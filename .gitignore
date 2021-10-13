@@ -1,3 +1,10 @@
+#Targets directry
+_targets
+
+#All model output
+*/out/*
+
+#R files
 # History files
 .Rhistory
 .Rapp.history
