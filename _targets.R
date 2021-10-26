@@ -5,11 +5,15 @@ tar_option_set(packages = c("tidyverse", "lubridate","rmarkdown","knitr","leafle
 
 source("./2_process/src/2_process.R")
 
+dir.create("2_process/out/", showWarnings = FALSE)
+dir.create("3_visualize/out/", showWarnings = FALSE)
+
 list(
   # Load harmonized WQP data product
   tar_target(
     p1_wqp_data,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds")),
+    readRDS(file = "1_fetch/in/DRB.WQdata.rds")
+  ),
   # Summarize data related to salinity in harmonized WQP data
   tar_target(
     p2_wqp_salinity_records_table,
