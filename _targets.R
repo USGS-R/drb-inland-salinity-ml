@@ -8,6 +8,11 @@ source("./2_process/src/2_process.R")
 dir.create("2_process/out/", showWarnings = FALSE)
 dir.create("3_visualize/out/", showWarnings = FALSE)
 
+# Define columns of interest for harmonized WQP data
+select_columns <- c("MonitoringLocationIdentifier","LongitudeMeasure","LatitudeMeasure",
+                    "CharacteristicName","param","USGSPCode","ActivityStartDate",
+                    "ActivityEndDate","resultVal2","resultUnits2","PrecisionValue")
+
 list(
   # Load harmonized WQP data product
   tar_target(
@@ -22,12 +27,12 @@ list(
   # Subset discrete major ions data
   tar_target(
     p2_wqp_Cl,
-    subset_wqp_major_ions_data(p1_wqp_data,param="Chloride")
+    subset_wqp_major_ions_data(p1_wqp_data,param="Chloride",select_columns)
   ),
   # Subset and save discrete specific conductance data
   tar_target(
     p2_wqp_spC_csv,
-    subset_wqp_spC_data(p1_wqp_data,fileout="2_process/out/DRB_WQdata_spC_data.csv")
+    subset_wqp_spC_data(p1_wqp_data,fileout="2_process/out/DRB_WQdata_spC_data.csv",select_columns)
   ),
   # Render data summary report
   tarchetypes::tar_render(p3_wqp_spC_report, "3_visualize/src/report-wqp-salinity-data.Rmd",output_dir = "3_visualize/out")
