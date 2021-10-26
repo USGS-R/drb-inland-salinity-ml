@@ -1,0 +1,91 @@
+---
+title: "DRB salinity data availability"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: html_document
+---
+
+### Records summary
+
+The harmonized WQP data product (Shoda et al. 2019) for the Delaware River Basin contains multiple water quality constituents that pertain to inland salinity. To start, we'll follow the recommendations of the dataset creators with regard to data quality flags. If we subset the dataset to only include records labeled "retain" in the harmonized data product, here's a breakdown of data available for the parameters most likely to be of interest:  
+
+```{r,echo=FALSE,message=FALSE}
+
+# Load data subsets for specific conductance and chloride
+SpC_path <- tar_read(p2_wqp_spC_csv)
+SpC_data <- read_csv(SpC_path)
+
+Cl_data <- tar_read(p2_wqp_Cl) 
+
+```
+
+
+```{r r-table, echo=FALSE}
+
+# Load salinity records overview table
+tar_read(p2_wqp_salinity_records_table) %>% kable() 
+
+```
+
+**Specific conductance**  
+
+The sites represented by these different salinity parameters often overlap. For example, `r length(intersect(unique(SpC_data$MonitoringLocationIdentifier),unique(Cl_data$MonitoringLocationIdentifier)))` sites have both chloride and specific conductance records. We will most likely begin model development by focusing on specific conductance. There are a couple of parameters that we can probably eliminate here, including the relatively few samples tagged as "min" or "max" specific conductance, which leaves us with `r length(SpC_data$resultVal2)` observations distributed across `r length(unique(SpC_data$MonitoringLocationIdentifier))` unique sites.  
+
+Most sites have relatively few specific conductance observations:
+
+```{r,echo=FALSE,fig.height=3.8,fig.width=5}
+
+SpC_data %>% 
+  group_by(MonitoringLocationIdentifier) %>% 
+  summarize(n=n()) %>%
+  ggplot() + 
+  stat_ecdf(aes(x=n),geom = "step",color="darkblue",size=0.8) + 
+  scale_x_log10() + 
+  xlab("Number of observations per site") + ylab("Cumulative frequency") +
+  theme_bw() 
+
+```
+
+
+<br>  
+
+```{r,echo=FALSE}
+
+#Assume NAD83 for now, need to confirm (explicit datum missing in metadata?)
+SpC_sites <- sf::st_as_sf(SpC_data,coords = c("LongitudeMeasure","LatitudeMeasure"),crs=4269) %>% 
+  sf::st_transform(4326) %>%
+  group_by(MonitoringLocationIdentifier) %>% 
+  summarize(n=n()) 
+  
+
+leaflet(SpC_sites) %>%
+  addProviderTiles("CartoDB.DarkMatter", group = "CartoDB") %>%
+  addCircleMarkers(radius = ~sqrt(n/10),color ="orange",
+    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", SpC_sites$MonitoringLocationIdentifier,"<br>",
+                                                  "n_records:", SpC_sites$n))
+
+```
+
+<br>  
+
+The number of specific conductance records, as well as the number of different sites represented, picks up after ~2000.   
+
+```{r,echo=FALSE}
+
+SpC_data %>% 
+  group_by(ActivityStartDate) %>% 
+  summarize(n_sites = length(unique(MonitoringLocationIdentifier))) %>% 
+  mutate(Year = year(ActivityStartDate),doy = yday(ActivityStartDate)) %>% 
+  ggplot() +
+  geom_tile(aes(x=doy,y=Year,fill=n_sites)) + 
+  scale_fill_gradient(low = "#eff3ff", high = "#08519c",trans="log",breaks= c(1,5,50)) + 
+  theme_bw() + 
+  theme(axis.line = element_line(color='black'),
+    plot.background = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank())
+
+```
+
+### Data citations  
+
+Shoda, M.E., Murphy, J.C., Falcone, J.A., and Duris, J.W., 2019, Multisource surface-water-quality data and U.S. Geological Survey streamgage match for the Delaware River Basin: U.S. Geological Survey data release, [https://doi.org/10.5066/P9PX8LZO](https://doi.org/10.5066/P9PX8LZO).
