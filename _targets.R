@@ -25,7 +25,7 @@ list(
     p1_wqp_data,
     readRDS(file = "1_fetch/in/DRB.WQdata.rds")
   ),
-  # Filter salinity data within harmonized WQP data
+  # Filter harmonized WQP data for salinity data
   tar_target(
     p2_filtered_wqp_data,
     filter_wqp_salinity_data(p1_wqp_data,major_ion_names = c("Chloride","Sodium"),select_wqp_vars,omit_wqp_events)
