@@ -4,31 +4,88 @@ date: "`r format(Sys.time(), '%d %B %Y')`"
 output: html_document
 ---
 
-### Records summary
+## Records summary
 
-The harmonized WQP data product (Shoda et al. 2019) for the Delaware River Basin contains multiple water quality constituents that pertain to inland salinity. To start, we'll follow the recommendations of the dataset creators with regard to data quality flags. If we subset the dataset to only include records labeled "retain" in the harmonized data product, here's a breakdown of data available for the parameters most likely to be of interest:  
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
 
-```{r,echo=FALSE,message=FALSE}
+# Load filtered data
+data_subset <- tar_read(p2_filtered_wqp_data)
 
-# Load data subsets for specific conductance and chloride
+# Load data subsets for specific conductance 
 SpC_path <- tar_read(p2_wqp_spC_csv)
-SpC_data <- read_csv(SpC_path)
+SpC_data <- read_csv(SpC_path,
+                     col_types = cols(ResultDetectionConditionText = col_character()))
 
-Cl_data <- tar_read(p2_wqp_Cl) 
+# Return Cl sites
+Cl_sites <- data_subset %>%
+  filter(param=="Chloride") %>%
+  summarize(Site = unique(MonitoringLocationIdentifier))
+
+# Return SpC sites
+SpC_sites <- SpC_data %>%
+  summarize(Site = unique(MonitoringLocationIdentifier))
+
+# Calculate percent of data subset representing censored data
+Cl_censored <- data_subset %>% 
+  filter(param=="Chloride") %>%
+  mutate(Censored = ifelse(ResultDetectionConditionText=="NA","N","Y")) %>%
+  group_by(Censored) %>%
+  summarize(n=n()) %>%
+  summarize(n[which(Censored=="Y")]/n[which(Censored=="N")]*100) %>%
+  as.numeric() %>%
+  round(2)
+
+SpC_censored <- SpC_data %>% 
+  mutate(Censored = ifelse(is.na(ResultDetectionConditionText),"N","Y")) %>%
+  group_by(Censored) %>%
+  summarize(n=n()) %>%
+  summarize(n[which(Censored=="Y")]/n[which(Censored=="N")]*100) %>%
+  as.numeric() %>%
+  round(2)
+
+# Calculate percent of data labeled as preliminary
+Cl_prelim <- data_subset %>% 
+  filter(param=="Chloride") %>%
+  mutate(Prelim = ifelse(ResultStatusIdentifier=="Preliminary","Y","N")) %>%
+  group_by(Prelim) %>%
+  summarize(n=n()) %>%
+  summarize(n[which(Prelim=="Y")]/n[which(Prelim=="N")]*100) %>%
+  as.numeric() %>%
+  round(2)
+
+SpC_prelim <- SpC_data %>%
+  mutate(Prelim = ifelse(ResultStatusIdentifier=="Preliminary","Y","N")) %>%
+  group_by(Prelim) %>%
+  summarize(n=n()) %>%
+  summarize(n[which(Prelim=="Y")]/n[which(Prelim=="N")]*100) %>%
+  as.numeric() %>%
+  round(2)
 
 ```
+  
+### Input dataset  
+The harmonized multiscale surface water quality dataset for the Delaware River Basin (Shoda et al. 2019) contains data for multiple water quality constituents that pertain to inland salinity. The harmonized dataset was created from data originally downloaded from the [Water Quality Portal](https://www.waterqualitydata.us/).
+
+### Data processing steps   
+We filtered the full dataset to include only measurements related to surface water salinity (`param_group = Salinity` or, for chloride and sodium, `param_group = Majors` & `param = Chloride|Sodium`). From this data subset we further excluded samples for which the original data entry referenced "conductivity" rather than "specific conductance" and no further information regarding the temperature basis was reported. Sediment samples and samples from tidal streams were excluded from the processed data (`ActivityMediaName != "Sediment"`; `MonitoringLocationTypeName` does not contain the word "tidal"), as were any samples assigned to specific hydrologic event codes that were not of interest to our study (`HydrologicEvent = "Spill"|"Volcanic action"`). Finally, we were interested in raw measurements of inland salinity rather than summary statistics, so samples with parameter codes denoting "min" or "max" were excluded from the filtered dataset (e.g. `param = "Specific conductance, field, max`).    
+  
+The full dataset includes many data QA/QC flags, including flags for undesired analytical methods, measurements with missing, ambiguous, or undesired units, and flags for duplicate measurements, among others. To process the data we followed the recommendations of the dataset creators with regard to these data quality flags and subset the data to only include records deemed suitable for further analysis (`final=="retain"`). Note that the retained records include samples tagged as `ResultStatusIdentifier = Preliminary` within the Water Quality Portal (Chloride: `r paste0(Cl_prelim,"%")`; SpConductance = `r paste0(SpC_prelim,"%")`). Next, in the full dataset, censored values (e.g., where the measurement is reported as "less than" or "greater than" the limit deemed reliable for reporting) are retained if a detection level was also reported. In those cases, the measurement value is assumed equal to the quantitation limit given, which is often common practice and the dataset creators cite as USGS-style, even though these substitution methods can bias summary statistics. Therefore a very small proportion of the filtered dataset for the inland salinity project represents censored measurements (e.g.,Chloride: `r paste0(Cl_censored,"%")`; Specific conductance: `r paste0(SpC_censored,"%")`).  
 
 
 ```{r r-table, echo=FALSE}
 
-# Load salinity records overview table
-tar_read(p2_wqp_salinity_records_table) %>% kable() 
+# Print salinity records overview table
+data_subset %>% 
+  filter(CharacteristicName!="Conductivity",!grepl("min|max", param,ignore.case = TRUE)) %>%
+  group_by(param_group,CharacteristicName,param) %>% 
+  summarize(n_records = n(),n_sites = length(unique(MonitoringLocationIdentifier)),.groups="keep") %>%
+  kable()
 
 ```
 
 **Specific conductance**  
 
-The sites represented by these different salinity parameters often overlap. For example, `r length(intersect(unique(SpC_data$MonitoringLocationIdentifier),unique(Cl_data$MonitoringLocationIdentifier)))` sites have both chloride and specific conductance records. We will most likely begin model development by focusing on specific conductance. There are a couple of parameters that we can probably eliminate here, including the relatively few samples tagged as "min" or "max" specific conductance, which leaves us with `r length(SpC_data$resultVal2)` observations distributed across `r length(unique(SpC_data$MonitoringLocationIdentifier))` unique sites.  
+The sites represented by these different salinity parameters often overlap. For example, `r length(intersect(Cl_sites$Site,SpC_sites$Site))` sites have both chloride and specific conductance records. We will most likely begin model development by focusing on specific conductance. The data processing steps outlined above leaves us with `r length(SpC_data$resultVal2)` observations distributed across `r length(unique(SpC_data$MonitoringLocationIdentifier))` unique sites.  
 
 Most sites have relatively few specific conductance observations:
 
@@ -86,6 +143,38 @@ SpC_data %>%
 
 ```
 
-### Data citations  
+<br>
+
+Zoom in on the sites with the most total samples:  
+
+```{r,echo=FALSE}
+
+top_sites <- SpC_data %>% 
+  group_by(MonitoringLocationIdentifier) %>% 
+  summarize(n_records = n()) %>% 
+  arrange(desc(n_records)) %>%
+  slice(1:50) 
+  
+SpC_data %>% 
+  filter(MonitoringLocationIdentifier %in% top_sites$MonitoringLocationIdentifier) %>%
+  mutate(Year = year(ActivityStartDate),doy = yday(ActivityStartDate)) %>%
+  group_by(MonitoringLocationIdentifier,Year) %>%
+  summarize(n_records = n(),.groups="keep") %>%
+  mutate(Site = factor(MonitoringLocationIdentifier,levels=top_sites$MonitoringLocationIdentifier)) %>%
+  ggplot() +
+  geom_tile(aes(x=Year,y= reorder(Site, desc(Site)),fill=n_records)) + 
+  scale_fill_gradient(trans="log",breaks= c(1,10,50,150)) + 
+  coord_cartesian(xlim=c(1908,2020)) + labs(y = "Site") +
+  theme_bw() + 
+  theme(axis.line = element_line(color='black'),
+    plot.background = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank())
+
+```
+
+## Data citations  
 
 Shoda, M.E., Murphy, J.C., Falcone, J.A., and Duris, J.W., 2019, Multisource surface-water-quality data and U.S. Geological Survey streamgage match for the Delaware River Basin: U.S. Geological Survey data release, [https://doi.org/10.5066/P9PX8LZO](https://doi.org/10.5066/P9PX8LZO).
+
+<br>  
