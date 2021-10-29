@@ -16,6 +16,9 @@ select_wqp_vars <- c("MonitoringLocationIdentifier","MonitoringLocationName","Lo
                      "ResultDetectionConditionText","ResultTemperatureBasisText","PrecisionValue","ResultStatusIdentifier",
                      "final")
 
+# Define water quality major ions of interest
+major_ion_names = c("Chloride","Sodium")
+
 # Define hydrologic event types in harmonized WQP data to exclude
 omit_wqp_events <- c("Spill","Volcanic action")
 
@@ -28,7 +31,7 @@ list(
   # Filter harmonized WQP data for salinity data
   tar_target(
     p2_filtered_wqp_data,
-    filter_wqp_salinity_data(p1_wqp_data,major_ion_names = c("Chloride","Sodium"),select_wqp_vars,omit_wqp_events)
+    filter_wqp_salinity_data(p1_wqp_data,major_ion_names,select_wqp_vars,omit_wqp_events)
   ),
   # Subset and save discrete specific conductance data
   tar_target(
