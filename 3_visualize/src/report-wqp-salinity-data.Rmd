@@ -20,9 +20,9 @@ SpC_data <- read_csv(SpC_path,
                      col_types = cols(ResultDetectionConditionText = col_character()))
 
 # Load NWIS daily SpC sites and data
-SpC_sites_nwis <- tar_read(p1_SpC_daily_sites)
+SpC_sites_nwis <- tar_read(p1_SpC_sites)
 SpC_data_nwis_path <- tar_read(p2_nwis_spC_csv)
-SpC_data_nwis <- read_csv(SpC_data_nwis_path)
+SpC_data_nwis <- read_csv(SpC_data_nwis_path,show_col_types = FALSE)
 
 # Return Cl sites
 Cl_sites <- data_subset %>%

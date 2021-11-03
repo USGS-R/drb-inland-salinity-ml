@@ -1,4 +1,4 @@
-munge_daily_mean_SpC_data <- function(x){
+munge_daily_mean_SpC_cols <- function(x){
   
   # x is a data frame containing downloaded daily data from NWIS
   
@@ -25,8 +25,8 @@ combine_daily_mean_SpC_data <- function(daily_data_nwis,fileout){
   
   # daily_data_nwis is a list containing the downloaded daily data for each SpC site within the DRB
   
-  # Munge daily site data
-  daily_data_nwis_munged <- lapply(daily_data_nwis,munge_daily_mean_SpC_data)
+  # Munge daily site data columns
+  daily_data_nwis_munged <- lapply(daily_data_nwis,munge_daily_mean_SpC_cols)
   
   # Combine daily site data and save to fileout
   daily_data_out <- do.call(rbind,daily_data_nwis_munged)
