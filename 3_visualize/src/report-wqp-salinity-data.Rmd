@@ -20,8 +20,8 @@ SpC_data <- read_csv(SpC_path,
                      col_types = cols(ResultDetectionConditionText = col_character()))
 
 # Load NWIS daily SpC sites and data
-SpC_sites_nwis <- tar_read(p1_SpC_sites)
-SpC_data_nwis_path <- tar_read(p2_nwis_spC_csv)
+SpC_sites_nwis <- tar_read(p1_nwis_SpC_sites)
+SpC_data_nwis_path <- tar_read(p2_nwis_SpC_daily_csv)
 SpC_data_nwis <- read_csv(SpC_data_nwis_path,show_col_types = FALSE)
 
 # Return Cl sites
@@ -147,10 +147,10 @@ SpC_data %>%
   filter(MonitoringLocationIdentifier %in% top_sites$MonitoringLocationIdentifier) %>%
   mutate(Year = year(ActivityStartDate),doy = yday(ActivityStartDate)) %>%
   group_by(MonitoringLocationIdentifier,Year) %>%
-  summarize(n_records = n(),.groups="keep") %>%
+  summarize(n_records_per_yr = n(),.groups="keep") %>%
   mutate(Site = factor(MonitoringLocationIdentifier,levels=top_sites$MonitoringLocationIdentifier)) %>%
   ggplot() +
-  geom_tile(aes(x=Year,y= reorder(Site, desc(Site)),fill=n_records)) + 
+  geom_tile(aes(x=Year,y= reorder(Site, desc(Site)),fill=n_records_per_yr)) + 
   scale_fill_gradient(trans="log",breaks= c(1,10,50,150)) + 
   coord_cartesian(xlim=c(1908,2020)) + labs(y = "Site") +
   theme_bw() + 
