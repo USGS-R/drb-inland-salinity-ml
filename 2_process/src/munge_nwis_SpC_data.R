@@ -33,9 +33,11 @@ combine_daily_mean_SpC_data <- function(daily_data_nwis,fileout){
   # Munge daily site data columns
   daily_data_nwis_munged <- lapply(daily_data_nwis,munge_daily_mean_SpC_cols)
   
-  # Combine daily site data and save to fileout
-  daily_data_out <- do.call(rbind,daily_data_nwis_munged)
+  # Combine daily site data and remove NA values
+  daily_data_out <- do.call(rbind,daily_data_nwis_munged) %>%
+    filter(!is.na(SpecCond))
   
+  # Save daily site data to fileout
   write_csv(daily_data_out, file = fileout)
 
   return(fileout)
