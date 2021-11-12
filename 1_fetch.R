@@ -7,15 +7,19 @@ p1_targets_list <- list(
     readRDS(file = "1_fetch/in/DRB.WQdata.rds")),
   tar_target(
     p1_nwis_SpC_sites,
-    get_nwis_sites(drb_huc8s,SpC_pcodes,site_tp_select)),
+    {
+      dummy <- '2021-11-12'
+      get_nwis_sites(drb_huc8s,SpC_pcodes,site_tp_select)
+    }
+    ),
   tar_target(
     p1_nwis_SpC_daily_data,
     {
-      # Filter SpC sites for sites with daily means (stat_cd = "00003")
-      daily_sites <- filter(p1_nwis_SpC_sites,data_type_cd=="dv",stat_cd=="00003")
+      # Filter SpC sites for sites with daily stat codes of interest
+      daily_sites <- filter(p1_nwis_SpC_sites,data_type_cd=="dv",stat_cd %in% c("00001","00003"))
       # For each site, download daily SpC means
       lapply(unique(daily_sites$site_no),function(x)
-        readNWISdv(siteNumbers = x,parameterCd=SpC_pcodes,statCd="00003",startDate = "",endDate = ""))
+        readNWISdv(siteNumbers = x,parameterCd=SpC_pcodes,statCd=c("00001","00003"),startDate = "",endDate = ""))
     }
   )
 )  
