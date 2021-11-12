@@ -7,7 +7,6 @@ output: html_document
 ## Records summary  
   
 
-### Harmonized WQP dataset
 
 ```{r,echo=FALSE,message=FALSE,warning=FALSE}
 
@@ -16,8 +15,8 @@ data_subset <- tar_read(p2_filtered_wqp_data)
 
 # Load WQP data subsets for specific conductance 
 SpC_path <- tar_read(p2_wqp_spC_csv)
-SpC_data <- read_csv(SpC_path,
-                     col_types = cols(ResultDetectionConditionText = col_character()))
+SpC_data <- read_csv(SpC_path,col_types = cols(ResultDetectionConditionText = col_character())) %>%
+  mutate(site_no = if_else(grepl("USGS",MonitoringLocationIdentifier),substr(MonitoringLocationIdentifier,6,100),MonitoringLocationIdentifier))
 
 # Load NWIS daily SpC sites and data
 SpC_sites_nwis <- tar_read(p1_nwis_SpC_sites)
@@ -69,7 +68,15 @@ SpC_prelim <- SpC_data %>%
   as.numeric() %>%
   round(2)
 
+# How many truly unique sites are there?
+n_unique_sites_wqp <- SpC_data %>% distinct(LongitudeMeasure,LatitudeMeasure)
+n_unique_SpC_locs <- length(n_unique_sites_wqp$LongitudeMeasure) - length(intersect(unique(SpC_data$site_no),unique(SpC_data_nwis$site_no)))
+
+
+
 ```
+  
+### Harmonized WQP dataset
   
 #### Input dataset  
 The harmonized multiscale surface water quality dataset for the Delaware River Basin (Shoda et al. 2019) contains data for multiple water quality constituents that pertain to inland salinity. The harmonized dataset was created from data originally downloaded from the [Water Quality Portal](https://www.waterqualitydata.us/).
@@ -163,7 +170,36 @@ SpC_data %>%
 
 <br>  
 
-Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data:  
+To what extent is there seasonal bias in the discrete samples?
+
+```{r,echo=FALSE}
+
+samples_by_month <- SpC_data %>% 
+  mutate(Year = year(ActivityStartDate),
+         Month = month(ActivityStartDate),
+         doy = yday(ActivityStartDate)) %>%
+  group_by(Month) %>% summarize(n=n()) 
+
+samples_by_month_topsites <- SpC_data %>% 
+  filter(MonitoringLocationIdentifier %in% top_sites$MonitoringLocationIdentifier) %>%
+  mutate(Year = year(ActivityStartDate),
+         Month = month(ActivityStartDate),
+         doy = yday(ActivityStartDate)) %>%
+  group_by(Month) %>% summarize(n=n())
+
+
+  ggplot() + geom_bar(data = samples_by_month,aes(x=as.factor(Month),y=n,fill="all sites"),stat="identity") +
+    geom_bar(data = samples_by_month_topsites,aes(x=as.factor(Month),y=n,fill="top-50 sites"),stat="identity") +
+    scale_fill_manual(values = c("darkgray","cornflowerblue"))+
+    labs(x="Month",y="# discrete SC observations across the DRB") + 
+    theme_bw() + 
+    theme(legend.title = element_blank())
+
+```
+
+<br>  
+
+Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r n_unique_SpC_locs` sites):  
 
 ```{r,echo=FALSE}
 
