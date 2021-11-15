@@ -57,10 +57,13 @@ combine_daily_mean_SpC_data <- function(daily_data_nwis,fileout){
   # Munge daily site data columns
   daily_data_nwis_munged <- lapply(daily_data_nwis,munge_daily_mean_SpC_cols)
   
-  # Combine daily site data and remove rows without SpecCond or SpecCond_Max values
+  # Combine daily site data 
   daily_data_out <- do.call(rbind,daily_data_nwis_munged) %>%
-    filter(!(is.na(SpecCond)&is.na(SpecCond_Max)))
-  
+           # remove rows with no data for either SpecCond or SpecCond_Max:
+    filter(!(is.na(SpecCond) & is.na(SpecCond_Max)),
+           # remove rows where daily mean SC is greater than daily max SC while keeping rows with NA in just one column:
+           (is.na(SpecCond)|is.na(SpecCond_Max)|(!SpecCond > SpecCond_Max)))
+
   # Save daily site data to fileout
   write_csv(daily_data_out, file = fileout)
 
