@@ -35,6 +35,8 @@ drb_huc8s <- c("02040101","02040102","02040103","02040104","02040105","02040106"
 # Define USGS site types for which to download specific conductance data (include "Stream","Stream:Canal", and "Spring" sites)
 site_tp_select <- c("ST","ST-CA","SP") 
 
+# Change dummy date to force re-build of relevant NWIS sites
+dummy_date <- "2021-11-12"
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)

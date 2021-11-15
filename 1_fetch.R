@@ -8,7 +8,7 @@ p1_targets_list <- list(
   tar_target(
     p1_nwis_SpC_sites,
     {
-      dummy <- '2021-11-12'
+      dummy <- dummy_date
       get_nwis_sites(drb_huc8s,SpC_pcodes,site_tp_select)
     }
     ),
