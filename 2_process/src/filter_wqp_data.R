@@ -3,7 +3,7 @@ filter_wqp_salinity_data <- function(data,major_ion_names,select_wqp_vars,omit_w
   # major_ion_names are values to keep from the param column of the harmonized wqp data
   # select_wqp_vars are columns of data to keep from the harmonized wqp data
   # omit_wqp_events are values to omit from HydrologicEvent column of the harmonized wqp data
-  # exclude_tidal boolean; if TRUE, rows containing "tidal" within the MonitoringLocationTypeName column of the harmonized wqp data are omitted
+  # exclude_tidal logical, defaults to TRUE. If TRUE, rows containing "tidal" within the MonitoringLocationTypeName column of the harmonized wqp data are omitted
   
   data_subset <- filter(data,(param_group=="Salinity"|param %in% major_ion_names),
                         # Filter out any sediment samples, samples representing hydrologic events that are not of interest, and samples from LocationType = ditch:

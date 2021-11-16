@@ -4,17 +4,24 @@ date: "`r format(Sys.time(), '%d %B %Y')`"
 output: html_document
 ---
 
-## Records summary
+## Records summary  
+  
+
 
 ```{r,echo=FALSE,message=FALSE,warning=FALSE}
 
-# Load filtered data
+# Load filtered WQP data
 data_subset <- tar_read(p2_filtered_wqp_data)
 
-# Load data subsets for specific conductance 
+# Load WQP data subsets for specific conductance 
 SpC_path <- tar_read(p2_wqp_spC_csv)
-SpC_data <- read_csv(SpC_path,
-                     col_types = cols(ResultDetectionConditionText = col_character()))
+SpC_data <- read_csv(SpC_path,col_types = cols(ResultDetectionConditionText = col_character())) %>%
+  mutate(site_no = if_else(grepl("USGS",MonitoringLocationIdentifier),substr(MonitoringLocationIdentifier,6,100),MonitoringLocationIdentifier))
+
+# Load NWIS daily SpC sites and data
+SpC_sites_nwis <- tar_read(p1_nwis_SpC_sites)
+SpC_data_nwis_path <- tar_read(p2_nwis_SpC_daily_csv)
+SpC_data_nwis <- read_csv(SpC_data_nwis_path,show_col_types = FALSE)
 
 # Return Cl sites
 Cl_sites <- data_subset %>%
@@ -61,12 +68,20 @@ SpC_prelim <- SpC_data %>%
   as.numeric() %>%
   round(2)
 
+# How many truly unique sites are there?
+n_unique_sites_wqp <- SpC_data %>% distinct(LongitudeMeasure,LatitudeMeasure)
+n_unique_SpC_locs <- length(n_unique_sites_wqp$LongitudeMeasure) - length(intersect(unique(SpC_data$site_no),unique(SpC_data_nwis$site_no)))
+
+
+
 ```
   
-### Input dataset  
+### Harmonized WQP dataset
+  
+#### Input dataset  
 The harmonized multiscale surface water quality dataset for the Delaware River Basin (Shoda et al. 2019) contains data for multiple water quality constituents that pertain to inland salinity. The harmonized dataset was created from data originally downloaded from the [Water Quality Portal](https://www.waterqualitydata.us/).
 
-### Data processing steps   
+#### Data processing steps   
 We filtered the full dataset to include only measurements related to surface water salinity (`param_group = Salinity` or, for chloride and sodium, `param_group = Majors` & `param = Chloride|Sodium`). From this data subset we further excluded samples for which the original data entry referenced "conductivity" rather than "specific conductance" and no further information regarding the temperature basis was reported. Sediment samples, samples from tidal streams, and samples from ditch locations were excluded from the processed data (`ActivityMediaName != "Sediment"`; `MonitoringLocationTypeName` does not contain the word "tidal"; `MonitoringLocationTypeName != "Stream: Ditch"`), as were any samples assigned to specific hydrologic event codes that were not of interest to our study (`HydrologicEvent = "Spill"|"Volcanic action"`). Finally, we were interested in raw measurements of inland salinity so samples with parameter codes denoting "min" or "max" were excluded from the filtered dataset (e.g. `param = "Specific conductance, field, max`).    
   
 The full dataset includes many data QA/QC flags, including flags for undesired analytical methods, measurements with missing, ambiguous, or undesired units, and flags for duplicate measurements, among others. To process the data we followed the recommendations of the dataset creators with regard to these data quality flags and subset the data to only include records deemed suitable for further analysis (`final=="retain"`). Note that the retained records include samples tagged as `ResultStatusIdentifier = Preliminary` within the Water Quality Portal (Chloride: `r paste0(Cl_prelim,"%")`; SpConductance = `r paste0(SpC_prelim,"%")`). Next, in the full dataset, censored values (e.g., where the measurement is reported as "less than" or "greater than" the limit deemed reliable for reporting) are retained if a detection level was also reported. In those cases, the measurement value is assumed equal to the quantitation limit given, which is often common practice and the dataset creators cite as USGS-style, even though these substitution methods can bias summary statistics. Therefore a very small proportion of the filtered dataset for the inland salinity project represents censored measurements (e.g.,Chloride: `r paste0(Cl_censored,"%")`; Specific conductance: `r paste0(SpC_censored,"%")`).  
@@ -99,26 +114,6 @@ SpC_data %>%
   scale_x_log10() + 
   xlab("Number of observations per site") + ylab("Cumulative frequency") +
   theme_bw() 
-
-```
-
-
-<br>  
-
-```{r,echo=FALSE}
-
-#Assume NAD83 for now, need to confirm (explicit datum missing in metadata?)
-SpC_sites <- sf::st_as_sf(SpC_data,coords = c("LongitudeMeasure","LatitudeMeasure"),crs=4269) %>% 
-  sf::st_transform(4326) %>%
-  group_by(MonitoringLocationIdentifier) %>% 
-  summarize(n=n()) 
-  
-
-leaflet(SpC_sites) %>%
-  addProviderTiles("CartoDB.DarkMatter", group = "CartoDB") %>%
-  addCircleMarkers(radius = ~sqrt(n/10),color ="orange",
-    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", SpC_sites$MonitoringLocationIdentifier,"<br>",
-                                                  "n_records:", SpC_sites$n))
 
 ```
 
@@ -159,10 +154,10 @@ SpC_data %>%
   filter(MonitoringLocationIdentifier %in% top_sites$MonitoringLocationIdentifier) %>%
   mutate(Year = year(ActivityStartDate),doy = yday(ActivityStartDate)) %>%
   group_by(MonitoringLocationIdentifier,Year) %>%
-  summarize(n_records = n(),.groups="keep") %>%
+  summarize(n_records_per_yr = n(),.groups="keep") %>%
   mutate(Site = factor(MonitoringLocationIdentifier,levels=top_sites$MonitoringLocationIdentifier)) %>%
   ggplot() +
-  geom_tile(aes(x=Year,y= reorder(Site, desc(Site)),fill=n_records)) + 
+  geom_tile(aes(x=Year,y= reorder(Site, desc(Site)),fill=n_records_per_yr)) + 
   scale_fill_gradient(trans="log",breaks= c(1,10,50,150)) + 
   coord_cartesian(xlim=c(1908,2020)) + labs(y = "Site") +
   theme_bw() + 
@@ -172,6 +167,73 @@ SpC_data %>%
     panel.grid.major = element_blank())
 
 ```
+
+<br>  
+
+To what extent is there seasonal bias in the discrete samples?
+
+```{r,echo=FALSE}
+
+samples_by_month <- SpC_data %>% 
+  mutate(Year = year(ActivityStartDate),
+         Month = month(ActivityStartDate),
+         doy = yday(ActivityStartDate)) %>%
+  group_by(Month) %>% summarize(n=n()) 
+
+samples_by_month_topsites <- SpC_data %>% 
+  filter(MonitoringLocationIdentifier %in% top_sites$MonitoringLocationIdentifier) %>%
+  mutate(Year = year(ActivityStartDate),
+         Month = month(ActivityStartDate),
+         doy = yday(ActivityStartDate)) %>%
+  group_by(Month) %>% summarize(n=n())
+
+
+  ggplot() + geom_bar(data = samples_by_month,aes(x=as.factor(Month),y=n,fill="all sites"),stat="identity") +
+    geom_bar(data = samples_by_month_topsites,aes(x=as.factor(Month),y=n,fill="top-50 sites"),stat="identity") +
+    scale_fill_manual(values = c("darkgray","cornflowerblue"))+
+    labs(x="Month",y="# discrete SC observations across the DRB") + 
+    theme_bw() + 
+    theme(legend.title = element_blank())
+
+```
+
+<br>  
+
+Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r n_unique_SpC_locs` sites):  
+
+```{r,echo=FALSE}
+
+# WQP sites: assume NAD83 for now, need to confirm (explicit datum missing in metadata?)
+SpC_sites_wqp <- sf::st_as_sf(SpC_data,coords = c("LongitudeMeasure","LatitudeMeasure"),crs=4269) %>% 
+  sf::st_transform(4326) %>%
+  group_by(MonitoringLocationIdentifier) %>% 
+  summarize(n=n()) 
+
+# NWIS sites:
+SpC_nwis_data_summary <- SpC_data_nwis %>% group_by(site_no) %>% summarize(n_days=n())
+
+SpC_nwis_site_summary <- filter(SpC_sites_nwis,data_type_cd=="dv",stat_cd=="00003") %>%
+  select(site_no,station_nm,site_tp_cd,dec_lat_va,dec_long_va,dec_coord_datum_cd,parm_cd,stat_cd) %>%
+  group_by(site_no) %>%
+  slice(1) %>%
+  left_join(.,SpC_nwis_data_summary,by="site_no") %>%
+  sf::st_as_sf(.,coords=c("dec_long_va","dec_lat_va"),crs=4269) %>%
+  sf::st_transform(4326) 
+
+
+leaflet() %>%
+  addProviderTiles("CartoDB.DarkMatter", group = "CartoDB") %>%
+  addCircleMarkers(data=SpC_sites_wqp,radius = ~sqrt(n/50),color ="orange",
+    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", SpC_sites_wqp$MonitoringLocationIdentifier,"<br>",
+                                                  "n_records:", SpC_sites_wqp$n)) %>%
+  addCircleMarkers(data=SpC_nwis_site_summary,radius = ~sqrt(n_days/50),color ="green",
+    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", SpC_nwis_site_summary$site_no,"<br>",
+                                                  "n_daily_records:",SpC_nwis_site_summary$n_days)) %>%
+  addLegend("bottomright", colors = c("orange","green"), labels = c("Harmonized WQP dataset","NWIS daily data")) 
+
+```
+
+<br>  
 
 ## Data citations  
 
