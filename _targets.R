@@ -9,6 +9,8 @@ source("3_visualize.R")
 
 dir.create("2_process/out/", showWarnings = FALSE)
 dir.create("3_visualize/out/", showWarnings = FALSE)
+dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
+dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -31,18 +33,22 @@ pcodes_select <- c("00095","90095","00094","90096")
 parameter <- "00095"
 
 # Define minor HUCs (hydrologic unit codes) that make up the DRB to use in calls to dataRetrieval functions
-# Lower Delaware: 0204 subregion (for now, exclude New Jersey Coastal (https://water.usgs.gov/GIS/huc_name.html) and Delaware Bay ("02040204")
+# Lower Delaware: 0204 subregion (for now, exclude New Jersey Coastal (https://water.usgs.gov/GIS/huc_name.html)
 drb_huc8s <- c("02040101","02040102","02040103","02040104","02040105","02040106",
-               "02040201","02040202","02040203","02040205","02040206","02040207")
+               "02040201","02040202","02040203","02040204","02040205","02040206","02040207")
 
 # Define USGS site types for which to download specific conductance data (include "Stream","Stream:Canal", and "Spring" sites)
 site_tp_select <- c("ST","ST-CA","SP") 
+
+# Omit undesired sites
+# "01412350" coded as site type "ST" but within Delaware Bay and is influenced by tides
+omit_nwis_sites <- c("01412350") 
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
 
 # Change dummy date to force re-build of NWIS SC sites and data download
-dummy_date <- "2021-11-23"
+dummy_date <- "2021-11-30"
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)

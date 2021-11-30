@@ -52,7 +52,10 @@ get_daily_nwis_data <- function(site_info,parameter,stat_cd_select) {
            # omit rows with no data
     filter(!(is.na(Value) & is.na(Value_Max)),
            # omit rows where daily mean > daily max
-           (is.na(Value)|is.na(Value_Max)|(!Value > Value_Max))) %>%
+           (is.na(Value)|is.na(Value_Max)|(!Value > Value_Max)),
+           # omit rows with undesired data quality codes
+           !(Value_cd %in% c("P Eqp","P Mnt")),
+           !(Value_Max_cd %in% c("P Eqp","P Mnt"))) %>%
     mutate(Parameter=c("00095"="SpecCond","00300"="DO")[parameter]) %>%
     select(agency_cd,site_no,Date,Parameter,Value,Value_cd,Value_Max,Value_Max_cd)
   

@@ -10,22 +10,20 @@ output: html_document
 
 ```{r,echo=FALSE,message=FALSE,warning=FALSE}
 
+##------------ WQP ------------##
+
 # Load filtered WQP data
 data_subset <- tar_read(p2_filtered_wqp_data)
-
-# Load WQP data subsets for specific conductance 
-SC_path <- tar_read(p2_wqp_SC_csv)
-SC_data <- read_csv(SC_path,col_types = cols(ResultDetectionConditionText = col_character())) %>%
-  mutate(site_no = if_else(grepl("USGS",MonitoringLocationIdentifier),substr(MonitoringLocationIdentifier,6,100),MonitoringLocationIdentifier))
-
-# Load NWIS daily SC sites and data
-SC_sites_nwis <- tar_read(p1_nwis_sites)
-SC_data_nwis <- tar_read(p1_daily_data)
 
 # Return Cl sites
 Cl_sites <- data_subset %>%
   filter(param=="Chloride") %>%
   summarize(Site = unique(MonitoringLocationIdentifier))
+
+# Load WQP data subsets for specific conductance 
+SC_path <- tar_read(p2_wqp_SC_csv)
+SC_data <- read_csv(SC_path,col_types = cols(ResultDetectionConditionText = col_character())) %>%
+  mutate(site_no = if_else(grepl("USGS",MonitoringLocationIdentifier),substr(MonitoringLocationIdentifier,6,100),MonitoringLocationIdentifier))
 
 # Return SC sites
 SC_sites <- SC_data %>%
@@ -67,15 +65,22 @@ SC_prelim <- SC_data %>%
   as.numeric() %>%
   round(2)
 
-# How many truly unique sites are there?
-n_unique_sites_wqp <- SC_data %>% distinct(LongitudeMeasure,LatitudeMeasure)
-n_unique_SC_locs <- length(n_unique_sites_wqp$LongitudeMeasure) - length(intersect(unique(SC_data$site_no),unique(SC_data_nwis$site_no)))
+##------------ NWIS ------------##
 
+# Load NWIS daily SC sites and data
+SC_sites_nwis <- tar_read(p1_nwis_sites)
+SC_data_nwis <- tar_read(p1_daily_data)
+
+
+# Load full site list:
+site_list <- read_csv(tar_read(p2_site_list_csv),show_col_types = FALSE)
+unique_all_lat_lon <- site_list %>% distinct(lat,lon) %>% summarize(n_sites=n())
+unique_wqp_lat_lon <- SC_data %>% distinct(LatitudeMeasure,LongitudeMeasure) %>% summarize(n_sites=n())
 
 
 ```
   
-### Harmonized WQP dataset
+### 1. Harmonized WQP dataset
   
 #### Input dataset  
 The harmonized multiscale surface water quality dataset for the Delaware River Basin (Shoda et al. 2019) contains data for multiple water quality constituents that pertain to inland salinity. The harmonized dataset was created from data originally downloaded from the [Water Quality Portal](https://www.waterqualitydata.us/).
@@ -84,6 +89,8 @@ The harmonized multiscale surface water quality dataset for the Delaware River B
 We filtered the full dataset to include only measurements related to surface water salinity (`param_group = Salinity` or, for chloride and sodium, `param_group = Majors` & `param = Chloride|Sodium`). From this data subset we further excluded samples for which the original data entry referenced "conductivity" rather than "specific conductance" and no further information regarding the temperature basis was reported. Sediment samples, samples from tidal streams, and samples from ditch locations were excluded from the processed data (`ActivityMediaName != "Sediment"`; `MonitoringLocationTypeName` does not contain the word "tidal"; `MonitoringLocationTypeName != "Stream: Ditch"`), as were any samples assigned to specific hydrologic event codes that were not of interest to our study (`HydrologicEvent = "Spill"|"Volcanic action"`). Finally, we were interested in raw measurements of inland salinity so samples with parameter codes denoting "min" or "max" were excluded from the filtered dataset (e.g. `param = "Specific conductance, field, max`).    
   
 The full dataset includes many data QA/QC flags, including flags for undesired analytical methods, measurements with missing, ambiguous, or undesired units, and flags for duplicate measurements, among others. To process the data we followed the recommendations of the dataset creators with regard to these data quality flags and subset the data to only include records deemed suitable for further analysis (`final=="retain"`). Note that the retained records include samples tagged as `ResultStatusIdentifier = Preliminary` within the Water Quality Portal (Chloride: `r paste0(Cl_prelim,"%")`; SpConductance = `r paste0(SC_prelim,"%")`). Next, in the full dataset, censored values (e.g., where the measurement is reported as "less than" or "greater than" the limit deemed reliable for reporting) are retained if a detection level was also reported. In those cases, the measurement value is assumed equal to the quantitation limit given, which is often common practice and the dataset creators cite as USGS-style, even though these substitution methods can bias summary statistics. Therefore a very small proportion of the filtered dataset for the inland salinity project represents censored measurements (e.g.,Chloride: `r paste0(Cl_censored,"%")`; Specific conductance: `r paste0(SC_censored,"%")`).  
+
+The original coordinate reference system used for the lat/lon coordinates was not retained in the harmonized dataset. To create a list of unique sites, we searched the Water Quality Portal (`dataRetrieval::whatWQPsites()`) for sites within the target HUC8 watersheds, and matched the returned CRS to the harmonized dataset according to the site ID (`MonitoringLocationIdentifier`).
 
 
 ```{r r-table, echo=FALSE}
@@ -99,7 +106,7 @@ data_subset %>%
 
 **Specific conductance**  
 
-The sites represented by these different salinity parameters often overlap. For example, `r length(intersect(Cl_sites$Site,SC_sites$Site))` sites have both chloride and specific conductance records. We will most likely begin model development by focusing on specific conductance. The data processing steps outlined above leaves us with `r length(SC_data$resultVal2)` observations distributed across `r length(unique(SC_data$MonitoringLocationIdentifier))` unique sites.  
+The sites represented by these different salinity parameters often overlap. For example, `r length(intersect(Cl_sites$Site,SC_sites$Site))` sites have both chloride and specific conductance records. We will most likely begin model development by focusing on specific conductance. The data processing steps outlined above leaves us with `r length(SC_data$resultVal2)` observations distributed across `r length(unique(SC_data$MonitoringLocationIdentifier))` unique site id's (note that some site id's appear to share geospatial coordinates; there are `r unique_wqp_lat_lon$n_sites` unique lat/lon locations within the harmonized dataset).    
 
 Most sites have relatively few specific conductance observations:
 
@@ -198,37 +205,47 @@ samples_by_month_topsites <- SC_data %>%
 
 <br>  
 
-Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r n_unique_SC_locs` sites):  
+### Specific conductance site locations  
+
+Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r unique_all_lat_lon$n_sites` unique lat/lon locations):  
 
 ```{r,echo=FALSE}
 
-# WQP sites: assume NAD83 for now, need to confirm (explicit datum missing in metadata?)
-SC_sites_wqp <- sf::st_as_sf(SC_data,coords = c("LongitudeMeasure","LatitudeMeasure"),crs=4269) %>% 
+# Handle different coordinate reference systems across sites:
+site_list_split <- split(site_list,f=site_list$datum)
+site_list_sp_ls <- lapply(site_list_split,function(x){
+  
+  # assume unknown crs (datum = "UNKWN") are equal to WGS84:
+  datum_assign <- case_when(x$datum[1] == "NAD83" ~ 4269,
+                            x$datum[1] == "WGS84" ~ 4326,
+                            x$datum[1] == "NAD27" ~ 4267,
+                            x$datum[1] == "UNKWN" ~ 4326)
+  
+  # convert data frame to spatial object:
+  site_list_sp <- sf::st_as_sf(x,coords=c("lon","lat"),crs=datum_assign) %>%
   sf::st_transform(4326) %>%
-  group_by(MonitoringLocationIdentifier) %>% 
-  summarize(n=n()) 
+  mutate(group = as.factor(case_when(data_src_combined == "NWIS_daily/Harmonized_WQP_data" ~ "daily",
+                           data_src_combined == "NWIS_instantaneous/Harmonized_WQP_data" ~ "instantaneous",
+                           data_src_combined == "Harmonized_WQP_data" ~ "discrete",
+                           data_src_combined == "NWIS_instantaneous" ~ "instantaneous",
+                           data_src_combined == "NWIS_daily" ~ "daily")))
+  return(site_list_sp) 
+  
+})
+# Create spatial object:
+site_list_sp <- do.call(rbind,site_list_sp_ls)
 
-# NWIS sites:
-SC_nwis_data_summary <- SC_data_nwis %>% group_by(site_no) %>% summarize(n_days=n())
-
-SC_nwis_site_summary <- filter(SC_sites_nwis,data_type_cd=="dv",stat_cd=="00003") %>%
-  select(site_no,station_nm,site_tp_cd,dec_lat_va,dec_long_va,dec_coord_datum_cd,parm_cd,stat_cd) %>%
-  group_by(site_no) %>%
-  slice(1) %>%
-  left_join(.,SC_nwis_data_summary,by="site_no") %>%
-  sf::st_as_sf(.,coords=c("dec_long_va","dec_lat_va"),crs=4269) %>%
-  sf::st_transform(4326) 
-
-
+# Define color palette for circle markers:
+pal <- colorFactor(palette = c("orange","blue","green"),domain=site_list_sp$group)
+  
+# Plot sites:
 leaflet() %>%
   addProviderTiles("CartoDB.DarkMatter", group = "CartoDB") %>%
-  addCircleMarkers(data=SC_sites_wqp,radius = ~sqrt(n/50),color ="orange",
-    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", SC_sites_wqp$MonitoringLocationIdentifier,"<br>",
-                                                  "n_records:", SC_sites_wqp$n)) %>%
-  addCircleMarkers(data=SC_nwis_site_summary,radius = ~sqrt(n_days/50),color ="green",
-    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", SC_nwis_site_summary$site_no,"<br>",
-                                                  "n_daily_records:",SC_nwis_site_summary$n_days)) %>%
-  addLegend("bottomright", colors = c("orange","green"), labels = c("Harmonized WQP dataset","NWIS daily data")) 
+  addCircleMarkers(data=site_list_sp,radius = ~sqrt(count_days_total/40),color = ~pal(group),
+    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", site_list_sp$site_id,"<br>",
+                                                  "n_observation-days:", site_list_sp$count_days_total)) %>%
+    addLegend("bottomright", colors = c("orange","green","blue"), labels = c("discrete","instantaneous","daily")) 
+
 
 ```
 
