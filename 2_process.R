@@ -27,7 +27,8 @@ p2_targets_list <- list(
     p2_site_list_csv,
     {
       wqp_data_subset <- read_csv(p2_wqp_SC_csv,col_types = cols(ResultDetectionConditionText = col_character()))
-      create_site_list(wqp_data_subset,p1_nwis_sites,p1_daily_data,p1_inst_data,hucs=drb_huc8s,fileout = "2_process/out/DRB_SC_sitelist.csv")
+      create_site_list(wqp_data_subset,p1_nwis_sites,p1_daily_data,p1_inst_data,
+                       hucs=drb_huc8s,crs_out="NAD83",fileout = "2_process/out/DRB_SC_sitelist.csv")
     },
     format = "file")
 )
