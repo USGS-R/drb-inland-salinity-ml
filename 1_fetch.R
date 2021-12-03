@@ -28,7 +28,7 @@ p1_targets_list <- list(
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
-    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select),
+    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,start_date="",end_date=dummy_date),
     pattern = map(p1_nwis_sites_daily)),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -41,7 +41,7 @@ p1_targets_list <- list(
   # Download NWIS instantaneous data
   tar_target(
     p1_inst_data,
-    get_inst_nwis_data(p1_nwis_sites_inst,parameter),
+    get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date="",end_date=dummy_date),
     pattern = map(p1_nwis_sites_inst))
   
 )  

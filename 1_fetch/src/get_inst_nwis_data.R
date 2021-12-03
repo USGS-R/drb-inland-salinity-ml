@@ -1,19 +1,25 @@
-get_inst_nwis_data <- function(site_info,parameter) {
+get_inst_nwis_data <- function(site_info,parameter,start_date = "",end_date = "") {
   #' 
   #' @description Function to download NWIS instantaneous data
   #'
   #' @param site_info a data frame containing site info for NWIS instantaneous site. site_info must include the variable "site_no"
   #' @param parameter a character vector containing the USGS parameter code of interest
+  #' @param start_date character string indicating the starting date for data retrieval (YYYY-MM-DD). 
+  #' Default value is "" to indicate retrieval for the earliest possible record.
+  #' @param end_date character string indicating the ending date for data retrieval (YYYY-MM-DD).
+  #' Default value is "" to indicate retrieval for the latest possible record.
   #'
   #' @value A data frame containing instantaneous values and data quality codes for the parameter of interest
   #' @examples 
   #' get_inst_nwis_data(site_info = data.frame(site_no="01484272"),parameter="00300")
+  #' get_inst_nwis_data(site_info = data.frame(site_no="01484272"),parameter="00095",start_date = "2020-10-01",end_date="2021-09-30")
+
   
   message(sprintf('Retrieving instantaneous data for %s', site_info$site_no))
 
   # Download instantaneous data (use default time zone = "UTC" to avoid daylight savings issues)
   site_data <- dataRetrieval::readNWISuv(
-    siteNumbers = site_info$site_no,parameterCd=parameter,startDate = "",endDate = "",tz = "UTC") %>%
+    siteNumbers = site_info$site_no,parameterCd=parameter,startDate = start_date,endDate = end_date,tz = "UTC") %>%
     dataRetrieval::renameNWISColumns(p00300="Value",p00095="Value") 
   
   # Munge column names for some sites with different or unusually-named value columns
@@ -47,6 +53,10 @@ get_inst_nwis_data <- function(site_info,parameter) {
   
   # Return instantaneous data
   site_data_out <- site_data %>%
+           # omit rows with no data
+    filter(!is.na(Value_Inst),
+           # omit rows with undesired data quality codes
+           !(grepl("eqp|mnt",Value_Inst_cd,ignore.case = TRUE))) %>%
     mutate(Parameter=c("00095"="SpecCond","00300"="DO")[parameter]) %>%
     rename("time_zone" = "tz_cd") %>%
     select(agency_cd,site_no,dateTime,Parameter,Value_Inst,Value_Inst_cd,time_zone)
