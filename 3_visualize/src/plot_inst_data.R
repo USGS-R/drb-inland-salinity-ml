@@ -18,8 +18,8 @@ plot_inst_data <- function(out_file, site_data) {
   if(length(flag_cols)>0) stop("Input data is missing one or more required columns: Value_Inst_hourly, Value_Inst_cd, dateTime, site_no")
   
   # Define y-axis label
-  ylabel <- case_when(site_data$Parameter[1] %in% c("SpecCond","00095") ~ expression(Hourly~mean~SC~at~'25'~deg~C~(mu~S/cm)),
-                      site_data$Parameter[1] %in% c("DO","00300") ~ expression(Hourly~mean~DO~","~unfiltered~(mg/L)))
+  ylabel <- case_when(site_data$Parameter[1] %in% c("SpecCond","00095") ~ expression("Hourly mean SC at 25"*degree*"C ("*mu*"S/cm)"),
+                      site_data$Parameter[1] %in% c("DO","00300") ~ expression("Hourly mean DO, unfiltered (mg/L)"))
   
   # Create hourly time series plot
   inst_plot <- ggplot( 

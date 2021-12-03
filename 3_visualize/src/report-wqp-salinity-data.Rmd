@@ -205,38 +205,33 @@ samples_by_month_topsites <- SC_data %>%
 
 <br>  
 
+### 2. NWIS continuous data  
+
+#### Data processing steps  
+NWIS sites with specific conductance data were identified by querying NWIS for sites within the Delaware River Basin with data matching the parameter codes "00095","90095","00094", or "90096". Note that other USGS parameter codes have been used to record specific conductance which were not used for this project (e.g. "90094","99974","99978","99982","00402") but may be relevant for extending this work to other basins beyond the DRB. 
+
+The spatial extent of the DRB for this project encompasses the Upper and Lower Delaware basins including the following HUC08 watersheds (https://water.usgs.gov/GIS/huc_name.html): 02040101, 02040102, 02040103, 02040104, 02040105, 02040106, 02040201, 02040202, 02040203, 02040204, 02040205, 02040206, and 02040207. The two New Jersey Coastal HUC08 watersheds within the Delaware subregion (0204) were excluded (HUC08 = 02040301 and 02040302).  
+
+
+<br>  
+
 ### Specific conductance site locations  
 
 Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r unique_all_lat_lon$n_sites` unique lat/lon locations):  
 
 ```{r,echo=FALSE}
 
-# Handle different coordinate reference systems across sites:
-site_list_split <- split(site_list,f=site_list$datum)
-site_list_sp_ls <- lapply(site_list_split,function(x){
-  
-  # assume unknown crs (datum = "UNKWN") are equal to WGS84:
-  datum_assign <- case_when(x$datum[1] == "NAD83" ~ 4269,
-                            x$datum[1] == "WGS84" ~ 4326,
-                            x$datum[1] == "NAD27" ~ 4267,
-                            x$datum[1] == "UNKWN" ~ 4326)
-  
-  # convert data frame to spatial object:
-  site_list_sp <- sf::st_as_sf(x,coords=c("lon","lat"),crs=datum_assign) %>%
+# Convert site list data frame to spatial object:
+  site_list_sp <- sf::st_as_sf(site_list,coords=c("lon","lat"),crs=site_list$datum[1]) %>%
   sf::st_transform(4326) %>%
   mutate(group = as.factor(case_when(data_src_combined == "NWIS_daily/Harmonized_WQP_data" ~ "daily",
                            data_src_combined == "NWIS_instantaneous/Harmonized_WQP_data" ~ "instantaneous",
                            data_src_combined == "Harmonized_WQP_data" ~ "discrete",
                            data_src_combined == "NWIS_instantaneous" ~ "instantaneous",
                            data_src_combined == "NWIS_daily" ~ "daily")))
-  return(site_list_sp) 
-  
-})
-# Create spatial object:
-site_list_sp <- do.call(rbind,site_list_sp_ls)
 
 # Define color palette for circle markers:
-pal <- colorFactor(palette = c("orange","blue","green"),domain=site_list_sp$group)
+pal <- colorFactor(palette = c("blue","orange","green"),domain=site_list_sp$group)
   
 # Plot sites:
 leaflet() %>%

@@ -18,8 +18,8 @@ plot_daily_data <- function(out_file, site_data) {
   if(length(flag_cols)>0) stop("Input data is missing one or more required columns: Value, Value_cd, Date, site_no")
   
   # Define y-axis label
-  ylabel <- case_when(site_data$Parameter[1] %in% c("SpecCond","00095") ~ expression(Daily~mean~SC~at~'25'~deg~C~(mu~S/cm)),
-                      site_data$Parameter[1] %in% c("DO","00300") ~ expression(Daily~mean~DO~","~unfiltered~(mg/L)))
+  ylabel <- case_when(site_data$Parameter[1] %in% c("SpecCond","00095") ~ expression("Daily mean SC at 25"*degree*"C ("*mu*"S/cm)"),
+                      site_data$Parameter[1] %in% c("DO","00300") ~ expression("Daily mean DO, unfiltered (mg/L)"))
   
   # Create daily time series plot
   daily_plot <- ggplot( 

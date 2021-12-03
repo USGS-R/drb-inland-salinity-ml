@@ -26,7 +26,7 @@ major_ion_names = c("Chloride","Sodium")
 # Define hydrologic event types in harmonized WQP data to exclude
 omit_wqp_events <- c("Spill","Volcanic action")
 
-# Define all USGS specific conductance parameter codes
+# Define USGS specific conductance parameter codes of interest
 pcodes_select <- c("00095","90095","00094","90096") 
 
 # Define USGS specific conductance parameter code to use for continuous data
