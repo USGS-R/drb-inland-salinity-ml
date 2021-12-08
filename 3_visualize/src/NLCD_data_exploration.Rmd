@@ -1,0 +1,170 @@
+---
+title: "exploring_NLCD"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## Read in libraries 
+```{r libs, include=FALSE}
+
+library(sf)
+library(dplyr)
+library(terra)
+library(raster)
+library(rgdal)         
+library(RColorBrewer) 
+library(rasterVis)  
+library(mapview)
+library(rgdal)
+library(ggplot2)
+library(nhdplusTools)
+library(FedData)
+library(stars)
+
+```
+
+
+## Load in datafiles 
+```{r NLCD_datafiles}
+
+## NLCD read-in with terra - unzip NLCD landcover folders should be in same folder as this script
+
+# --> Download at: https://www.mrlc.gov/data/nlcd-2019-land-cover-conus . Click: Download 
+NLCD_2019 <-terra::rast('nlcd_2019_land_cover_l48_20210604/nlcd_2019_land_cover_l48_20210604.img')
+
+# --> Download at: https://www.mrlc.gov/data/nlcd-land-cover-change-index-conus Click: Download
+NLCD_change_index <- terra::rast('nlcd_2001_2019_change_index_l48_20210604/nlcd_2001_2019_change_index_l48_20210604.img')
+
+## Plots
+par(mfrow = c(1,2))
+plot(NLCD_2019, legend =T, main = 'Nation - NLCD 2019', plg = list(cex = 0.4))
+plot(NLCD_change_index, legend = T, main = ' Nation - NLCD Land Cover Change Index',plg = list(cex = 0.4))
+
+```
+
+```{r shp_datafiles, warning = F}
+
+## drb huc8 areas - sample proded by lauren (crosswalk rmd)
+drb_huc8s <- c("02040101","02040102","02040103","02040104","02040105","02040106","02040201",
+               "02040202","02040203","02040204","02040205","02040206","02040207")
+
+## Get HUC8 polygons from nhdplusTools and merge the entire basin
+drb_basin <- nhdplusTools::get_huc8(id = drb_huc8s,buffer = 0.5) %>%
+  st_union() %>% st_make_valid() %>% st_transform(crs=4269)
+
+print(crs(drb_basin))
+
+## Get sample segment
+coords_lst <- c(-71.473104, 43.171591)
+coords_stg <- '-71.473104, 43.171591'
+
+random_point <- st_sfc(st_point(coords_lst),
+                       crs = 4269)
+
+comid <- discover_nhdplus_id(random_point)
+print(comid)
+
+## Grabbing a nwis site - a comid - and navigate_nldi allows user to go up and down this stream
+flowline <- navigate_nldi(list(featureSource = "comid", 
+                               featureID = comid), 
+                          mode = "upstreamMain", 
+                          distance_km = 10)
+
+print(crs(flowline))
+
+## Plots of shps
+par(mfrow = c(1,2))
+plot(drb_basin, main = 'Selected Hydro Boundary in Drb')
+plot(flowline$UM_flowlines$geometry,
+     main = paste0('Main upstream flowline \n', "Comid: ", comid, "\n Coords: ", coords_stg),
+     cex.main = 0.7)
+
+```
+
+
+### NLCD - Land Cover Change Index 
+```{r national_scale_LCCI}
+
+drb_basin <- st_transform(drb_basin, crs = crs(NLCD_change_index))
+
+# After reprojection, convert to patVector
+drb_basin_SV <- vect(drb_basin)
+
+terra::plot(NLCD_change_index,
+            legend = T, plg = list(cex=0.4), main = "NLCD Land Cover Change Index Raster and selected DRB Boundary"
+            )
+terra::plot(drb_basin_SV, add = T)
+
+```
+
+
+```{r basin_scale_LCCI}
+
+crop_NLCD_change_index <- terra::crop(NLCD_change_index,
+                                       ext(drb_basin_SV))
+
+terra::plot(crop_NLCD_change_index, 
+             legend=TRUE, plg = list(cex = 0.4), main = "NLCD Land Cover Change Index in the in the selected DRB boundary")
+plot(drb_basin_SV, add = T, lwd = 2)
+
+
+```
+
+```{r flowline_scale_LCCI}
+
+flowline_drb <- st_transform(flowline$UM_flowlines$geometry, crs = crs(NLCD_change_index))
+
+flowline_drb_SV <- vect(flowline_drb)
+
+flowline_NLCD_change_index <- terra::crop(NLCD_change_index, ext(flowline_drb_SV))
+
+terra::plot(flowline_NLCD_change_index, 
+             legend=TRUE, plg = list(x=1961000, y=2499500, cex = 0.5), main = paste0("NLCD Land Cover Change Index at stream segment scale \n",
+                                                                                    "Comid: ", comid, " Coords: ", coords_stg), cex.main = 0.8)
+plot(flowline_drb_SV, add = T, lwd = 2)
+box(col ="white")
+
+```
+
+### NLCD 2019
+
+```{r national_scale_LC}
+
+drb_basin_SV <- vect(drb_basin)
+
+terra::plot(NLCD_2019,
+            legend = T, plg = list(cex=0.4), main = 'NLCD Land Cover Raster and selected DRB Boundary - 2019'
+            )
+terra::plot(drb_basin_SV, add = T)
+
+```
+
+```{r basin_scale_LC}
+
+crop_NLCD_2019 <- terra::crop(NLCD_2019, ext(drb_basin_SV))
+
+terra::plot(crop_NLCD_2019,legend=TRUE, plg = list(cex = 0.4), main = "NLCD Land Cover Raster in the selected DRB boundary - 2019")
+plot(drb_basin_SV, add = T, lwd = 2)
+
+```
+
+
+
+```{r flowline_scale_LC}
+
+flowline_NLCD_2019 <- terra::crop(NLCD_2019, ext(flowline_drb_SV))
+
+terra::plot(flowline_NLCD_2019, 
+             legend=TRUE, plg = list(x=1961000, y=2499500, cex = 0.5), main = paste0("NLCD Land Cover Raster at stream segment scale \n",
+                                                                                    "Comid: ", comid, " Coords: ", coords_stg), cex.main = 0.8)
+plot(flowline_drb_SV, add = T, lwd = 2)
+box(col ="white")
+
+```
+
+
