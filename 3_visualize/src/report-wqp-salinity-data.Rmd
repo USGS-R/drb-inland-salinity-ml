@@ -73,7 +73,8 @@ SC_data_nwis <- tar_read(p1_daily_data)
 
 
 # Load full site list:
-site_list <- read_csv(tar_read(p2_site_list_csv),show_col_types = FALSE)
+site_list_path <- tar_read(p2_site_list_csv)
+site_list <- read_csv(site_list_path,show_col_types = FALSE)
 unique_all_lat_lon <- site_list %>% distinct(lat,lon) %>% summarize(n_sites=n())
 unique_wqp_lat_lon <- SC_data %>% distinct(LatitudeMeasure,LongitudeMeasure) %>% summarize(n_sites=n())
 
@@ -221,26 +222,8 @@ Combining the harmonized WQP dataset with daily data from NWIS (which includes d
 
 ```{r,echo=FALSE}
 
-# Convert site list data frame to spatial object:
-  site_list_sp <- sf::st_as_sf(site_list,coords=c("lon","lat"),crs=site_list$datum[1]) %>%
-  sf::st_transform(4326) %>%
-  mutate(group = as.factor(case_when(data_src_combined == "NWIS_daily/Harmonized_WQP_data" ~ "daily",
-                           data_src_combined == "NWIS_instantaneous/Harmonized_WQP_data" ~ "instantaneous",
-                           data_src_combined == "Harmonized_WQP_data" ~ "discrete",
-                           data_src_combined == "NWIS_instantaneous" ~ "instantaneous",
-                           data_src_combined == "NWIS_daily" ~ "daily")))
-
-# Define color palette for circle markers:
-pal <- colorFactor(palette = c("blue","orange","green"),domain=site_list_sp$group)
-  
-# Plot sites:
-leaflet() %>%
-  addProviderTiles("CartoDB.DarkMatter", group = "CartoDB") %>%
-  addCircleMarkers(data=site_list_sp,radius = ~sqrt(count_days_total/40),color = ~pal(group),
-    stroke = FALSE, fillOpacity = 0.5,popup=paste("Site:", site_list_sp$site_id,"<br>",
-                                                  "n_observation-days:", site_list_sp$count_days_total)) %>%
-    addLegend("bottomright", colors = c("orange","green","blue"), labels = c("discrete","instantaneous","daily")) 
-
+site_list_map <- map_SC_sites(site_list_path)
+site_list_map
 
 ```
 

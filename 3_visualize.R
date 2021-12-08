@@ -1,5 +1,6 @@
 source("3_visualize/src/plot_daily_data.R")
 source("3_visualize/src/plot_inst_data.R")
+source("3_visualize/src/map_SC_sites.R")
 
 p3_targets_list <- list(
   
@@ -16,6 +17,6 @@ p3_targets_list <- list(
              pattern = map(p2_inst_data_hourly)),
   
   # Render data summary report (note that tar_render returns a target with format="file") 
-  tarchetypes::tar_render(p3_wqp_spC_report, "3_visualize/src/report-wqp-salinity-data.Rmd",output_dir = "3_visualize/out")
+  tarchetypes::tar_render(p3_SC_report, "3_visualize/src/report-wqp-salinity-data.Rmd",output_dir = "3_visualize/out")
 )
 
