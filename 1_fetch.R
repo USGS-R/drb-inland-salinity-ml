@@ -1,26 +1,52 @@
 source("1_fetch/src/get_nwis_sites.R")
+source("1_fetch/src/get_daily_nwis_data.R")
+source("1_fetch/src/get_inst_nwis_data.R")
 
 p1_targets_list <- list(
-  # Load harmonized WQP data product
+  
+  # Load harmonized WQP data product for discrete samples
   tar_target(
     p1_wqp_data,
     readRDS(file = "1_fetch/in/DRB.WQdata.rds")),
+  
+  # Identify NWIS sites with SC data 
   tar_target(
-    p1_nwis_SpC_sites,
+    p1_nwis_sites,
     {
       dummy <- dummy_date
-      get_nwis_sites(drb_huc8s,SpC_pcodes,site_tp_select)
+      get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     }
     ),
+  
+  # Subset daily NWIS sites
   tar_target(
-    p1_nwis_SpC_daily_data,
-    {
-      # Filter SpC sites for sites with daily stat codes of interest
-      daily_sites <- filter(p1_nwis_SpC_sites,data_type_cd=="dv",stat_cd %in% c("00001","00003"))
-      # For each site, download daily SpC means
-      lapply(unique(daily_sites$site_no),function(x)
-        readNWISdv(siteNumbers = x,parameterCd=SpC_pcodes,statCd=c("00001","00003"),startDate = "",endDate = ""))
-    }
-  )
+    p1_nwis_sites_daily,
+    p1_nwis_sites %>%
+      # retain "dv" sites that contain data records after user-specified {earliest_date}
+      filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
+      # for sites with multiple time series (ts_id), retain the most recent time series for site_info
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)),
+  
+  # Download NWIS daily data
+  tar_target(
+    p1_daily_data,
+    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,start_date=earliest_date,end_date=dummy_date),
+    pattern = map(p1_nwis_sites_daily)),
+  
+  # Subset NWIS sites with instantaneous (sub-daily) data
+  tar_target(
+    p1_nwis_sites_inst,
+    p1_nwis_sites %>%
+      # retain "uv" sites that contain data records after user-specified {earliest_date}
+      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
+      # for sites with multiple time series (ts_id), retain the most recent time series for site_info
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)),
+  
+  # Download NWIS instantaneous data
+  tar_target(
+    p1_inst_data,
+    get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
+    pattern = map(p1_nwis_sites_inst))
+  
 )  
 

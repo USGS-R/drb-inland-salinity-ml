@@ -1,20 +1,34 @@
 source("2_process/src/filter_wqp_data.R")
-source("2_process/src/munge_nwis_SpC_data.R")
+source("2_process/src/munge_inst_timeseries.R")
+source("2_process/src/create_site_list.R")
 
 p2_targets_list <- list(
+  
   # Filter harmonized WQP data for salinity data
   tar_target(
     p2_filtered_wqp_data,
-    filter_wqp_salinity_data(p1_wqp_data,major_ion_names,select_wqp_vars,omit_wqp_events)
+    filter_wqp_salinity_data(p1_wqp_data,major_ion_names,wqp_vars_select,omit_wqp_events)
   ),
-  # Subset and save discrete SpC data from harmonized WQP
+  
+  # Subset discrete SC data from harmonized WQP
   tar_target(
-    p2_wqp_spC_csv,
-    subset_wqp_spC_data(p2_filtered_wqp_data,fileout="2_process/out/DRB_WQdata_SpC_data.csv"),
+    p2_wqp_SC_csv,
+    subset_wqp_SC_data(p2_filtered_wqp_data,fileout="2_process/out/DRB_WQdata_SC_data.csv"),
     format="file"),
-  # Clean and save NWIS daily SpC data 
+  
+  # Aggregate instantaneous SC data to hourly averages
   tar_target(
-    p2_nwis_SpC_daily_csv,
-    combine_daily_mean_SpC_data(p1_nwis_SpC_daily_data,fileout="2_process/out/DRB_daily_SpC_data.csv"),
-    format="file")
+    p2_inst_data_hourly,
+    aggregate_data_to_hourly(p1_inst_data,output_tz = "UTC"),
+    pattern = map(p1_inst_data)),
+  
+  # Create a list of unique site id's with SC data  
+  tar_target(
+    p2_site_list_csv,
+    {
+      wqp_data_subset <- read_csv(p2_wqp_SC_csv,col_types = cols(ResultDetectionConditionText = col_character()))
+      create_site_list(wqp_data_subset,p1_nwis_sites,p1_daily_data,p1_inst_data,
+                       hucs=drb_huc8s,crs_out="NAD83",fileout = "2_process/out/DRB_SC_sitelist.csv")
+    },
+    format = "file")
 )
