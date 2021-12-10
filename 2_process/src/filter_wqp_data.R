@@ -1,9 +1,19 @@
-filter_wqp_salinity_data <- function(data,major_ion_names,select_wqp_vars,omit_wqp_events,exclude_tidal=TRUE){
-  
-  # major_ion_names are values to keep from the param column of the harmonized wqp data
-  # select_wqp_vars are columns of data to keep from the harmonized wqp data
-  # omit_wqp_events are values to omit from HydrologicEvent column of the harmonized wqp data
-  # exclude_tidal logical, defaults to TRUE. If TRUE, rows containing "tidal" within the MonitoringLocationTypeName column of the harmonized wqp data are omitted
+filter_wqp_salinity_data <- function(data,major_ion_names,wqp_vars_select,omit_wqp_events,exclude_tidal=TRUE){
+  #' 
+  #' @description Function to filter the DRB multisource surface-water-quality dataset for desired parameters, units, and variables  
+  #'
+  #' @param data a data frame containing the downloaded DRB multisource surface-water-quality dataset
+  #' @param major_ion_names a character vector containing the desired parameter values from the data column "param". 
+  #' See Shoda et al. 2019 (https://doi.org/10.5066/P9PX8LZO) for more information.  
+  #' @param wqp_vars_select a character vector indicating which data columns to retain from the DRB multisource dataset
+  #' @param omit_wqp_events a character vector indicating which values to omit from the "HydrologicEvent" column within the DRB multisource dataset
+  #' @param exclude_tidal logical, defaults to TRUE. If TRUE, rows containing "tidal" within the "MonitoringLocationTypeName" column of the
+  #' DRB multisource dataset will be omitted. 
+  #'
+  #' @value A data frame containing discrete water quality samples from the Delaware River Basin for the parameters of interest
+  #' @examples 
+  #' filter_wqp_data(data = DRB_WQdata,params_select=c("Dissolved oxygen"),wqp_vars_select=c("MonitoringLocationIdentifier","MonitoringLocationName"),
+  #' omit_wqp_events=c("Volcanic action"),fileout="./data/out/filtered_wqp_data.csv")
   
   data_subset <- filter(data,(param_group=="Salinity"|param %in% major_ion_names),
                         # Filter out any sediment samples, samples representing hydrologic events that are not of interest, and samples from LocationType = ditch:
@@ -15,29 +25,36 @@ filter_wqp_salinity_data <- function(data,major_ion_names,select_wqp_vars,omit_w
       filter(.,!grepl("tidal", MonitoringLocationTypeName,ignore.case = TRUE))
       } else {.}
     } %>% 
-    select(all_of(select_wqp_vars))
+    select(all_of(wqp_vars_select))
   
   return(data_subset)
   
 }
 
 
-subset_wqp_spC_data <- function(filtered_data,fileout){
-  
-  # filtered_data is output from filter_wqp_salinity_data function
-  # fileout is the name of the file to be saved, including path and file extension
-  
+subset_wqp_SC_data <- function(filtered_data,fileout){
+  #' 
+  #' @description Function to subset the filtered WQP salinity dataset for specific conductance  
+  #'
+  #' @param filtered_data a data frame containing the filtered DRB multisource surface-water-quality dataset.
+  #' Filtered_data is the output from filter_wqp_salinity_data().
+  #' @param fileout a character string that indicates the name of the file to be saved, including path and file extension 
+  #'
+  #' @value A data frame containing discrete specific conductance samples from the Delaware River Basin 
+  #' @examples 
+  #' subset_wqp_SC_data(filtered_data = filtered_wqp_data,fileout="./data/out/filtered_wqp_SC_data.csv")
+
   # Filter out specific conductance param values "min" and "max"
-  SpC_params <- c("Specific conductance, field",
+  SC_params <- c("Specific conductance, field",
                   "Specific conductance",
                   "Specific conductance, field, mean",
                   "Specific conductance, lab")
 
-  SpC_data_subset <- filtered_data %>%
+  SC_data_subset <- filtered_data %>%
     # Omit samples originally entered as "conductivity" since we can't be sure these reflect temperature-corrected conductance
-    filter(param %in% SpC_params,CharacteristicName!="Conductivity") 
+    filter(param %in% SC_params,CharacteristicName!="Conductivity") 
 
-  write_csv(SpC_data_subset, file = fileout)
+  write_csv(SC_data_subset, file = fileout)
   
   return(fileout)
   
