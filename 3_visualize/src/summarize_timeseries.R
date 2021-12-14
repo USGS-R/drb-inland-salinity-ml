@@ -38,8 +38,8 @@ target_summary_stats <- function(df,ValueVar,fileout){
     group_by(site_no) %>%
     summarize(site_no = site_no[1],
               n_obs = length(!is.na(.data[[ValueVar]])),
-              mean = mean(.data[[ValueVar]],na.rm=TRUE),
-              sd = sd(.data[[ValueVar]],na.rm=TRUE))
+              mean = round(mean(.data[[ValueVar]],na.rm=TRUE),6),
+              sd = round(sd(.data[[ValueVar]],na.rm=TRUE),6))
   
   # Save summary table
   readr::write_csv(data_summary,fileout)
