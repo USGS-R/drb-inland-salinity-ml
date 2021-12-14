@@ -75,9 +75,8 @@ SC_data_nwis <- tar_read(p1_daily_data)
 # Load full site list:
 site_list_path <- tar_read(p2_site_list_csv)
 site_list <- read_csv(site_list_path,show_col_types = FALSE)
-unique_all_lat_lon <- site_list %>% distinct(lat,lon) %>% summarize(n_sites=n())
-unique_wqp_lat_lon <- SC_data %>% distinct(LatitudeMeasure,LongitudeMeasure) %>% summarize(n_sites=n())
-
+site_tally <- read_csv(tar_read(p3_sitelist_summary_csv),show_col_types = FALSE)
+unique_wqp_lat_lon <- SC_data %>% distinct(LatitudeMeasure,LongitudeMeasure) %>% summarize(n_sites=n()) 
 
 ```
   
@@ -218,7 +217,7 @@ The spatial extent of the DRB for this project encompasses the Upper and Lower D
 
 ### Specific conductance site locations  
 
-Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r unique_all_lat_lon$n_sites` unique lat/lon locations):  
+Combining the harmonized WQP dataset with daily data from NWIS (which includes data from NGWOS high-frequency stations), here is a map of site locations with specific conductance data (n = `r site_tally$n_unique_latlon` unique lat/lon locations):  
 
 ```{r,echo=FALSE}
 

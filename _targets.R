@@ -9,6 +9,7 @@ source("3_visualize.R")
 
 dir.create("2_process/out/", showWarnings = FALSE)
 dir.create("3_visualize/out/", showWarnings = FALSE)
+dir.create("3_visualize/log/", showWarnings = FALSE)
 dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
 
@@ -51,7 +52,7 @@ stat_cd_select <- c("00001","00003")
 earliest_date <- "1979-10-01"
 
 # Change dummy date to force re-build of NWIS SC sites and data download
-dummy_date <- "2021-12-08"
+dummy_date <- "2021-12-13"
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
