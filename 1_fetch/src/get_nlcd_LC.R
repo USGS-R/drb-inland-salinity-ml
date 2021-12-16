@@ -1,7 +1,7 @@
 download_NHD_NLCD_data <- function(sb_id,
                                  out_path = '1_fetch/src',
                                  downloaded_data_folder_name = 'NA',
-                                 create_LandCover_folder = T){
+                                 create_LandCover_folder = T, overwrite_download = T){
   
   #' @description download Land Cover data to the repo's fetch/src folder.
   #' 
@@ -9,6 +9,7 @@ download_NHD_NLCD_data <- function(sb_id,
   #' @param out_path: output path for the downloaded data package from ScienceBase  
   #' @param downloaded_data_folder_name: folder name for the new folder for the data in outpath char or list of char. Must be same lenght as sb_id
   #' @param create_LandCover_folder: Create a catch all Land Cover Data Folder in 1_fetch/src/ where all downloaded Land Cover Data will reside
+  #' @param overwrite_download 
   #' @value 
   #' @example  download_NHD_NLCD_data(sb_id = '57855ddee4b0e02680bf37bf', out_path = '1_fetch/src', downloaded_data_folder_name = 'LandCover_ripbuffer_id_11')
   #' @example  download_NHD_NLCD_data(sb_id = c('57855ddee4b0e02680bf37bf','570577fee4b0d4e2b7571d7b'), out_path = '1_fetch/src', downloaded_data_folder_name = c('LandCover_ripbuffer_id_11', 'pct_imperviousness_ripzone_id_11'))
@@ -28,7 +29,7 @@ download_NHD_NLCD_data <- function(sb_id,
     stop('Downloaded_data_name must be same list length as sb_id')
   }
   
-  ## Create labeled list for for loop
+  ## Create labeled list for loop
   sb_id_labeled <- structure(sb_id, names = downloaded_data_folder_name)
   
   ## Loop through sb_ids and download from ScienceBase
@@ -36,31 +37,18 @@ download_NHD_NLCD_data <- function(sb_id,
 
   for(i in 1:length(sb_id_labeled)){
     
-    ## create folder for specific sb_id
-    
+    # Create folder for specific sb_id
     file_path <- file.path(out_path, names(sb_id_labeled[i]))
-    print(file_path)
-    
     dir.create(file_path, showWarnings = F)
     
-    ## Download data but catching error in case of overwrite error in item_file_download
-    tryCatch(
-      expr = {
-        sbtools::item_file_download(sb_id = sb_id_labeled[[i]], dest_dir = file_path, overwrite_file = F)
-        },
-      error = function(e){
-        message('Caught the following error:')
-        print(e)
-        },
-      finally = {
-        message(paste(names(sb_id_labeled[i]), 'data downloaded in:', file_path))
-        }
-      )
+    # Download to specified folder
+    sbtools::item_file_download(sb_id = sb_id_labeled[[i]], dest_dir = file_path, overwrite_file = overwrite_download)
+    
+    message(paste(names(sb_id_labeled[i]), 'data downloaded in:', file_path))
+    # append to list 
     downloaded_data_folder <- append(downloaded_data_folder, file_path)
     }
-  
   return(downloaded_data_folder)
-  #return(paste('All downloaded data can be found in:', out_path))
 }
 
 
@@ -90,10 +78,11 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_name,
     } else{out_path <- data_path}
     
     ## Unzip files
-    for(j in list.files(data_path, pattern = ".zip$")){
-        zip_file <- file.path(data_path, j)
-        unzip(zip_file, exdir = out_path)
-    }  
+    list_zipfiles <- list.files(data_path, pattern = ".zip$")
+    lapply(list_zipfiles, function(x)
+      unzip(file.path(data_path, x), exdir = out_path)
+    )
+
   }
 
   return(out_path)
