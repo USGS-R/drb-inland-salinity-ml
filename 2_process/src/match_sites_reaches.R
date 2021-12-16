@@ -2,12 +2,13 @@
 #' from https://code.usgs.gov/wwatkins/national-site-reach/-/blob/master/R/match_sites_reaches.R
 #' modified by: Jeff Sadler
 #' Match each site with a reach (seg_id/COMID)
-get_site_flowlines <- function(reach_sf, sites, max_matches = 1, search_radius = 0.1) {
+get_site_flowlines <- function(reach_sf, sites, sites_crs, max_matches = 1, search_radius = 0.1) {
   #' 
   #' @description Function to match reaches (flowlines) to point sites 
   #'
   #' @param reach_sf sf object of reach polylines with column "subsegid" and in WGS84
   #' @param sites dataframe with columns "lat" "lon"
+  #' @param sites_crs the crs os the sites table (i.e., 4269 for NAD83)
   #' @param max_matches the maximum number of segments that a point can match to
   #' @param search_radius the maximum radius in same units as sf object
   #' within which a segment will match (segments outside of the radius will not match)
@@ -31,7 +32,7 @@ get_site_flowlines <- function(reach_sf, sites, max_matches = 1, search_radius =
   sites_sf <- sites %>% rowwise() %>%
     filter(across(c(lon, lat), ~ !is.na(.x))) %>%
     mutate(Shape = list(st_point(c(lon, lat), dim = "XY"))) %>%
-    st_as_sf() %>% st_set_crs(4326) %>%
+    st_as_sf() %>% st_set_crs(sites_crs) %>%
     st_transform(st_crs(reaches_nhd_fields)) %>%
     st_geometry()
   message('matching flowlines with reaches...')
