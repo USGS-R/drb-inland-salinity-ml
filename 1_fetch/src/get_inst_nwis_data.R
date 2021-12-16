@@ -17,7 +17,7 @@ get_inst_nwis_data <- function(site_info,parameter,start_date = "",end_date = ""
   
   message(sprintf('Retrieving instantaneous data for %s', site_info$site_no))
 
-  # Download instantaneous data (use default time zone = "UTC" to avoid daylight savings issues)
+  # Download instantaneous data (use default time zone = "UTC" to avoid issues with daylight savings time)
   site_data <- dataRetrieval::readNWISuv(
     siteNumbers = site_info$site_no,parameterCd=parameter,startDate = start_date,endDate = end_date,tz = "UTC") %>%
     dataRetrieval::renameNWISColumns(p00300="Value",p00095="Value") 
@@ -27,6 +27,8 @@ get_inst_nwis_data <- function(site_info,parameter,start_date = "",end_date = ""
     if(parameter == '00300') {
       site_data <- switch(
         site_info$site_no[1],
+        # 01467200: Potential relocation of sensors; multiple time series include ~6-month co-deployment that shows comparability of 
+        # time series ('Value_Inst' and 'ISM.Test.Bed.'). Select 'ISM.Test.Bed' when data are available, otherwise select 'Value_Inst' data:
         "01467200" = site_data %>%
           mutate(Value_Inst_merged = coalesce(`ISM.Test.Bed...ISM.Test.Bed..barge.._Value_Inst`,`Value_Inst`),
                  Value_Inst_cd_merged = coalesce(`ISM.Test.Bed...ISM.Test.Bed..barge.._Value_Inst_cd`,`Value_Inst_cd`)) %>%
@@ -36,17 +38,26 @@ get_inst_nwis_data <- function(site_info,parameter,start_date = "",end_date = ""
     if(parameter == "00095") {
       site_data <- switch(
         site_info$site_no[1],
+        # 01434498: Returned data contains time series from 'Side.Channel' and multiple piezometers. Select data that are representative of the main river channel:
         "01434498" = site_data %>%
           select(agency_cd,site_no,dateTime,Value_Inst,Value_Inst_cd,tz_cd),
+        # 01435000: Returned data contains time series from 'Intake' and multiple piezometers. Select data that are representative of the main river channel:
         "01435000" = site_data %>%
           mutate(Value_Inst_merged = Channel.WQ_Value_Inst,
                  Value_Inst_cd_merged = Channel.WQ_Value_Inst_cd) %>%
           select(agency_cd,site_no,dateTime,Value_Inst_merged,Value_Inst_cd_merged,tz_cd) %>%
           rename("Value_Inst"="Value_Inst_merged","Value_Inst_cd"="Value_Inst_cd_merged"),
+        # 01467200: Potential sensor relocation; multiple time series include co-deployment period that shows comparability of time series ('Value_Inst', 'ISM.Test.Bed.'). 
+        # Select 'ISM.Test.Bed' when data are available, otherwise select 'Value_Inst' data:
         "01467200" = site_data %>%
           mutate(Value_Inst_merged = coalesce(`ISM.Test.Bed...ISM.Test.Bed..barge.._Value_Inst`,`Value_Inst`),
                  Value_Inst_cd_merged = coalesce(`ISM.Test.Bed...ISM.Test.Bed..barge.._Value_Inst_cd`,`Value_Inst_cd`)) %>%
           select(agency_cd,site_no,dateTime,Value_Inst_merged,Value_Inst_cd_merged,tz_cd) %>%
+          rename("Value_Inst"="Value_Inst_merged","Value_Inst_cd"="Value_Inst_cd_merged"),
+        # 01482537: No site remarks given to indicate preferred time series, therefore, select longer ts (ts_id = 290960, "at.0.5.ft.depth_Value_Inst"):
+        "01482537" = site_data %>%
+          mutate(Value_Inst_merged = at.0.5.ft.depth_Value_Inst,
+                 Value_Inst_cd_merged = at.0.5.ft.depth_Value_Inst_cd) %>%
           rename("Value_Inst"="Value_Inst_merged","Value_Inst_cd"="Value_Inst_cd_merged"))
     }
   }
