@@ -12,23 +12,23 @@ download_NHD_NLCD_data <- function(sb_id,
   #' @param create_LandCover_folder: Create a catch all Land Cover Data Folder in 1_fetch/src/ where all downloaded Land Cover Data will reside
   #' @value 
   #' @example  download_NHD_NLCD_data(sb_id = '57855ddee4b0e02680bf37bf', out_path = '1_fetch/src', downloaded_data_folder_name = 'LandCover_ripbuffer_id_11')
-  #' @example  download_NHD_NLCD_data(sb_id = c('57855ddee4b0e02680bf37bf','570577fee4b0d4e2b7571d7b'), out_path = '1_fetch/src', downloaded_data_folder_name = c('LandCover_ripbuffer_id_11', 'pct_imperviousness_ripzone_id_11')
+  #' @example  download_NHD_NLCD_data(sb_id = c('57855ddee4b0e02680bf37bf','570577fee4b0d4e2b7571d7b'), out_path = '1_fetch/src', downloaded_data_folder_name = c('LandCover_ripbuffer_id_11', 'pct_imperviousness_ripzone_id_11'))
   
   ## Create Land Cover Data sub folder in base directory if true
   if(create_LandCover_folder == T){
-    out_path <- file.path(out_path, "LandCover")
-    if(!dir.exists(out_path)){dir.create(out_path)}
+    out_path <- file.path(out_path, "LandCover_Data")
+    dir.create(out_path, showWarnings = F)
   }
   
   ## Create data folder for downloaded data if non given
-  if (downloaded_data_folder_name == 'NA'){
+  if(downloaded_data_folder_name == 'NA'){
     downloaded_data_folder_name <- sb_id
   } 
   ## Check lengths of sb_id and downloaded_data_folder_name
   else if(length(downloaded_data_folder_name) != length(sb_id)){
-    stop('Downloaded_data_name must be same length as sb_id')
+    stop('Downloaded_data_name must be same list length as sb_id')
   }
-  ß
+  
   ## Create labeled list for for loop
   sb_id_labeled <- structure(sb_id, names = downloaded_data_folder_name)
   
@@ -38,13 +38,7 @@ download_NHD_NLCD_data <- function(sb_id,
     
     file_path <- file.path(out_path, names(sb_id_labeled[i]))
     print(file_path)
-    if(!dir.exists(file_path)){
-      dir.create(file_path)
-      }
-      else{
-      ## Consider removing
-        print("Folder for downloaded data package already exists")
-      }
+    dir.create(file_path, showWarnings = F)
     
     ## Download data but catching error in case of overwrite error in item_file_download
     tryCatch(
@@ -63,9 +57,9 @@ download_NHD_NLCD_data <- function(sb_id,
   
   return(paste('All downloaded data can be found in:', out_path))
 }
- 
 
-###------------------------------------------------
+
+###-----------------------------------------------------------------------------
 
 unzip_NHD_NLCD_data <- function(downloaded_data_folder_name, 
                                 downloaded_data_path = '1_fetch/src/LandCover',
@@ -89,17 +83,13 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_name,
     ## create Unzip folder if True
     if(create_unzip_subfolder == T){
       out_path <- file.path(data_path,"unzipped")
-      if (dir.exists(out_path) == F) {
-          dir.create(out_path)
-          print(dir.exists(out_path))
-      }
+      dir.create(out_path, showWarnings = F)
     } else{out_path <- data_path}
     
     ## Unzip files
     for(j in list.files(data_path , pattern = ".zip$")){
         zip_file <- file.path(data_path, j)
         unzip(zip_file, exdir = out_path)
-      
     }  
   }
 }
