@@ -2,12 +2,15 @@
 #' from https://code.usgs.gov/wwatkins/national-site-reach/-/blob/master/R/match_sites_reaches.R
 #' modified by: Jeff Sadler
 #' Match each site with a reach (seg_id/COMID)
-get_site_flowlines <- function(reach_sf, sites) {
+get_site_flowlines <- function(reach_sf, sites, max_matches = 1, search_radius = 0.1) {
   #' 
   #' @description Function to match reaches (flowlines) to point sites 
   #'
   #' @param reach_sf sf object of reach polylines with column "segidnat" and in WGS84
   #' @param sites dataframe with columns "lat" "lon"
+  #' @param max_matches the maximum number of segments that a point can match to
+  #' @param search_radius the maximum radius in same units as sf object
+  #' within which a segment will match (segments outside of the radius will not match)
   #'
   #' @value A data frame the same columns as the sites input dataframe with additional columns
   #' of "segidnat" and "offset" where "offset" is the distance (in degrees) between the point
@@ -27,8 +30,8 @@ get_site_flowlines <- function(reach_sf, sites) {
   message('matching flowlines with reaches...')
   flowline_indices <- nhdplusTools::get_flowline_index(flines = reaches_nhd_fields,
                                                        points = sites_sf,
-                                                       max_matches = 1,
-                                                       search_radius = .1) %>%
+                                                       max_matches = max_matches,
+                                                       search_radius = search_radius) %>%
     select(COMID, id, offset) %>%
     rename(segidnat = COMID)
   
