@@ -1,6 +1,7 @@
 source("1_fetch/src/get_nwis_sites.R")
 source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
+source('1_fetch/src/get_nlcd_LC.R')
 
 p1_targets_list <- list(
   
@@ -57,7 +58,21 @@ p1_targets_list <- list(
   tar_target(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_inst))
+    pattern = map(p1_nwis_sites_inst)),
   
-)  
+  
+  # Download NLCD datasets 
+  tar_target(
+    NLCD_data, 
+    download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
+                           out_path = '1_fetch/src',
+                           downloaded_data_folder_name = NLCD_folders,
+                           create_LandCover_folder = T),
+    format = 'file'),
+  
+  tar_target(NLCD_data_unzipped, 
+             unzip_NHD_NLCD_data(downloaded_data_folder_name = NLCD_data, create_unzip_subfolder = T),
+             format = 'file'
+             )  
+)
 

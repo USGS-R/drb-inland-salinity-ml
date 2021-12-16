@@ -1,8 +1,7 @@
-
 download_NHD_NLCD_data <- function(sb_id,
                                  out_path = '1_fetch/src',
                                  downloaded_data_folder_name = 'NA',
-                                 create_LandCover_folder = F){
+                                 create_LandCover_folder = T){
   
   #' @description download Land Cover data to the repo's fetch/src folder.
   #' 
@@ -33,11 +32,15 @@ download_NHD_NLCD_data <- function(sb_id,
   sb_id_labeled <- structure(sb_id, names = downloaded_data_folder_name)
   
   ## Loop through sb_ids and download from ScienceBase
+  downloaded_data_folder <- c()
+
   for(i in 1:length(sb_id_labeled)){
+    
     ## create folder for specific sb_id
     
     file_path <- file.path(out_path, names(sb_id_labeled[i]))
     print(file_path)
+    
     dir.create(file_path, showWarnings = F)
     
     ## Download data but catching error in case of overwrite error in item_file_download
@@ -53,32 +56,32 @@ download_NHD_NLCD_data <- function(sb_id,
         message(paste(names(sb_id_labeled[i]), 'data downloaded in:', file_path))
         }
       )
+    downloaded_data_folder <- append(downloaded_data_folder, file_path)
     }
   
-  return(paste('All downloaded data can be found in:', out_path))
+  return(downloaded_data_folder)
+  #return(paste('All downloaded data can be found in:', out_path))
 }
 
 
 ###-----------------------------------------------------------------------------
 
 unzip_NHD_NLCD_data <- function(downloaded_data_folder_name, 
-                                downloaded_data_path = '1_fetch/src/LandCover',
                                 create_unzip_subfolder = T){
   
   #' @description Unzip downloaded Land Cover data 
   #' 
-  #' @param downloaded_data_folder_name: sb_id for the ScienceBase Id for land cover dataset of interest
-  #' @param downloaded_data_path: output path for the downloaded data package from ScienceBase  
+  #' @param downloaded_data_folder_name: folder name where nlcd data was downloaded. If no folder name was assigned, folder name is the sb_id of the downloaded data
+  #' @param downloaded_data_path: path to the downloaded data folders. If LandCover_Data folder was created, downloaded_data_path = '1_fetch/src/LandCover_Data'. If no LandCover_Data folder created, ownloaded_data_path = '1_fetch/src/'
   #' @param create_unzip_subfolder: folder name for the new folder for the data in outpath char or list of char
-  #' @value create
-  #' @example unzip_NHD_NLCD_data(downloaded_data_folder_name = ''pct_imperviousness_id_11'', downloaded_data_path = '1_fetch/src', create_unzip_subfolder = T)
+  #' @example unzip_NHD_NLCD_data(downloaded_data_folder_name = pct_imperviousness_id_11', downloaded_data_path = '1_fetch/src', create_unzip_subfolder = T)
   #' @example unzip_NHD_NLCD_data(downloaded_data_folder_name = 'pct_imperviousness_id_11', downloaded_data_path = '1_fetch/src/LandCover', create_unzip_subfolder = T) 
   
   ## Unzip files in subfolders 
   for(i in 1:length(downloaded_data_folder_name)){
     
     # Paths to files to unzip based on sb_folder item
-    data_path <- file.path(downloaded_data_path, downloaded_data_folder_name[i])
+    data_path <- downloaded_data_folder_name[i]
     
     ## create Unzip folder if True
     if(create_unzip_subfolder == T){
@@ -87,12 +90,12 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_name,
     } else{out_path <- data_path}
     
     ## Unzip files
-    for(j in list.files(data_path , pattern = ".zip$")){
+    for(j in list.files(data_path, pattern = ".zip$")){
         zip_file <- file.path(data_path, j)
         unzip(zip_file, exdir = out_path)
     }  
   }
-}
 
-
-
+  return(out_path)
+  
+  }
