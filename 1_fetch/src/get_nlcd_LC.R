@@ -46,7 +46,7 @@ download_NHD_NLCD_data <- function(sb_id,
     ## Download data but catching error in case of overwrite error in item_file_download
     tryCatch(
       expr = {
-        sbtools::item_file_download(sb_id = sb_id_labeled[[i]], dest_dir = file_path)
+        sbtools::item_file_download(sb_id = sb_id_labeled[[i]], dest_dir = file_path, overwrite_file = F)
         },
       error = function(e){
         message('Caught the following error:')
