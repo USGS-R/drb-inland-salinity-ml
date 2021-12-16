@@ -83,7 +83,10 @@ p1_targets_list <- list(
   tar_target(
     p1_reaches_sf,
     # third item is the .shp file (all are 'dbf', 'prj', 'shp', and 'shx')
-    st_read(p1_reaches_shp_unzipped[3])
+    {
+    shp_file_idx <- grep(".shp", p1_reaches_shp_unzipped)
+    st_read(p1_reaches_shp_unzipped[shp_file_idx])
+    }
   )
 )  
 

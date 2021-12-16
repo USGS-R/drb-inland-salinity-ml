@@ -17,7 +17,6 @@ get_site_flowlines <- function(reach_sf, sites) {
     select(COMID = segidnat) %>%
     mutate(REACHCODE = COMID, ToMeas = 100, FromMeas = 100) %>%
     st_as_sf()
-  print(pryr::object_size(reaches_nhd_fields))
   
   sites_sf <- sites %>% rowwise() %>%
     filter(across(c(lon, lat), ~ !is.na(.x))) %>%
