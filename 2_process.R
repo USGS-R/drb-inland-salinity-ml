@@ -37,6 +37,6 @@ p2_targets_list <- list(
      p2_sites_w_segs,
      {
        sites_tbl <- read_csv(p2_site_list_csv)
-       get_site_flowlines(p1_reaches_sf, sites_tbl)
+       get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
      })
 )
