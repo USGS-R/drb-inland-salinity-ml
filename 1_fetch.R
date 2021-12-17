@@ -63,16 +63,16 @@ p1_targets_list <- list(
   
   # Download NLCD datasets 
   tar_target(
-    NLCD_data, 
+    p1_NLCD_data_zipped, 
     download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
-                           out_path = '1_fetch/src',
+                           out_path = '1_fetch/out',
                            downloaded_data_folder_name = NLCD_folders,
                            create_LandCover_folder = T),
     format = 'file'),
   
-  tar_target(NLCD_data_unzipped, 
-             unzip_NHD_NLCD_data(downloaded_data_folder_name = NLCD_data, create_unzip_subfolder = T),
+  tar_target(p1_NLCD_data_unzipped, 
+             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped, create_unzip_subfolder = T),
              format = 'file'
-             )  
+             )
 )
 

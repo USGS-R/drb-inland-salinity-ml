@@ -1,7 +1,7 @@
 library(targets)
 
 options(tidyverse.quiet = TRUE)
-tar_option_set(packages = c("tidyverse", "lubridate","rmarkdown","dataRetrieval","knitr","leaflet","sf")) 
+tar_option_set(packages = c("tidyverse", "lubridate","rmarkdown","dataRetrieval","knitr","leaflet","sf", 'purrr')) 
 
 source("1_fetch.R")
 source("2_process.R")
@@ -53,7 +53,6 @@ earliest_date <- "1979-10-01"
 
 # Change dummy date to force re-build of NWIS SC sites and data download
 dummy_date <- "2021-12-13"
-
 
 # Define land cover datasets to extract 
 sb_ids_NLCD <- c(
