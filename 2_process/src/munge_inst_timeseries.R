@@ -89,7 +89,8 @@ aggregate_data_to_daily <- function(inst_data, daily_data, min_daily_coverage, o
               Value_Min = min(Value_Inst, na.rm=TRUE), 
               Value_Max = max(Value_Inst,na.rm=TRUE), 
               na_count=sum(is.na(Value_Inst)), 
-              value_count=sum(!is.na(Value_Inst))) %>%
+              value_count=sum(!is.na(Value_Inst)),
+              .groups="keep") %>%
     mutate(percent_coverage=value_count/(value_count + na_count)) %>%
     filter(percent_coverage > min_daily_coverage) %>%
     select(-c(na_count, value_count, percent_coverage))
