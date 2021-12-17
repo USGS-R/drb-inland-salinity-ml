@@ -70,6 +70,7 @@ aggregate_data_to_daily <- function(inst_data, daily_data){
   only_inst_data = setdiff(inst_data$site_no, daily_data$site_no)
   
   daily_values <- p1_inst_data %>%
+    filter(site_no %in% only_inst_data) %>%
     mutate(Date = as.Date(dateTime, format="%Y-%m-%d")) %>%
     group_by(Date, site_no) %>%
     summarise(Value = mean(Value_Inst), 
