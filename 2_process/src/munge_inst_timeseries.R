@@ -75,9 +75,9 @@ aggregate_data_to_daily <- function(inst_data, daily_data, output_tz){
   
   daily_values <- inst_data %>%
     filter(site_no %in% only_inst_data) %>%
-    mutate(dateTime = with_tz(dateTime,tzone=output_tz)) %>%
-    mutate(Date = date(dateTime)) %>%
-    group_by(Date, site_no) %>%
+    mutate(dateTime_local = lubridate::with_tz(dateTime,tzone=output_tz),
+           Date = lubridate::date(dateTime_local)) %>%
+    group_by(Date, site_no, .groups = "keep") %>%
     summarise(Value = mean(Value_Inst, na.rm=TRUE), 
               Value_Min = min(Value_Inst, na.rm=TRUE), 
               Value_Max = max(Value_Inst,na.rm=TRUE), 
