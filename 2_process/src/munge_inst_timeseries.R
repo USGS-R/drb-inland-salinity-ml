@@ -78,9 +78,9 @@ aggregate_data_to_daily <- function(inst_data, daily_data, output_tz){
     mutate(dateTime = with_tz(dateTime,tzone=output_tz)) %>%
     mutate(Date = date(dateTime)) %>%
     group_by(Date, site_no) %>%
-    summarise(Value = mean(Value_Inst), 
-              Value_Min = min(Value_Inst), 
-              Value_Max = max(Value_Inst), 
+    summarise(Value = mean(Value_Inst, na.rm=TRUE), 
+              Value_Min = min(Value_Inst, na.rm=TRUE), 
+              Value_Max = max(Value_Inst,na.rm=TRUE), 
               na_count=sum(is.na(Value_Inst)), 
               value_count=sum(!is.na(Value_Inst))) %>%
     mutate(percent_coverage=value_count/(value_count + na_count)) %>%
