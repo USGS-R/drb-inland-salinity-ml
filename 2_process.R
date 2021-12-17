@@ -38,12 +38,12 @@ p2_targets_list <- list(
      {
        sites_tbl <- read_csv(p2_site_list_csv)
        get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
-     })
+     }),
   
   # Aggregate instantaneous DO data to daily min/mean/max
   tar_target(
     p2_inst_data_daily,
-    aggregate_data_to_daily(p1_inst_data,p1_daily_data)),
+    aggregate_data_to_daily(p1_inst_data,p1_daily_data,"America/New_York")),
   
   # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
   tar_target(

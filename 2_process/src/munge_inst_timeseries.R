@@ -55,7 +55,7 @@ aggregate_data_to_hourly <- function(inst_data,output_tz){
 
 }
 
-aggregate_data_to_daily <- function(inst_data, daily_data){
+aggregate_data_to_daily <- function(inst_data, daily_data, output_tz){
   #' 
   #' @description Function to aggregate instantaneous NWIS data collected at sub-hourly (e.g. 15/5/30 min) intervals to hourly min/mean/maxs
   #'
@@ -63,15 +63,20 @@ aggregate_data_to_daily <- function(inst_data, daily_data){
   #' inst_data must include the following columns: c("Value_Inst","dateTime","site_no")
   #' @param daily_data a data frame the downloaded daily time series of DO data. This is used so that if a site is already in 
   #'  the daily sites, we won't do the aggregating here
+  #' @param output_tz character string to set display attribute of dateTime. Possible values to provide are "UTC",
+  #' "America/New_York","America/Chicago", "America/Denver","America/Los_Angeles", "America/Anchorage", 
+  #' as well as the following which do not use daylight savings time: "America/Honolulu", "America/Jamaica",
+  #' "America/Managua","America/Phoenix", and "America/Metlakatla"
   #'
   #' @value A data frame containing daily min, mean, and max values the parameter of interest
   
   
   only_inst_data = setdiff(inst_data$site_no, daily_data$site_no)
   
-  daily_values <- p1_inst_data %>%
+  daily_values <- inst_data %>%
     filter(site_no %in% only_inst_data) %>%
-    mutate(Date = as.Date(dateTime, format="%Y-%m-%d")) %>%
+    mutate(dateTime = with_tz(dateTime,tzone=output_tz)) %>%
+    mutate(Date = date(dateTime)) %>%
     group_by(Date, site_no) %>%
     summarise(Value = mean(Value_Inst), 
               Value_Min = min(Value_Inst), 
