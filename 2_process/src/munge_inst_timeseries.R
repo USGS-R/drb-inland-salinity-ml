@@ -69,12 +69,16 @@ aggregate_data_to_daily <- function(inst_data, daily_data){
   
   only_inst_data = setdiff(inst_data$site_no, daily_data$site_no)
   
-  daily_values <- inst_data %>%
-    filter(site_no %in% only_inst_data) %>%
+  daily_values <- p1_inst_data %>%
     mutate(Date = as.Date(dateTime, format="%Y-%m-%d")) %>%
     group_by(Date, site_no) %>%
-    summarise(Value = mean(Value_Inst), Value_Min = min(Value_Inst), Value_Max = max(Value_Inst)) %>%
-    na.omit()
+    summarise(Value = mean(Value_Inst), 
+              Value_Min = min(Value_Inst), 
+              Value_Max = max(Value_Inst), 
+              na_count=sum(is.na(Value_Inst)), 
+              value_count=sum(!is.na(Value_Inst))) %>%
+    mutate(percent_coverage=value_count/(value_count + na_count)) %>%
+    filter(percent_coverage > 0.5)
   
   return(daily_values)
 }
