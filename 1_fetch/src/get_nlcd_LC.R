@@ -7,17 +7,14 @@ download_NHD_NLCD_data <- function(sb_id,
   
   #' @description download Land Cover data to the repo's fetch/src folder.
   #' 
-  #' @param sb_id: The ScienceBase Id for the nhd NLCD land cover Dataset of interest. Str or vector of str
-  #' @param out_path: Default is `1_fetch/out`. Output folder for the downloaded data packages from ScienceBase. If does not exist in directory, will be created. 
-  #' @param downloaded_data_folder_name: Default is NA. Folder name(s) for the data in out_path. Str or vector of str. Must be same length as sb_id. When NA, folder names will be labelled by sb_id. 
-  #' @param create_LandCover_folder: Default is True. Create a catch all Land Cover Data Folder in 1_fetch/src/ where all downloaded Land Cover Data will reside
-  #' @param overwrite_download If true, data will overwrite previous download in same out_path. 
+  #' @param sb_id: The ScienceBase Id for the NHD-NLCD land cover dataset of interest. Str or vector of str.
+  #' @param out_path: Output folder for the downloaded data packages from ScienceBase. Default `1_fetch/out`. If path does not exist in directory, path will be created. 
+  #' @param downloaded_data_folder_name: Sub-folder name(s) for the data in out_path. Str or vector of str. Default NA, where folder names will be labelled by sb_id. If not = NA, Must be same length as sb_id. 
+  #' @param create_LandCover_folder: Create a catch all Land Cover Data Folder in 1_fetch/out where all downloaded Land Cover Data will reside. Default TRUE.
+  #' @param overwrite_download If true, data will overwrite previous download in same out_path. Default TRUE.
   #' @value 
   #' @example  download_NHD_NLCD_data(sb_id = '57855ddee4b0e02680bf37bf', out_path = '1_fetch/out', downloaded_data_folder_name = 'LandCover_ripbuffer_id_11')
   #' @example  download_NHD_NLCD_data(sb_id = c('57855ddee4b0e02680bf37bf','570577fee4b0d4e2b7571d7b'), out_path = '1_fetch/out', downloaded_data_folder_name = c('LandCover_ripbuffer_id_11', 'pct_imperviousness_ripzone_id_11'))
-  
-  ## Creating '1_fetch/out' folder in working dir. 
-  dir.create(out_path, showWarnings = F)
   
   ## Create Land Cover Data sub folder in base directory if true
   if(create_LandCover_folder == T){
