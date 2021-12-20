@@ -84,7 +84,7 @@ aggregate_data_to_daily <- function(inst_data, daily_data, min_daily_coverage, o
     filter(site_no %in% only_inst_data) %>%
     mutate(dateTime_local = lubridate::with_tz(dateTime,tzone=output_tz),
            Date = lubridate::date(dateTime_local)) %>%
-    group_by(Date, site_no, agency_cd, Parameter) %>%
+    group_by(site_no, Date, agency_cd, Parameter) %>%
     summarise(Value = mean(Value_Inst, na.rm=TRUE), 
               Value_Min = min(Value_Inst, na.rm=TRUE), 
               Value_Max = max(Value_Inst,na.rm=TRUE), 
