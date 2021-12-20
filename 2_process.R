@@ -40,7 +40,7 @@ p2_targets_list <- list(
        get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
      }),
   
-  # Aggregate instantaneous DO data to daily min/mean/max
+  # Aggregate instantaneous SC data to daily min/mean/max
   tar_target(
     p2_inst_data_daily,
     aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")),
