@@ -95,3 +95,23 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
   }
   return(out_path)
 }
+
+###----------------------------------
+
+read_subset_LC_data <- function(LC_data, LC_data_path, PRMSxWalk){
+  
+  ## Read
+  files <- list.files(path = LC_data_path, pattern = '*.txt', full.names = T)
+  LC_data_list<-lapply(files, read_csv)
+
+  ## Combine
+  cbind_df <-LC_data_list %>% 
+    reduce(inner_join, by = 'COMID') ## possibly add as full_join
+  
+  ## subset by comid_id's from xwalk
+  data_subsetted <-cbind_df %>%
+    right_join(PRMSxWalk,
+               by = c('COMID' = 'comid_down'),
+               keep = T)
+
+  }
