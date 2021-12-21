@@ -22,11 +22,14 @@ download_NHD_NLCD_data <- function(sb_id,
     dir.create(out_path, showWarnings = F)
   }
   
+  ## Sb_id split
+  sb_id <- strsplit(sb_id, "/") %>% sapply(function(x) x[length(x)])
+  
   ## Check lengths of sb_id and downloaded_data_folder_name
   ## first, avoiding error when downloaded_data_folder_name = NA (checking len)
   if(!(is.na(downloaded_data_folder_name) && length(downloaded_data_folder_name) == 1)){
     if(length(downloaded_data_folder_name) != length(sb_id)){
-      stop('Downloaded_data_name must be same list length as sb_id')
+      stop('Downloaded_data_name must be same length as sb_id')
     }
   }
   

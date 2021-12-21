@@ -58,15 +58,16 @@ dummy_date <- "2021-12-13"
 # Define land cover datasets to extract 
 sb_ids_NLCD <- c(
   # ImperviousnessPct_2011: 
-    '57057a9be4b0d4e2b7571fbb',
+    'https://www.sciencebase.gov/catalog/item/57057a9be4b0d4e2b7571fbb',
   # Imperviousness100mBufferRipZone:
-    '570577fee4b0d4e2b7571d7b',
+    'https://www.sciencebase.gov/catalog/item/570577fee4b0d4e2b7571d7b',
   # TreeCanopy_100mBuffered_RipZone: 
-    '570572e2e4b0d4e2b75718bc',
+    'https://www.sciencebase.gov/catalog/item/570572e2e4b0d4e2b75718bc',
   # NLCD_LandCover_2011: 
-    '5761bad4e4b04f417c2d30c5', 
+    'https://www.sciencebase.gov/catalog/item/5761bad4e4b04f417c2d30c5',
   # Estimated percent of catchment in 50 meter riparian zone that contains the land-use and land-cover
-    '57855ddee4b0e02680bf37bf')
+    'https://www.sciencebase.gov/catalog/item/57855ddee4b0e02680bf37bf'
+  )
 
 # Define Land Cover dataset download folders:
 
