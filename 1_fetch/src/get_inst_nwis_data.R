@@ -64,10 +64,8 @@ get_inst_nwis_data <- function(site_info,parameter,start_date = "",end_date = ""
   
   # Return instantaneous data
   site_data_out <- site_data %>%
-           # omit rows with no data
-    filter(!is.na(Value_Inst),
-           # omit rows with undesired data quality codes
-           !(grepl("eqp|mnt",Value_Inst_cd,ignore.case = TRUE))) %>%
+    # omit rows with undesired data quality codes
+    filter(!(grepl("eqp|mnt",Value_Inst_cd,ignore.case = TRUE))) %>%
     mutate(Parameter=c("00095"="SpecCond","00300"="DO")[parameter]) %>%
     rename("time_zone" = "tz_cd") %>%
     select(agency_cd,site_no,dateTime,Parameter,Value_Inst,Value_Inst_cd,time_zone)

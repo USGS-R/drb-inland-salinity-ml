@@ -1,6 +1,7 @@
 source("2_process/src/filter_wqp_data.R")
 source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
+source("2_process/src/match_sites_reaches.R")
 
 p2_targets_list <- list(
   
@@ -30,5 +31,22 @@ p2_targets_list <- list(
       create_site_list(wqp_data_subset,p1_nwis_sites,p1_daily_data,p1_inst_data,
                        hucs=drb_huc8s,crs_out="NAD83",fileout = "2_process/out/DRB_SC_sitelist.csv")
     },
-    format = "file")
+    format = "file"),
+
+  tar_target(
+     p2_sites_w_segs,
+     {
+       sites_tbl <- read_csv(p2_site_list_csv)
+       get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
+     }),
+  
+  # Aggregate instantaneous SC data to daily min/mean/max
+  tar_target(
+    p2_inst_data_daily,
+    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")),
+  
+  # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
+  tar_target(
+    p2_daily_combined,
+    bind_rows(p1_daily_data, p2_inst_data_daily))
 )
