@@ -105,6 +105,11 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
 
 read_subset_LC_data <- function(LC_data_folder = '1_fetch/src/LandCover_data/', PRMSxWalk){
   
+  #' @description Read in  
+  #' @param LC_data_folder: path to folder(s) where zipped data is saved. Input should be output of download_NHD_NLCD_data()
+  #' @param PRMSxWalk: Default True. Create unzipped sub-folder in downloaded data folder.
+  #' @example read_subset_LC_data(LC_data_folder = '1_fetch/src/LandCover_data/', PRMSxWalk = T)
+
   # Function Vars 
   ## creating list for dfs before for loop
   all_data_subsetted <- list()
