@@ -60,7 +60,7 @@ sb_ids_NLCD <- c(
   # ImperviousnessPct_2011: 
     'https://www.sciencebase.gov/catalog/item/57057a9be4b0d4e2b7571fbb',
   # Imperviousness100mBufferRipZone:
-    'https://www.sciencebase.gov/catalog/item/570577fee4b0d4e2b7571d7b',
+   'https://www.sciencebase.gov/catalog/item/570577fee4b0d4e2b7571d7b',
   # TreeCanopy_100mBuffered_RipZone: 
     'https://www.sciencebase.gov/catalog/item/570572e2e4b0d4e2b75718bc',
   # NLCD_LandCover_2011: 
@@ -71,11 +71,13 @@ sb_ids_NLCD <- c(
 
 # Define Land Cover dataset download folders:
 
-NLCD_folders <- c('ImperviousnessPct_2011',
-               'Imperviousness100m_RipZone',
-               'TreeCanopy_100mBuffered_RipZone',
-               'NLCD_LandCover_2011',
-               'NLCD_LandCover_50m_RipZone')
+NLCD_folders <- c(
+   'ImperviousnessPct_2011',
+   'Imperviousness100m_RipZone',
+   'TreeCanopy_100mBuffered_RipZone',
+   'NLCD_LandCover_2011',
+   'NLCD_LandCover_50m_RipZone'
+)
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)

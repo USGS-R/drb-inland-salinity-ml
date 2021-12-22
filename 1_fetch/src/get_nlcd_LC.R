@@ -103,7 +103,8 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
 ###----------------------------------
 
 read_subset_LC_data <- function(LC_data_folder,
-                                Comids_in_AOI_df, comid_col = 'comid_down'){
+                                Comids_in_AOI_df,
+                                comid_col = 'comid_down'){
   
   #' @description Read in and subset lc data after data is downloaded and unzipped
   #' @param LC_data_folder_path: LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
