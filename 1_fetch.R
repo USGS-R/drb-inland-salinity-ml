@@ -81,7 +81,6 @@ p1_targets_list <- list(
   
   ## read in NLCD datasets and subet by comid in DRB
   # --> Note - p1_NLCD_data_location is the input for LC_data_folder as this is the location of all the LC data
-  
 
   tar_target(p1_NLCD_df,
              read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped, 
@@ -98,7 +97,7 @@ p1_targets_list <- list(
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
     format = "file"),
-  
+
   # Unzip zipped shapefile
   tar_target(
     p1_reaches_shp,
@@ -113,11 +112,7 @@ p1_targets_list <- list(
   # read shapefile into sf object
   tar_target(
     p1_reaches_sf,
-    st_read(p1_reaches_shp))
-
+    st_read(p1_reaches_shp)
   )
-
-  
-
-
+)  
 
