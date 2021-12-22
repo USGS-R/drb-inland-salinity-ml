@@ -4,7 +4,7 @@ source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 
 ## temp sample xwalk table for p1_NLCD_df target
-tmp_xwalk_tbl <- readRDS('1_fetch/src/example_xwalk_table.rds')
+tmp_xwalk_tbl <- readRDS('1_fetch/in/example_xwalk_table.rds')
 
 p1_targets_list <- list(
   

@@ -102,24 +102,25 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
 
 ###----------------------------------
 
-read_subset_LC_data <- function(LC_data_folder,
+read_subset_LC_data <- function(LC_data_folder_path,
                                 Comids_in_AOI_df,
-                                comid_col = 'comid_down'){
+                                Comid_col = 'comid_down'){
   
   #' @description Read in and subset lc data after data is downloaded and unzipped
   #' @param LC_data_folder_path: LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
   #' @param Comids_in_AOI_df: dataframe of all comid ids
-  #' @param comid_col: str. key col in Xwalk table 
-  #' @example read_subset_LC_data(LC_data_folder = "1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped", PRMSxWalk = PRMSxWalk)
-  #' @example read_subset_LC_data(LC_data_folder = c("1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
-  #'  "1_fetch/out/LandCover_Data/Imperviousness100m_RipZone/unzipped") , PRMSxWalk = PRMSxWalk)
+  #' @param Comid_col: str. key col in Xwalk table 
+  #' @example read_subset_LC_data(LC_data_folder_path = "1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
+  #'  Comids_in_AOI_df = PRMSxWalk,  Comid_col = 'comid_down')
+  #' @example read_subset_LC_data(LC_data_folder_path = c("1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
+  #'  "1_fetch/out/LandCover_Data/Imperviousness100m_RipZone/unzipped") , Comids_in_AOI_df = PRMSxWalk,  Comid_col = 'comid_down')
 
   # Function Vars 
   ## creating list for dfs before for loop
   all_data_subsetted <- list()
   
   # Loop through sub-folders, combine datasets, and subset through Join
-  for(LC_data in LC_data_folder){
+  for(LC_data in LC_data_folder_path){
     
   ## Read in
     LC_data_path <- unlist(LC_data)
@@ -134,7 +135,7 @@ read_subset_LC_data <- function(LC_data_folder,
   ## Subset by comid_id's from Xwalk
     data_subsetted <-cbind_df %>%
       right_join(Comids_in_AOI_df,
-               by = c('COMID' = comid_col),
+               by = c('COMID' = Comid_col),
                keep = T)
 
   ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
