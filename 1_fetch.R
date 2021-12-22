@@ -63,16 +63,26 @@ p1_targets_list <- list(
   
   # Download NLCD datasets 
   tar_target(
-    p1_NLCD_data_zipped, 
+    p1_NLCD_data_location, 
     download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
                            out_path = '1_fetch/out',
                            downloaded_data_folder_name = NLCD_folders,
                            create_LandCover_folder = T),
     format = 'file'),
   
+  ## Unzip all NLCD downloaded datasets 
   tar_target(p1_NLCD_data_unzipped, 
-             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped, create_unzip_subfolder = T),
+             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+                                 create_unzip_subfolder = T),
              format = 'file'
+             ),
+  
+  ## read in NLCD datasets and subet by comid in DRB
+  # --> Note - p1_NLCD_data_location is the input for LC_data_folder as this is the location of all the LC data
+  
+  tar_target(p1_LC_dfs, read_subset_LC_data(LC_data_folder = p1_NLCD_data_location, 
+                                            Crosswalk
+                                            )
              )
 )
 

@@ -101,20 +101,40 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
 
 ###----------------------------------
 
-read_subset_LC_data <- function(LC_data, LC_data_path, PRMSxWalk){
-  
-  ## Read
-  files <- list.files(path = LC_data_path, pattern = '*.txt', full.names = T)
-  LC_data_list<-lapply(files, read_csv)
+## Issue if there is no Land Cover Data folder - must add condition that checks this
 
-  ## Combine
-  cbind_df <-LC_data_list %>% 
-    reduce(inner_join, by = 'COMID') ## possibly add as full_join
+read_subset_LC_data <- function(LC_data_folder = '1_fetch/src/LandCover_data/', PRMSxWalk){
   
-  ## subset by comid_id's from xwalk
-  data_subsetted <-cbind_df %>%
-    right_join(PRMSxWalk,
+  # Function Vars 
+  ## creating list for dfs before for loop
+  all_data_subsetted <- list()
+  LC_sub_folders <- list.files(LC_data_folder)
+  
+  # Loop through sub-folders, combine datasets, and subset through Join
+  for(LC_data in LC_sub_folders){
+    
+  ## Read in
+    unzipped_folder = file.path(LC_data_folder, LC_data, 'unzipped')
+    
+    files <- list.files(path = unzipped_folder, pattern = '*.txt|*.TXT', full.names = T)
+  
+    data_list <- lapply(files, read_csv)
+  
+  ## Combine
+    cbind_df <-data_list %>%
+      reduce(inner_join, by = 'COMID') ## possibly add as full_join
+
+  ## Subset by comid_id's from xwalk
+    data_subsetted <-cbind_df %>%
+      right_join(PRMSxWalk,
                by = c('COMID' = 'comid_down'),
                keep = T)
 
+  ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
+    all_data_subsetted[[LC_data]] <- data_subsetted
+  
   }
+
+  return(all_data_subsetted)
+  
+}
