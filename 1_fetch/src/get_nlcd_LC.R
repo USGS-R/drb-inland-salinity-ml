@@ -2,7 +2,6 @@
 download_NHD_NLCD_data <- function(sb_id,
                                  out_path = '1_fetch/out',
                                  downloaded_data_folder_name = NA,
-                                 create_LandCover_folder = T,
                                  overwrite_download = T){
   
   #' @description download Land Cover data to the repo's fetch/src folder.
@@ -16,11 +15,9 @@ download_NHD_NLCD_data <- function(sb_id,
   #' @example  download_NHD_NLCD_data(sb_id = '57855ddee4b0e02680bf37bf', out_path = '1_fetch/out', downloaded_data_folder_name = 'LandCover_ripbuffer_id_11')
   #' @example  download_NHD_NLCD_data(sb_id = c('57855ddee4b0e02680bf37bf','570577fee4b0d4e2b7571d7b'), out_path = '1_fetch/out', downloaded_data_folder_name = c('LandCover_ripbuffer_id_11', 'pct_imperviousness_ripzone_id_11'))
   
-  ## Create Land Cover Data sub folder in base directory if true
-  if(create_LandCover_folder == T){
+  ## Create Land Cover Data sub folder in base directory
     out_path <- file.path(out_path, "LandCover_Data")
     dir.create(out_path, showWarnings = F)
-  }
   
   ## Sb_id split
   sb_id <- strsplit(sb_id, "/") %>% sapply(function(x) x[length(x)])
@@ -79,6 +76,7 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
   #' @example unzip_NHD_NLCD_data(downloaded_data_folder_path = pct_imperviousness_id_11', create_unzip_subfolder = T)
   #' @example unzip_NHD_NLCD_data(downloaded_data_folder_path = 'pct_imperviousness_id_11', create_unzip_subfolder = T) 
   
+  list_out_paths <- c()
   ## Unzip files in subfolders 
   for(i in 1:length(downloaded_data_folder_path)){
     
@@ -95,49 +93,60 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
     lapply(list_zipfiles, function(x)
       unzip(file.path(data_path, x), exdir = out_path)
     )
+    
+    list_out_paths <- append(list_out_paths, out_path)
   }
-  return(out_path)
+  print(list_out_paths)
+  return(list_out_paths)
 }
 
 ###----------------------------------
 
-## Issue if there is no Land Cover Data folder - must add condition that checks this
-
-read_subset_LC_data <- function(LC_data_folder = '1_fetch/src/LandCover_data/', PRMSxWalk){
+read_subset_LC_data <- function(LC_data_folder,
+                                Comids_in_AOI_df, comid_col = 'comid_down'){
   
-  #' @description Read in  
-  #' @param LC_data_folder: path to folder(s) where zipped data is saved. Input should be output of download_NHD_NLCD_data()
-  #' @param PRMSxWalk: Default True. Create unzipped sub-folder in downloaded data folder.
-  #' @example read_subset_LC_data(LC_data_folder = '1_fetch/src/LandCover_data/', PRMSxWalk = T)
+  #' @description Read in and subset lc data after data is downloaded and unzipped
+  #' @param LC_data_folder_path: LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
+  #' @param Comids_in_AOI_df: dataframe of all comid ids
+  #' @param comid_col: str. key col in Xwalk table 
+  #' @example read_subset_LC_data(LC_data_folder = "1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped", PRMSxWalk = PRMSxWalk)
+  #' @example read_subset_LC_data(LC_data_folder = c("1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
+  #'  "1_fetch/out/LandCover_Data/Imperviousness100m_RipZone/unzipped") , PRMSxWalk = PRMSxWalk)
 
   # Function Vars 
   ## creating list for dfs before for loop
   all_data_subsetted <- list()
-  LC_sub_folders <- list.files(LC_data_folder)
   
   # Loop through sub-folders, combine datasets, and subset through Join
-  for(LC_data in LC_sub_folders){
+  for(LC_data in LC_data_folder){
     
   ## Read in
-    unzipped_folder = file.path(LC_data_folder, LC_data, 'unzipped')
+    LC_data_path <- unlist(LC_data)
+    files <- list.files(path = LC_data_path, pattern = '*.txt|*.TXT', full.names = T)
     
-    files <- list.files(path = unzipped_folder, pattern = '*.txt|*.TXT', full.names = T)
-  
-    data_list <- lapply(files, read_csv)
+    data_list <- lapply(files, read_csv) ## --> Note this will print read_csv() output specs
   
   ## Combine
     cbind_df <-data_list %>%
       reduce(inner_join, by = 'COMID') ## possibly add as full_join
 
-  ## Subset by comid_id's from xwalk
+  ## Subset by comid_id's from Xwalk
     data_subsetted <-cbind_df %>%
-      right_join(PRMSxWalk,
-               by = c('COMID' = 'comid_down'),
+      right_join(Comids_in_AOI_df,
+               by = c('COMID' = comid_col),
                keep = T)
 
   ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
-    all_data_subsetted[[LC_data]] <- data_subsetted
-  
+    if(endsWith(LC_data, 'unzipped')){
+      name <- str_split(LC_data, pattern = '/', simplify = T)
+      name <- name[length(name)-1]
+    }
+    else{
+      name <- str_split(LC_data, pattern = '/', simplify = T)
+      name <-name[length(name)]
+    }
+    
+    all_data_subsetted[[name]] <- data_subsetted
   }
 
   return(all_data_subsetted)

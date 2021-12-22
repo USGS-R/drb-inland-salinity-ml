@@ -3,6 +3,9 @@ source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 
+## temp sample xwalk table for p1_NLCD_df target
+tmp_xwalk_tbl <- readRDS('1_fetch/src/example_xwalk_table.rds')
+
 p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
@@ -63,11 +66,11 @@ p1_targets_list <- list(
   
   # Download NLCD datasets 
   tar_target(
-    p1_NLCD_data_location, 
+    p1_NLCD_data_zipped, 
     download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
                            out_path = '1_fetch/out',
-                           downloaded_data_folder_name = NLCD_folders,
-                           create_LandCover_folder = T),
+                           downloaded_data_folder_name = NLCD_folders
+                           ),
     format = 'file'),
   
   ## Unzip all NLCD downloaded datasets 
@@ -80,9 +83,10 @@ p1_targets_list <- list(
   ## read in NLCD datasets and subet by comid in DRB
   # --> Note - p1_NLCD_data_location is the input for LC_data_folder as this is the location of all the LC data
   
-  tar_target(p1_LC_dfs, read_subset_LC_data(LC_data_folder = p1_NLCD_data_location, 
-                                            Crosswalk
-                                            )
+  tar_target(p1_NLCD_df,
+             read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped,
+                                PRMSxWalk = tmp_xwalk_tbl,
+                                PRMSxWalk_comid_col = 'comid_down')
              )
 )
 
