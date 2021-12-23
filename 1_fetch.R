@@ -3,9 +3,6 @@ source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 
-## temp sample xwalk table for p1_NLCD_df target
-tmp_xwalk_tbl <- readRDS('1_fetch/in/example_xwalk_table.rds')
-
 p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
@@ -62,30 +59,6 @@ p1_targets_list <- list(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
     pattern = map(p1_nwis_sites_inst)),
-  
-  # Download NLCD datasets 
-  tar_target(
-    p1_NLCD_data_zipped, 
-    download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
-                           out_path = '1_fetch/out',
-                           downloaded_data_folder_name = NLCD_folders
-                           ),
-    format = 'file'),
-  
-  ## Unzip all NLCD downloaded datasets 
-  tar_target(p1_NLCD_data_unzipped, 
-             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
-                                 create_unzip_subfolder = T),
-             format = 'file'
-             ),
-  
-  ## read in NLCD datasets and subet by comid in DRB
-  # --> Note - p1_NLCD_data_location is the input for LC_data_folder as this is the location of all the LC data
-
-  tar_target(p1_NLCD_df,
-             read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped, 
-                                 Comids_in_AOI_df = tmp_xwalk_tbl, 
-                                 Comid_col = 'comid_down')),
 
   tar_target(
     p1_reaches_shp_zip,
@@ -113,6 +86,30 @@ p1_targets_list <- list(
   tar_target(
     p1_reaches_sf,
     st_read(p1_reaches_shp)
-  )
+  ),
+
+  # Download NLCD datasets 
+  tar_target(
+    p1_NLCD_data_zipped, 
+    download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
+                           out_path = '1_fetch/out',
+                           downloaded_data_folder_name = NLCD_folders
+    ),
+    format = 'file'),
+  
+  ## Unzip all NLCD downloaded datasets 
+  ## Note - this returns a string or vector of strings of data path to unzipped datasets 
+  tar_target(p1_NLCD_data_unzipped, 
+             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+                                 create_unzip_subfolder = T),
+             format = 'file'
+  ),
+  
+  ## read in NLCD datasets and subet by comid in DRB
+  ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
+  tar_target(p1_NLCD_df,
+             read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped, 
+                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>% select(COMID), 
+                                 Comid_col = 'COMID'))
 )  
 
