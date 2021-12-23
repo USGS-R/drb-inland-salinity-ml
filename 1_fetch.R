@@ -85,7 +85,7 @@ p1_targets_list <- list(
   tar_target(p1_NLCD_df,
              read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = tmp_xwalk_tbl, 
-                                 comid_col = 'comid_down')),
+                                 Comid_col = 'comid_down')),
 
   tar_target(
     p1_reaches_shp_zip,
