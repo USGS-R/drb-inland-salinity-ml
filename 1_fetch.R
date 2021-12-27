@@ -1,6 +1,7 @@
 source("1_fetch/src/get_nwis_sites.R")
 source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
+source("1_fetch/src/get_nhdplusv2.R")
 
 p1_targets_list <- list(
   
@@ -86,6 +87,13 @@ p1_targets_list <- list(
   tar_target(
     p1_reaches_sf,
     st_read(p1_reaches_shp)
+  ),
+  
+  # Download NHDPlusV2 flowlines for DRB
+  tar_target(
+    p1_nhdv2reaches_sf,
+    get_nhdv2_flowlines(drb_huc8s)
   )
+  
 )  
 
