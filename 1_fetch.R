@@ -92,19 +92,7 @@ p1_targets_list <- list(
   # Download NHDPlusV2 flowlines for DRB
   tar_target(
     p1_nhdv2reaches_sf,
-    {
-      drb_huc8s %>%
-        # For each HUC8 watershed, retrieve NHDPlusV2 flowlines
-        purrr::map(.,get_nhdv2_flowlines) %>%
-        # Bind HUC8 flowlines together
-        bind_rows() %>%
-        # Reformat variable names to uppercase
-        rename_with(.,toupper,id:enabled) %>%
-        # Remove duplicated COMIDs that result from retrieving flowlines associated with (overlapping) HUC8 bbox's
-        group_by(COMID) %>%
-        slice(1) %>%
-        ungroup()
-    }
+    get_nhdv2_flowlines(drb_huc8s)
   )
   
 )  
