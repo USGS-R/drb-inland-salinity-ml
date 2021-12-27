@@ -17,7 +17,8 @@ pair_nhd_reaches <- function(nhd_lines,prms_line){
   
   # Find intersection between NHD reaches and buffered PRMS polygon, and calculate lengths of intersecting NHD reaches
   lines_int <- suppressWarnings(sf::st_intersection(nhd_lines_proj,prms_line_buffer)) %>%
-    mutate(len = as.numeric(sf::st_length(.)))
+    mutate(len = as.numeric(sf::st_length(.))) %>%
+    st_drop_geometry()
 
   # Find associated NHD reaches that overlap by >5 m (indicating that the NHD and PRMS lines likely overlap rather than just touch)
   nhd_paired <- lines_int %>% 
@@ -42,7 +43,7 @@ pair_nhd_reaches <- function(nhd_lines,prms_line){
   # To make sure we're not missing any NHD reaches between downstream/upstream COMIDs,
   # recursively traverse NHD from upstream COMID until we find downstream COMID
   if(nhd_paired_down$COMID==nhd_paired_up$COMID){
-    between_lines <- sf::st_drop_geometry(nhd_paired_down)
+    between_lines <- nhd_paired_down
   }else{
     between_lines <- traverse_nhd(nhd_lines = nhd_lines,
                                   paired_flines = nhd_paired,
