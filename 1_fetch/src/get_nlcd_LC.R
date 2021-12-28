@@ -1,4 +1,4 @@
-
+###-----------------------------------------------------------------------------
 download_NHD_NLCD_data <- function(sb_id,
                                  out_path = '1_fetch/out',
                                  downloaded_data_folder_name = NA,
@@ -19,7 +19,7 @@ download_NHD_NLCD_data <- function(sb_id,
     out_path <- file.path(out_path, "LandCover_Data")
     dir.create(out_path, showWarnings = F)
   
-  ## Sb_id split
+  ## sb_id split
   sb_id <- strsplit(sb_id, "/") %>% sapply(function(x) x[length(x)])
   
   ## Check lengths of sb_id and downloaded_data_folder_name
@@ -100,7 +100,7 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
   return(list_out_paths)
 }
 
-###----------------------------------
+###-----------------------------------------------------------------------------
 
 read_subset_LC_data <- function(LC_data_folder_path,
                                 Comids_in_AOI_df,
@@ -136,12 +136,12 @@ read_subset_LC_data <- function(LC_data_folder_path,
     data_subsetted <-cbind_df %>%
       right_join(Comids_in_AOI_df,
                by = c('COMID' = Comid_col),
-               keep = T)
+               keep = F)
 
   ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
     if(endsWith(LC_data, 'unzipped')){
       name <- str_split(LC_data, pattern = '/', simplify = T)
-      name <- name[length(name)-1]
+      name <- name[length(name) - 1]
     }
     else{
       name <- str_split(LC_data, pattern = '/', simplify = T)
