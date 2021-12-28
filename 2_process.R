@@ -2,6 +2,7 @@ source("2_process/src/filter_wqp_data.R")
 source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
+source("2_process/src/pair_nhd_reaches.R")
 
 p2_targets_list <- list(
   
@@ -23,6 +24,16 @@ p2_targets_list <- list(
     aggregate_data_to_hourly(p1_inst_data,output_tz = "UTC"),
     pattern = map(p1_inst_data)),
   
+  # Aggregate instantaneous SC data to daily min/mean/max
+  tar_target(
+    p2_inst_data_daily,
+    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")),
+  
+  # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
+  tar_target(
+    p2_daily_combined,
+    bind_rows(p1_daily_data, p2_inst_data_daily)),
+  
   # Create a list of unique site id's with SC data  
   tar_target(
     p2_site_list_csv,
@@ -40,13 +51,15 @@ p2_targets_list <- list(
        get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
      }),
   
-  # Aggregate instantaneous SC data to daily min/mean/max
+  # Pair PRMS segments with NHDPlusV2 reaches
   tar_target(
-    p2_inst_data_daily,
-    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")),
-  
-  # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
-  tar_target(
-    p2_daily_combined,
-    bind_rows(p1_daily_data, p2_inst_data_daily))
+    p2_prms_nhdv2_xwalk,
+    {
+      p1_reaches_sf %>%
+        split(.,.$subsegid) %>%
+        purrr::map(.,pair_nhd_reaches,nhd_lines=p1_nhdv2reaches_sf) %>%
+        purrr::map(.,summarize_paired_comids) %>%
+        bind_rows()
+    }
+  )
 )

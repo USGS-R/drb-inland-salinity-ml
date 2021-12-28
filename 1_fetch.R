@@ -2,6 +2,7 @@ source("1_fetch/src/get_nwis_sites.R")
 source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
+source("1_fetch/src/get_nhdplusv2.R")
 
 p1_targets_list <- list(
   
@@ -111,5 +112,11 @@ p1_targets_list <- list(
              read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% select(COMID), 
                                  Comid_col = 'COMID'))
+  
+  # Download NHDPlusV2 flowlines for DRB
+  tar_target(
+    p1_nhdv2reaches_sf,
+    get_nhdv2_flowlines(drb_huc8s)
+  )  
 )  
 
