@@ -65,7 +65,7 @@ sb_ids_NLCD <- c(
     'https://www.sciencebase.gov/catalog/item/570572e2e4b0d4e2b75718bc',
   # NLCD_LandCover_2011: 
     'https://www.sciencebase.gov/catalog/item/5761bad4e4b04f417c2d30c5',
-  # Estimated percent of catchment in 50 meter riparian zone that contains the land-use and land-cover
+  # Estimated percent of catchment in 50 meter riparian zone that contains the land-use and land-cover:
     'https://www.sciencebase.gov/catalog/item/57855ddee4b0e02680bf37bf'
   )
 
