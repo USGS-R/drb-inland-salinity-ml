@@ -149,8 +149,13 @@ read_subset_LC_data <- function(LC_data_folder_path,
     }
     
     all_data_subsetted[[name]] <- data_subsetted
-  }
-
+    }
+   ## if only one NLCD table loaded, set as a df
+    if(length(all_data_subsetted) == 1){
+      print(TRUE)
+      all_data_subsetted <-  all_data_subsetted[[1]]
+    }
+      
   return(all_data_subsetted)
   
 }
