@@ -65,34 +65,38 @@ p2_targets_list <- list(
     }
   ),
   
+  # Extract COMID and respective area for LC estimation below
   tar_target(p2_nhd_area_att, 
              p1_nhdv2reaches_sf %>%
                st_drop_geometry() %>%
                select(COMID,AREASQKM,TOTDASQKM)
   ),
   
+  ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids filtered to drb 
   tar_target(p2_drb_comids, 
             {p2_prms_nhdv2_xwalk %>%
                # split df by PRMS_segid() -  
                split(.,.$PRMS_segid) %>%
                # loop through each row element of this list and str split such that each new col is a cell
                lapply(.,function(x){
-                 comids <- data.frame(PRMS_segid = x$PRMS_segid,comid=unlist(strsplit(x$comid_all,split=";")))
+                 comids <- data.frame(PRMS_segid = x$PRMS_segid,
+                                      comid=unlist(strsplit(x$comid_all,split=";")))
                }) %>%
                bind_rows()
             }
   ),
-  
+  ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
+  # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(p2_LC_w_catchment_area,
-             LC_w_area(area_att = p2_nhd_area_att,
+             AOI_LC_w_area(area_att = p2_nhd_area_att,
                        NLCD_LC_df = p1_NLCD_df$NLCD_LandCover_2011,
                        drb_comids_df = p2_drb_comids)
              ),
-
+  
+  ## Estimate LC proportion in PRMS catchment
+  # returns df with percent LC in PRMS catchment in our AOI
   tar_target(p2_PRMS_lc_proportions,
              proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area,
-                                   drb_comids_df = p2_drb_comids,
                                    catchment_att = "CAT")
              )
-
 )
