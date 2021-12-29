@@ -11,7 +11,7 @@ AOI_LC_w_area <- function(NLCD_LC_df, area_att, aoi_comids_df){
   
 # Filter land cover attributes to aoi comids (drb) and join with area columns
   lc_area <- NLCD_LC_df %>%
-    filter(COMID %in% drb_comids_df$comid) %>%
+    filter(COMID %in% aoi_comids_df$comid) %>%
     left_join(., area_att, by="COMID") %>%
     mutate(COMID = as.character(COMID))
 

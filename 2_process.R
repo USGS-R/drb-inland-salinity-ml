@@ -5,7 +5,6 @@ source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
 source("2_process/src/combine_NLCD_PRMS.R")
 
-
 p2_targets_list <- list(
   
   # Filter harmonized WQP data for salinity data
@@ -90,7 +89,7 @@ p2_targets_list <- list(
   tar_target(p2_LC_w_catchment_area,
              AOI_LC_w_area(area_att = p2_nhd_area_att,
                        NLCD_LC_df = p1_NLCD_df$NLCD_LandCover_2011,
-                       drb_comids_df = p2_drb_comids)
+                       aoi_comids_df = p2_drb_comids)
              ),
   
   ## Estimate LC proportion in PRMS catchment
