@@ -59,8 +59,8 @@ area_df <- drb_comids %>%
   # sum the area calculation of the comid to agg to the level of PRMS
     across(starts_with(paste0("AREA_",catchment_att)), sum, .names="PRMS_PERCENT_{col}"),
 #   # round the new cols PRMS_percent
-across(starts_with(paste0("PRMS_", catchment_att)), round, 2),
-     .groups="keep"))
+    across(starts_with(paste0("PRMS_", catchment_att)), round, 2), 
+  .groups="keep")
 
   return(area_df)
 
