@@ -3,6 +3,8 @@ source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
+source("2_process/src/combine_NLCD_PRMS.R")
+
 
 p2_targets_list <- list(
   
@@ -61,5 +63,36 @@ p2_targets_list <- list(
         purrr::map(.,summarize_paired_comids) %>%
         bind_rows()
     }
-  )
+  ),
+  
+  tar_target(p2_nhd_area_att, 
+             p1_nhdv2reaches_sf %>%
+               st_drop_geometry() %>%
+               select(COMID,AREASQKM,TOTDASQKM)
+  ),
+  
+  tar_target(p2_drb_comids, 
+            {p2_prms_nhdv2_xwalk %>%
+               # split df by PRMS_segid() -  
+               split(.,.$PRMS_segid) %>%
+               # loop through each row element of this list and str split such that each new col is a cell
+               lapply(.,function(x){
+                 comids <- data.frame(PRMS_segid = x$PRMS_segid,comid=unlist(strsplit(x$comid_all,split=";")))
+               }) %>%
+               bind_rows()
+            }
+  ),
+  
+  tar_target(p2_LC_w_catchment_area,
+             LC_w_area(area_att = p2_nhd_area_att,
+                       NLCD_LC_df = p1_NLCD_df$NLCD_LandCover_2011,
+                       drb_comids_df = p2_drb_comids)
+             ),
+
+  tar_target(p2_PRMS_lc_proportions,
+             proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area,
+                                   drb_comids_df = p2_drb_comids,
+                                   catchment_att = "CAT")
+             )
+
 )
