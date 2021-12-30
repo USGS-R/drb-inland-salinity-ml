@@ -113,10 +113,8 @@ p1_targets_list <- list(
   ## read in NLCD datasets and subet by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
   tar_target(p1_NLCD_data,
-             read_subset_LC_data(LC_data_folder = p1_NLCD_data_unzipped, 
-                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>%
-                                   st_drop_geometry() %>%
-                                   select(COMID), 
+             read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
+                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                                  Comid_col = 'COMID')
              )
 )
