@@ -64,14 +64,8 @@ p2_targets_list <- list(
     }
   ),
   
-  # Extract COMID and respective area for LC estimation below
-  tar_target(p2_nhd_area_att, 
-             p1_nhdv2reaches_sf %>%
-               st_drop_geometry() %>%
-               select(COMID,AREASQKM,TOTDASQKM)
-  ),
-  
-  ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids filtered to drb 
+
+  ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS idsnh filtered to drb 
   tar_target(p2_drb_comids, 
             {p2_prms_nhdv2_xwalk %>%
                # split df by PRMS_segid() -  
@@ -87,7 +81,7 @@ p2_targets_list <- list(
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(p2_LC_w_catchment_area,
-             AOI_LC_w_area(area_att = p2_nhd_area_att,
+             AOI_LC_w_area(area_att = p1_nhd_area_att,
                        NLCD_LC_df = p1_NLCD_df$NLCD_LandCover_2011,
                        aoi_comids_df = p2_drb_comids)
              ),

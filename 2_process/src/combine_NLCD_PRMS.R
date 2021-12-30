@@ -44,7 +44,7 @@ area_df <- NLCD_LC_df_w_area %>%
     # Sum to calculate total area of the PRMS  catchment
     across(AREASQKM, sum, .names='AREASQKM_PRMS'),
     # Sum to calculate total LC area at the PRMS catchment scale
-    across(starts_with(paste0('AREA_',catchment_att)), sum, .names = 'PRMS_AREA_{col}'),
+    across(starts_with(paste0('AREA_',catchment_att)), sum, .names = 'PRMS_{col}'),
     # calculate proportion of LC in entire PRMS catchment - Call PRMS_PERCENT
     across(starts_with(paste0('PRMS_AREA_',catchment_att)), ~(.x/AREASQKM), .names="PRMS_PERCENT_{col}"),
     # round the new PRMS cols 
