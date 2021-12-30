@@ -1,7 +1,10 @@
 library(targets)
 
 options(tidyverse.quiet = TRUE)
-tar_option_set(packages = c("tidyverse", "lubridate","rmarkdown","dataRetrieval","knitr","leaflet","sf", 'purrr', 'readr', 'sbtools')) 
+tar_option_set(packages = c("tidyverse", "lubridate",
+                            "rmarkdown","dataRetrieval",
+                            "knitr","leaflet","sf",
+                            'purrr', 'sbtools')) 
 
 source("1_fetch.R")
 source("2_process.R")
@@ -57,16 +60,16 @@ dummy_date <- "2021-12-13"
 
 # Define land cover datasets to extract 
 sb_ids_NLCD <- c(
-  # ImperviousnessPct_2011:
-    'https://www.sciencebase.gov/catalog/item/57057a9be4b0d4e2b7571fbb',
-  # Imperviousness100mBufferRipZone:
-   'https://www.sciencebase.gov/catalog/item/570577fee4b0d4e2b7571d7b',
-  # TreeCanopy_100mBuffered_RipZone:
-    'https://www.sciencebase.gov/catalog/item/570572e2e4b0d4e2b75718bc',
-  # NLCD_LandCover_2011: 
-    'https://www.sciencebase.gov/catalog/item/5761bad4e4b04f417c2d30c5',
-  # Estimated percent of catchment in 50 meter riparian zone that contains the land-use and land-cover
-    'https://www.sciencebase.gov/catalog/item/57855ddee4b0e02680bf37bf'
+  # ImperviousnessPct_2011: 'https://www.sciencebase.gov/catalog/item/57057a9be4b0d4e2b7571fbb',
+  '57057a9be4b0d4e2b7571fbb',
+  # Imperviousness100mBufferRipZone:'https://www.sciencebase.gov/catalog/item/570577fee4b0d4e2b7571d7b',
+  '570577fee4b0d4e2b7571d7b',
+  # TreeCanopy_100mBuffered_RipZone: 'https://www.sciencebase.gov/catalog/item/570572e2e4b0d4e2b75718bc'
+  '570572e2e4b0d4e2b75718bc',
+  # NLCD_LandCover_2011: 'https://www.sciencebase.gov/catalog/item/5761bad4e4b04f417c2d30c5',
+  '5761bad4e4b04f417c2d30c5',
+  # Estimated percent of catchment in 50 meter riparian zone that contains the land-use and land-cover: 'https://www.sciencebase.gov/catalog/item/57855ddee4b0e02680bf37bf'
+  '57855ddee4b0e02680bf37bf'
   )
 
 # Define Land Cover dataset download folders:

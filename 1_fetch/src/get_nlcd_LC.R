@@ -9,7 +9,6 @@ download_NHD_NLCD_data <- function(sb_id,
   #' @param sb_id: The ScienceBase Id for the NHD-NLCD land cover dataset of interest. Str or vector of str.
   #' @param out_path: Output folder for the downloaded data packages from ScienceBase. Default `1_fetch/out`. If path does not exist in directory, path will be created. 
   #' @param downloaded_data_folder_name: Sub-folder name(s) for the data in out_path. Str or vector of str. Default NA, where folder names will be labelled by sb_id. If not = NA, Must be same length as sb_id. 
-  #' @param create_LandCover_folder: Create a catch all Land Cover Data Folder in 1_fetch/out where all downloaded Land Cover Data will reside. Default TRUE.
   #' @param overwrite_download If true, data will overwrite previous download in same out_path. Default TRUE.
   #' @value 
   #' @example  download_NHD_NLCD_data(sb_id = '57855ddee4b0e02680bf37bf', out_path = '1_fetch/out', downloaded_data_folder_name = 'LandCover_ripbuffer_id_11')
@@ -18,9 +17,6 @@ download_NHD_NLCD_data <- function(sb_id,
   ## Create Land Cover Data sub folder in base directory
     out_path <- file.path(out_path, "LandCover_Data")
     dir.create(out_path, showWarnings = F)
-  
-  ## sb_id split
-  sb_id <- strsplit(sb_id, "/") %>% sapply(function(x) x[length(x)])
   
   ## Check lengths of sb_id and downloaded_data_folder_name
   ## first, avoiding error when downloaded_data_folder_name = NA (checking len)
@@ -104,12 +100,12 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
 
 read_subset_LC_data <- function(LC_data_folder_path,
                                 Comids_in_AOI_df,
-                                Comid_col = 'comid_down'){
+                                Comid_col){
   
   #' @description Read in and subset lc data after data is downloaded and unzipped
   #' @param LC_data_folder_path: LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
   #' @param Comids_in_AOI_df: dataframe of all comid ids
-  #' @param Comid_col: str. key col in Xwalk table 
+  #' @param Comid_col: str. key Comid col in Xwalk table. e.g. "comid" | "COMID"
   #' @example read_subset_LC_data(LC_data_folder_path = "1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
   #'  Comids_in_AOI_df = PRMSxWalk,  Comid_col = 'comid_down')
   #' @example read_subset_LC_data(LC_data_folder_path = c("1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
@@ -126,7 +122,7 @@ read_subset_LC_data <- function(LC_data_folder_path,
     LC_data_path <- unlist(LC_data)
     files <- list.files(path = LC_data_path, pattern = '*.txt|*.TXT', full.names = T)
     
-    data_list <- lapply(files, read_csv) ## --> Note this will print read_csv() output specs
+    data_list <- lapply(files, function(x){ read_csv(x, show_col_types = FALSE)})
   
   ## Combine
     cbind_df <-data_list %>%
