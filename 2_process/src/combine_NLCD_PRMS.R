@@ -46,11 +46,14 @@ area_df <- NLCD_LC_df_w_area %>%
     # Sum to calculate total LC area at the PRMS catchment scale
     across(starts_with(paste0('AREA_',catchment_att)), sum, .names = 'PRMS_{col}'),
     # calculate proportion of LC in entire PRMS catchment - Call PRMS_PERCENT
-    across(starts_with(paste0('PRMS_AREA_',catchment_att)), ~(.x/AREASQKM), .names="PRMS_PERCENT_{col}"),
+    across(starts_with(paste0('PRMS_AREA_',catchment_att)), ~(.x/AREASQKM_PRMS),
+           .names="PERCENT_{col}"),
     # round the new PRMS cols 
     across(starts_with('PRMS'), round, 2), 
   .groups="drop")
 
+## Final cleaning - removing LC class 12 (snow/ice) and the empty PRMS (287_1)
+area_df <- area_df %>% select(-contains('NLCD11_12')) %>% filter(AREASQKM_PRMS > 0 )
 
   return(area_df)
 

@@ -82,7 +82,7 @@ p2_targets_list <- list(
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(p2_LC_w_catchment_area,
              AOI_LC_w_area(area_att = p1_nhd_area_att,
-                       NLCD_LC_df = p1_NLCD_df$NLCD_LandCover_2011,
+                       NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
                        aoi_comids_df = p2_drb_comids)
              ),
   
