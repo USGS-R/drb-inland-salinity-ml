@@ -1,6 +1,7 @@
 source("1_fetch/src/get_nwis_sites.R")
 source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
+source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 
 p1_targets_list <- list(
@@ -59,7 +60,7 @@ p1_targets_list <- list(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
     pattern = map(p1_nwis_sites_inst)),
-  
+
   tar_target(
     p1_reaches_shp_zip,
     # [Jeff] I downloaded this manually from science base: 
@@ -69,9 +70,8 @@ p1_targets_list <- list(
     # Because of that and since it's small (<700 Kb) I figured it'd be fine to
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
-    format = "file"
-  ),
-  
+    format = "file"),
+
   # Unzip zipped shapefile
   tar_target(
     p1_reaches_shp,
@@ -88,12 +88,35 @@ p1_targets_list <- list(
     p1_reaches_sf,
     st_read(p1_reaches_shp)
   ),
-  
+
   # Download NHDPlusV2 flowlines for DRB
   tar_target(
     p1_nhdv2reaches_sf,
-    get_nhdv2_flowlines(drb_huc8s)
-  )
+    get_nhdv2_flowlines(drb_huc8s)),  
+
+  # Download NLCD datasets 
+  tar_target(
+    p1_NLCD_data_zipped, 
+    download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
+                           out_path = '1_fetch/out',
+                           downloaded_data_folder_name = NLCD_folders),
+    format = 'file'),
   
-)  
+  ## Unzip all NLCD downloaded datasets 
+  ## Note - this returns a string or vector of strings of data path to unzipped datasets 
+  tar_target(p1_NLCD_data_unzipped, 
+             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+                                 create_unzip_subfolder = T),
+             format = 'file'
+  ),
+  
+  ## read in NLCD datasets and subet by comid in DRB
+  ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
+  tar_target(p1_NLCD_data,
+             read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
+                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
+                                 Comid_col = 'COMID')
+             )
+)
+  
 
