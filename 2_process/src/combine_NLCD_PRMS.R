@@ -53,7 +53,9 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area,
     .groups="drop")
   
   ## Final cleaning - removing LC class 12 (snow/ice) and the empty PRMS (287_1) 
-  area_df <- area_df %>% select(-contains('NLCD11_12')) %>% filter(AREASQKM_PRMS > 0)
+  area_df <- area_df %>%
+    filter(AREASQKM_PRMS > 0) %>%
+    select(where(~any(. != 0)))
 
   return(area_df)
 
