@@ -13,13 +13,14 @@ download_backcasted_LC <- function(sb_id, filename, download_path, overwrite_fil
                               destinations = path_to_downloaded_file,
                               overwrite_file = overwrite_file)
   
-  # unzip downloaded zip to subfolder. subfolder is named the filename
+  # Remove '.zip' extension for unzip folder
   unzip_folder_path <- sub('.zip','', path_to_downloaded_file)
-  unzip(path_to_downloaded_file, exdir = unzip_folder_path)
+  # unzip downloaded zip to subfolder. subfolder is named the filename
+  unzip(zipfile = path_to_downloaded_file, exdir = unzip_folder_path)
 
   # Find and delete years that are not needed - negate enables inverse matching
   Backcasting_files_del <- list.files(unzip_folder_path, full.names = T) %>% str_subset('2000|1990|1980|1970|1960', negate = T)
-  lapply(X = Backcasting_files_del, FUN = file.remove)
+  lapply(Backcasting_files_del, file.remove)
   rm(path_to_downloaded_file, Backcasting_files_del)
   
   return(list.files(unzip_folder_path, full.names = T))
