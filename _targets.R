@@ -82,6 +82,12 @@ NLCD_folders <- c(
    'NLCD_LandCover_50m_RipZone'
 )
 
+# vars for backcasted LC data
+### Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
+### Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
+sb_id_backcasting <- '605c987fd34ec5fa65eb6a74'
+DRB_Historical_Reconstruction_NLCD <- 'DRB_Historical_Reconstruction_1680-2010.zip' 
+
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
 

@@ -3,7 +3,8 @@ source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
-
+source('1_fetch/src/fetch_FORESCE.R')
+tar
 p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
@@ -116,7 +117,13 @@ p1_targets_list <- list(
              read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                                  Comid_col = 'COMID')
-             )
+             ),
+  
+  
+  tar_target(p1_backcasted_LC, download_backcasted_LC(sb_id = sb_id_backcasting,
+                                                      filename = DRB_Historical_Reconstruction_NLCD,
+                                                      download_path = '1_fetch/out'), 
+             format = 'file')
 )
   
 
