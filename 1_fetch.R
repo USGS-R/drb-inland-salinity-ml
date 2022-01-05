@@ -92,14 +92,9 @@ p1_targets_list <- list(
   # Download NHDPlusV2 flowlines for DRB
   tar_target(
     p1_nhdv2reaches_sf,
-    get_nhdv2_flowlines(drb_huc8s)),  
+    get_nhdv2_flowlines(drb_huc8s)
+    ), 
 
-  # Extract COMID and respective area for LC estimation below
-  tar_target(p1_nhd_area_att, 
-             p1_nhdv2reaches_sf %>%
-               st_drop_geometry() %>%
-               select(COMID,AREASQKM,TOTDASQKM)
-  ),
   
   # Download NLCD datasets 
   tar_target(
@@ -117,7 +112,7 @@ p1_targets_list <- list(
              format = 'file'
   ),
   
-  ## read in NLCD datasets and subet by comid in DRB
+  ## read in NLCD datasets and subset by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
   
   tar_target(p1_NLCD_data,
