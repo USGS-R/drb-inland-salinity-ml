@@ -58,6 +58,9 @@ earliest_date <- "1979-10-01"
 # Change dummy date to force re-build of NWIS SC sites and data download
 dummy_date <- "2021-12-13"
 
+# Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
+gf_data_select <- 'GeospatialFabricFeatures_02.zip'
+
 # Define land cover datasets to extract 
 sb_ids_NLCD <- c(
   # ImperviousnessPct_2011: 'https://www.sciencebase.gov/catalog/item/57057a9be4b0d4e2b7571fbb',
