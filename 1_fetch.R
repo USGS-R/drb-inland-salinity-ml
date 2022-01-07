@@ -99,7 +99,7 @@ p1_targets_list <- list(
   # Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
   tar_target(
     p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/",sb_id = '5362b683e4b0c409c6289bf6',sb_name = 'GeospatialFabricFeatures_02.zip'),
+    get_gf(out_dir = "1_fetch/out/",sb_id = '5362b683e4b0c409c6289bf6',sb_name = gf_data_select),
     format = "file"
   ),
   
