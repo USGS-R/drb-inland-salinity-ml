@@ -61,5 +61,12 @@ p2_targets_list <- list(
         purrr::map(.,summarize_paired_comids) %>%
         bind_rows()
     }
-  )
+  ),
+  
+  # Filter SC site list to omit discrete sites thought to be influenced by tidal extent
+  tar_target(
+    p2_sites_w_segs_nontidal_csv,
+    create_site_list_nontidal(p2_sites_w_segs,mainstem_reaches_tidal,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
+    format = "file")
+
 )

@@ -140,3 +140,31 @@ transform_site_locations <- function(site_list_df,crs_out){
   
 }
 
+
+create_site_list_nontidal <- function(site_list_w_segs_df,mainstem_segs,fileout){
+  #' 
+  #' @description Function to filter sites thought to be influenced by tides 
+  #'
+  #' @param site_list_df data frame containing site locations and matched segment id's
+  #' @param mainstem_segs character string containing the mainstem segments that are assumed to be influenced by tides
+  #' @param fileout file path and name for output data, including the file extension
+  #' 
+  
+  site_list_filtered <- site_list_w_segs_df %>%
+    # For daily-resolution model, omit discrete sites associated with reaches thought to be tidal:
+    filter(!(subsegid %in% mainstem_segs & data_src_combined=="Harmonized_WQP_data")) %>%
+    # For discrete sites that are associated with tidal reaches and are also NWIS sites, exclude discrete samples from count_days tally:
+    rowwise() %>%
+    mutate(count_days_discrete = case_when((subsegid %in% mainstem_segs) ~ 0, 
+                                           TRUE ~ count_days_discrete),
+           count_days_total = sum(count_days_nwis,count_days_discrete,na.rm=TRUE)) %>%
+    ungroup() %>% 
+    select(-geometry)
+  
+  # Save site list
+  write_csv(site_list_filtered, file = fileout)
+  
+  return(fileout)
+  
+}
+
