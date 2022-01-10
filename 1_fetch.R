@@ -4,6 +4,7 @@ source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 source('1_fetch/src/fetch_FORESCE.R')
+source("1_fetch/src/get_gf.R")
 
 p1_targets_list <- list(
   
@@ -94,6 +95,21 @@ p1_targets_list <- list(
   tar_target(
     p1_nhdv2reaches_sf,
     get_nhdv2_flowlines(drb_huc8s)),  
+  
+  # Download PRMS catchments for region 02
+  # Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
+  tar_target(
+    p1_catchments_shp,
+    get_gf(out_dir = "1_fetch/out/",sb_id = '5362b683e4b0c409c6289bf6',sb_name = gf_data_select),
+    format = "file"
+  ),
+  
+  # Read PRMS catchment shapefile into sf object and filter to DRB
+  tar_target(
+    p1_catchments_sf,
+    {st_read(dsn=p1_catchments_shp,layer="nhru") %>%
+      filter(hru_segment %in% p1_reaches_sf$subsegseg)}
+  ),
 
   # Download NLCD datasets 
   tar_target(
