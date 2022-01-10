@@ -56,7 +56,7 @@ stat_cd_select <- c("00001","00003")
 earliest_date <- "1979-10-01"
 
 # Change dummy date to force re-build of NWIS SC sites and data download
-dummy_date <- "2021-12-13"
+dummy_date <- "2021-12-31"
 
 # Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'
