@@ -22,7 +22,7 @@ summarize_site_list <- function(site_list_path,nwis_daily_data,nwis_inst_data,fi
       # tally number of unique lat/lon locations across data sources
       n_unique_latlon = as.numeric(tally(distinct(.,lat,lon))),
       # tally total number of WQP sites that contribute discrete data
-      n_all_WQP_sites = as.numeric(tally(filter(.,grepl("WQP",.$data_src_combined,ignore.case=TRUE)))),
+      n_all_WQP_sites = as.numeric(tally(filter(.,count_days_discrete > 0))),
       # tally total number of NWIS-daily sites that contribute continuous data
       n_all_nwis_daily_sites = length(unique(nwis_daily_data$site_no)),
       # tally total number of NWIS-inst sites that contribute continuous data
@@ -30,7 +30,7 @@ summarize_site_list <- function(site_list_path,nwis_daily_data,nwis_inst_data,fi
       # tally number of unique NWIS sites that contribute continuous data (daily or inst)
       n_unique_nwis_sites = as.numeric(tally(filter(.,grepl("NWIS",.$data_src_combined,ignore.case=TRUE)))),
       # tally number of site id's that have observations from both NWIS and WQP
-      n_sites_intersect_WQPNWIS = as.numeric(tally(filter(.,.$data_src_combined %in% c("NWIS_daily/Harmonized_WQP_data","NWIS_instantaneous/Harmonized_WQP_data")))),
+      n_sites_intersect_WQPNWIS = as.numeric(tally(filter(.,.$count_days_discrete>0 & .$data_src_combined %in% c("NWIS_daily/Harmonized_WQP_data","NWIS_instantaneous/Harmonized_WQP_data")))),
       # tally total number of observation-days across data sources
       n_obsdays_total = sum(count_days_total,na.rm=TRUE),
       # tally number of observation-days from NWIS
