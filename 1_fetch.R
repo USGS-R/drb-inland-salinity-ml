@@ -4,7 +4,7 @@ source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 source('1_fetch/src/fetch_FORESCE.R')
-tar
+
 p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
