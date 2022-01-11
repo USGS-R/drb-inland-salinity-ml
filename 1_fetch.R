@@ -87,7 +87,7 @@ p1_targets_list <- list(
   # read shapefile into sf object
   tar_target(
     p1_reaches_sf,
-    st_read(p1_reaches_shp)
+    st_read(p1_reaches_shp,quiet=TRUE)
   ),
 
   # Download NHDPlusV2 flowlines for DRB
@@ -106,8 +106,10 @@ p1_targets_list <- list(
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn=p1_catchments_shp,layer="nhru") %>%
-      filter(hru_segment %in% p1_reaches_sf$subsegseg)}
+    {st_read(dsn=p1_catchments_shp,layer="nhru",quiet=TRUE) %>%
+        filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
+        suppressWarnings()
+      }
   ),
 
   # Download NLCD datasets 
