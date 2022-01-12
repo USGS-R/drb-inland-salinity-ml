@@ -60,10 +60,11 @@ p2_targets_list <- list(
     p2_wqp_SC_filtered,
     subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)),
   
-  # Filter SC site list to omit discrete sites thought to be influenced by tidal extent
+  # Filter SC site list
   tar_target(
-    p2_sites_w_segs_nontidal_csv,
-    create_site_list_nontidal(p2_sites_w_segs,mainstem_reaches_tidal,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
+    p2_site_list_nontidal_csv,
+    create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
+                              hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
     format = "file")
 
 )

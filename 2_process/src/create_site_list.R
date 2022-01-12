@@ -1,4 +1,4 @@
-create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out="NAD83",fileout){
+create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out="NAD83"){
   #' 
   #' @description Function to create one site list that contains unique site locations for modeling
   #'
@@ -9,7 +9,6 @@ create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,
   #' @param nwis_daily_data data frame containing daily data for all NWIS daily sites
   #' @param nwis_inst_data data frame containing instantaneous data for all NWIS instantaneous sites
   #' @param crs_out character string indicating desired crs. Defaults to "NAD83", other options include "WGS84".
-  #' @param fileout file path and name for output data, including the file extension
   #'
   #' @value A data frame containing the id, name, data coverage, spatial coordinates, and data source for each unique data-site location.
 
@@ -138,28 +137,22 @@ transform_site_locations <- function(site_list_df,crs_out){
 }
 
 
-create_site_list_nontidal <- function(site_list_w_segs_df,mainstem_segs,fileout){
+create_site_list_nontidal <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out="NAD83",site_list_w_segs,fileout){
   #' 
-  #' @description Function to filter sites thought to be influenced by tides 
+  #' @description Function to create filtered site list (omit sites thought to be influenced by tides)
   #'
-  #' @param site_list_df data frame containing site locations and matched segment id's
-  #' @param mainstem_segs character string containing the mainstem segments that are assumed to be influenced by tides
+  #' @param site_list_w_segs data frame containing site locations and matched segment id's
   #' @param fileout file path and name for output data, including the file extension
+  #' see create_site_list for description of other params
   #' 
   
-  site_list_filtered <- site_list_w_segs_df %>%
-    # For daily-resolution model, omit discrete sites associated with reaches thought to be tidal:
-    filter(!(subsegid %in% mainstem_segs & data_src_combined=="Harmonized_WQP_data")) %>%
-    # For discrete sites that are associated with tidal reaches and are also NWIS sites, exclude discrete samples from count_days tally:
-    rowwise() %>%
-    mutate(count_days_discrete = case_when((subsegid %in% mainstem_segs) ~ 0, 
-                                           TRUE ~ count_days_discrete),
-           count_days_total = sum(count_days_nwis,count_days_discrete,na.rm=TRUE)) %>%
-    ungroup() %>% 
-    select(-geometry)
+  site_list_filtered <- create_site_list(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out)
+  
+  # Add segment information from site_list_w_segs
+  site_list_filtered_w_segs <- left_join(site_list_filtered,site_list_w_segs[,c("site_id","subsegid","offset","segidnat")],by="site_id")
   
   # Save site list
-  write_csv(site_list_filtered, file = fileout)
+  write_csv(site_list_filtered_w_segs, file = fileout)
   
   return(fileout)
   
