@@ -1,3 +1,16 @@
+rbind.fill.list <- function(x) {
+  nam <- sapply(x, names)
+  unam <- unique(unlist(nam))
+  len <- sapply(x, length)
+  out <- vector("list", length(len))
+  for (i in seq_along(len)) {
+    out[[i]] <- unname(x[[i]])[match(unam, nam[[i]])]
+  }
+  setNames(as.data.frame(do.call(rbind, out), stringsAsFactors=FALSE), unam)
+}
+
+
+
 raster_to_catchment_polygons <- function(polygon_sf, raster,
                                          categorical_raster = NULL,
                                          raster_summary_fun = NULL,
@@ -18,7 +31,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   raster <- rast(raster)
   vector_sf <- polygon_sf 
   
-  # raster <- rast(path)
+  # raster <- rast(p1_backcasted_LC[2])
   # vector_sf <- p1_catchments_sf
   
   ## check vector geometries 
@@ -56,7 +69,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   #  tmp <- terra::extract(drb_1960, catchments_vect[1:3,], list = T) %>% 
   
   ## handling unequal length of classes
-  final_raster_table <- rbind.fill(raster_per_polygon) %>%
+  final_raster_table <- rbind.fill.list(raster_per_polygon) %>%
     setNames(paste0(new_cols_prefix, names(.))) %>% 
     mutate(ID = row_number())
   
@@ -78,4 +91,15 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   return(df)
   
 }
+
+
+
+
+
+
+
+
+
+
+
 

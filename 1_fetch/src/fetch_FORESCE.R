@@ -1,4 +1,4 @@
-download_backcasted_LC <- function(sb_id, filename, download_path, overwrite_file = T){
+download_backcasted_LC <- function(sb_id, filename, download_path, overwrite_file = T, years = c('2000','1990','1980','1970','1960') ){
   
 #' @description Download and unzip specified file from sciencebase
 #' @param sb_id str. Sciencebase id. accepts a single str.
@@ -19,10 +19,14 @@ download_backcasted_LC <- function(sb_id, filename, download_path, overwrite_fil
   unzip(zipfile = path_to_downloaded_file, exdir = unzip_folder_path)
 
   # Find and delete years that are not needed - negate enables inverse matching
-  Backcasting_files_del <- list.files(unzip_folder_path, full.names = T) %>% str_subset('2000|1990|1980|1970|1960', negate = T)
+  years_collapsed <- paste(years, collapse = '|')
+  Backcasting_files_del <- list.files(unzip_folder_path, full.names = T) %>% str_subset(years_collapsed, negate = T)
   lapply(Backcasting_files_del, file.remove)
   rm(path_to_downloaded_file, Backcasting_files_del)
   
   return(list.files(unzip_folder_path, full.names = T))
   
 }
+
+
+# '2000|1990|1980|1970|1960'
