@@ -3,6 +3,8 @@ source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
+source("2_process/src/raster_per_PRMS.R")
+
 
 p2_targets_list <- list(
   
