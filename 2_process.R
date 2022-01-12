@@ -35,17 +35,13 @@ p2_targets_list <- list(
   
   # Create a list of unique site id's with SC data  
   tar_target(
-    p2_site_list_csv,
+    p2_site_list,
     create_site_list(p2_wqp_SC_data,p1_nwis_sites,p1_daily_data,p1_inst_data,
-                     hucs=drb_huc8s,crs_out="NAD83",fileout = "2_process/out/DRB_SC_sitelist.csv"),
-    format = "file"),
+                     hucs=drb_huc8s,crs_out="NAD83")),
 
   tar_target(
      p2_sites_w_segs,
-     {
-       sites_tbl <- read_csv(p2_site_list_csv,show_col_types = FALSE)
-       get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
-     }),
+     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
   
   # Pair PRMS segments with NHDPlusV2 reaches
   tar_target(

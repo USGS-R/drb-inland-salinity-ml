@@ -89,10 +89,7 @@ create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,
     lapply(.,transform_site_locations,crs_out=crs_out) %>%
     do.call(rbind,.)
   
-  # Save site list
-  write_csv(unique_sites_out, file = fileout)
-  
-  return(fileout)
+  return(unique_sites_out)
   
 }
 
