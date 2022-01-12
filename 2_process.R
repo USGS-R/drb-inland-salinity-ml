@@ -61,5 +61,11 @@ p2_targets_list <- list(
         purrr::map(.,summarize_paired_comids) %>%
         bind_rows()
     }
-  )
+  ),
+  
+  tar_target(p2_LC_per_catchment, 
+             raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
+                                          raster = p1_backcasted_LC[1], categorical_raster = TRUE,
+                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass')
+             )
 )
