@@ -59,6 +59,11 @@ p2_targets_list <- list(
     }
   ),
   
+  # Filter discrete samples from sites thought to be influenced by tidal extent
+  tar_target(
+    p2_wqp_SC_filtered,
+    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)),
+  
   # Filter SC site list to omit discrete sites thought to be influenced by tidal extent
   tar_target(
     p2_sites_w_segs_nontidal_csv,

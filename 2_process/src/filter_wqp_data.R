@@ -57,3 +57,34 @@ subset_wqp_SC_data <- function(filtered_data){
   
 }
 
+
+subset_wqp_nontidal <- function(wqp_data,site_list_w_segs,mainstem_segs){
+  #' 
+  #' @description Function to filter discrete samples potentially influenced by tides from the WQP specific conductance dataset  
+  #'
+  #' @param wqp_data a data frame containing the Water Quality Portal (WQP) specific conductance dataset
+  #' @param site_list_w_segs data frame containing site locations and matched segment id's
+  #' @param mainstem_segs character string containing the mainstem segments that are assumed to be influenced by tides
+  #'
+  #' @examples 
+  #' filter_wqp_nontidal(wqp_data=p2_wqp_SC_data,site_list_w_segs=p2_sites_w_segs,mainstem_segs=c("2771_1","2769_1"))
+  #' 
+
+  # Identify discrete sites associated with reaches thought to be tidal:
+  sites_tidal <- site_list_w_segs %>%
+    # Subset site list to find sites matched to tidal reaches
+    filter(subsegid %in% mainstem_segs) %>%
+    # Subset site list to include discrete sites only
+    filter(grepl("Harmonized_WQP_data",data_src_combined)) %>%
+    # "USGS-" was dropped from site_id in create_site_list step. Add back in to match with MonitoringLocationIdentifier in wqp_data
+    mutate(site_id_full = case_when(startsWith(site_id,"0") ~ paste0("USGS-",site_id),
+                                    TRUE ~ site_id))
+  
+  # Omit samples from tidal sites:
+  wqp_data_filtered <- wqp_data %>%
+    filter(!(MonitoringLocationIdentifier %in% sites_tidal$site_id_full))
+  
+  return(wqp_data_filtered)
+  
+}
+
