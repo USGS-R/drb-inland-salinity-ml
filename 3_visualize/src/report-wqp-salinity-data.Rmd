@@ -21,8 +21,7 @@ Cl_sites <- data_subset %>%
   summarize(Site = unique(MonitoringLocationIdentifier))
 
 # Load WQP data subsets for specific conductance 
-SC_path <- tar_read(p2_wqp_SC_csv)
-SC_data <- read_csv(SC_path,col_types = cols(ResultDetectionConditionText = col_character())) %>%
+SC_data <- tar_read(p2_wqp_SC_data) %>%
   mutate(site_no = if_else(grepl("USGS",MonitoringLocationIdentifier),substr(MonitoringLocationIdentifier,6,100),MonitoringLocationIdentifier))
 
 # Return SC sites

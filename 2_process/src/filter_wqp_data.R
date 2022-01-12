@@ -32,17 +32,16 @@ filter_wqp_salinity_data <- function(data,major_ion_names,wqp_vars_select,omit_w
 }
 
 
-subset_wqp_SC_data <- function(filtered_data,fileout){
+subset_wqp_SC_data <- function(filtered_data){
   #' 
   #' @description Function to subset the filtered WQP salinity dataset for specific conductance  
   #'
   #' @param filtered_data a data frame containing the filtered DRB multisource surface-water-quality dataset.
   #' Filtered_data is the output from filter_wqp_salinity_data().
-  #' @param fileout a character string that indicates the name of the file to be saved, including path and file extension 
   #'
   #' @value A data frame containing discrete specific conductance samples from the Delaware River Basin 
   #' @examples 
-  #' subset_wqp_SC_data(filtered_data = filtered_wqp_data,fileout="./data/out/filtered_wqp_SC_data.csv")
+  #' subset_wqp_SC_data(filtered_data = filtered_wqp_data)
 
   # Filter out specific conductance param values "min" and "max"
   SC_params <- c("Specific conductance, field",
@@ -54,9 +53,7 @@ subset_wqp_SC_data <- function(filtered_data,fileout){
     # Omit samples originally entered as "conductivity" since we can't be sure these reflect temperature-corrected conductance
     filter(param %in% SC_params,CharacteristicName!="Conductivity") 
 
-  write_csv(SC_data_subset, file = fileout)
-  
-  return(fileout)
+  return(SC_data_subset)
   
 }
 
