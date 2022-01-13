@@ -14,9 +14,8 @@ p2_targets_list <- list(
   
   # Subset discrete SC data from harmonized WQP
   tar_target(
-    p2_wqp_SC_csv,
-    subset_wqp_SC_data(p2_filtered_wqp_data,fileout="2_process/out/DRB_WQdata_SC_data.csv"),
-    format="file"),
+    p2_wqp_SC_data,
+    subset_wqp_SC_data(p2_filtered_wqp_data)),
   
   # Aggregate instantaneous SC data to hourly averages
   tar_target(
@@ -36,20 +35,13 @@ p2_targets_list <- list(
   
   # Create a list of unique site id's with SC data  
   tar_target(
-    p2_site_list_csv,
-    {
-      wqp_data_subset <- read_csv(p2_wqp_SC_csv,col_types = cols(ResultDetectionConditionText = col_character()))
-      create_site_list(wqp_data_subset,p1_nwis_sites,p1_daily_data,p1_inst_data,
-                       hucs=drb_huc8s,crs_out="NAD83",fileout = "2_process/out/DRB_SC_sitelist.csv")
-    },
-    format = "file"),
+    p2_site_list,
+    create_site_list(p2_wqp_SC_data,p1_nwis_sites,p1_daily_data,p1_inst_data,
+                     hucs=drb_huc8s,crs_out="NAD83")),
 
   tar_target(
      p2_sites_w_segs,
-     {
-       sites_tbl <- read_csv(p2_site_list_csv)
-       get_site_flowlines(p1_reaches_sf, sites_tbl, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
-     }),
+     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
   
   # Pair PRMS segments with NHDPlusV2 reaches
   tar_target(
@@ -61,5 +53,18 @@ p2_targets_list <- list(
         purrr::map(.,summarize_paired_comids) %>%
         bind_rows()
     }
-  )
+  ),
+  
+  # Filter discrete samples from sites thought to be influenced by tidal extent
+  tar_target(
+    p2_wqp_SC_filtered,
+    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)),
+  
+  # Filter SC site list
+  tar_target(
+    p2_site_list_nontidal_csv,
+    create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
+                              hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
+    format = "file")
+
 )

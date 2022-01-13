@@ -1,6 +1,7 @@
 source("1_fetch/src/get_nwis_sites.R")
 source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
+source("1_fetch/src/find_sites_multipleTS.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 source("1_fetch/src/get_gf.R")
@@ -48,14 +49,9 @@ p1_targets_list <- list(
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    p1_nwis_sites %>%
-      # retain "uv" sites that contain data records after user-specified {earliest_date}
-      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
-      # save record of sites with multiple time series
-      group_by(site_no) %>% mutate(count_ts = length(unique(ts_id))) %>%
-      filter(count_ts > 1) %>%
-      readr::write_csv(.,"3_visualize/log/summary_multiple_inst_ts.csv")),
-  
+    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,"3_visualize/log/summary_multiple_inst_ts.csv"),
+    format = "file"),
+
   # Download NWIS instantaneous data
   tar_target(
     p1_inst_data,
@@ -87,7 +83,7 @@ p1_targets_list <- list(
   # read shapefile into sf object
   tar_target(
     p1_reaches_sf,
-    st_read(p1_reaches_shp)
+    st_read(p1_reaches_shp,quiet=TRUE)
   ),
 
   # Download NHDPlusV2 flowlines for DRB
@@ -106,8 +102,10 @@ p1_targets_list <- list(
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn=p1_catchments_shp,layer="nhru") %>%
-      filter(hru_segment %in% p1_reaches_sf$subsegseg)}
+    {st_read(dsn=p1_catchments_shp,layer="nhru",quiet=TRUE) %>%
+        filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
+        suppressWarnings()
+      }
   ),
 
   # Download NLCD datasets 

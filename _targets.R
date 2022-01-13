@@ -49,6 +49,11 @@ site_tp_select <- c("ST","ST-CA","SP")
 # sites 01412350, 01484272, and 01482695 coded as site type "ST" but appear to be tidally-influenced
 omit_nwis_sites <- c("01412350","01484272","01482695") 
 
+# Define PRMS mainstem segments thought to be tidally-influenced (used for filtering sites used in daily/sub-daily models)
+mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1","2763_1","2759_1","2757_1","2752_1",
+                            "2753_1","2755_1","2772_1","388_1","389_1","385_1","386_1","383_1","382_1","377_1","378_1",
+                            "376_1","351_1","344_1","346_1","333_1")
+
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
 
@@ -56,7 +61,7 @@ stat_cd_select <- c("00001","00003")
 earliest_date <- "1979-10-01"
 
 # Change dummy date to force re-build of NWIS SC sites and data download
-dummy_date <- "2021-12-13"
+dummy_date <- "2021-12-31"
 
 # Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'

@@ -92,7 +92,7 @@ unzip_NHD_NLCD_data <- function(downloaded_data_folder_path,
     
     list_out_paths <- append(list_out_paths, out_path)
   }
-  print(list_out_paths)
+  
   return(list_out_paths)
 }
 
