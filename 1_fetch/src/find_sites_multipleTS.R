@@ -21,7 +21,8 @@ multTS_table <- site_list %>%
   mutate(end_date = case_when(end_date > latest_date ~ latest_date, TRUE ~ end_date),
          count_ts = length(unique(ts_id))) %>%
   # find sites with multiple time series
-  filter(count_ts > 1) %>% select(-count_nu)
+  filter(count_ts > 1) %>% 
+  select(-count_nu)
 
 # save record of instantaneous sites with multiple time series
   write_csv(multTS_table,fileout)
