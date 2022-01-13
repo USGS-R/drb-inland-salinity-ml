@@ -138,7 +138,8 @@ p1_targets_list <- list(
   
   tar_target(p1_backcasted_LC, download_backcasted_LC(sb_id = sb_id_backcasting,
                                                       filename = DRB_Historical_Reconstruction_NLCD,
-                                                      download_path = '1_fetch/out'), 
+                                                      download_path = '1_fetch/out', years = c('2000','1990','1980','1970','1960')
+                                                      ), 
              format = 'file')
 )
   

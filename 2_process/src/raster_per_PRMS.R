@@ -9,8 +9,6 @@ rbind.fill.list <- function(x) {
   setNames(as.data.frame(do.call(rbind, out), stringsAsFactors=FALSE), unam)
 }
 
-
-
 raster_to_catchment_polygons <- function(polygon_sf, raster,
                                          categorical_raster = NULL,
                                          raster_summary_fun = NULL,
@@ -30,9 +28,6 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   # read in 
   raster <- rast(raster)
   vector_sf <- polygon_sf 
-  
-  # raster <- rast(p1_backcasted_LC[2])
-  # vector_sf <- p1_catchments_sf
   
   ## check vector geometries 
   if(any(!st_is_valid(vector_sf))){
@@ -91,12 +86,6 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   return(df)
   
 }
-
-
-
-
-
-
 
 
 
