@@ -130,7 +130,20 @@ p1_targets_list <- list(
              read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                                  Comid_col = 'COMID')
+             ),
+
+
+  # csv of variables from the Wieczorek dataset that are of interest 
+  tar_target(p1_vars_of_interest_csv,
+             '1_fetch/in/NHDVarsOfInterest.csv',
+             format = 'file'
+             ),
+
+  # variables from the Wieczorek dataset that are of interest 
+  tar_target(p1_vars_of_interest,
+             read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
              )
+
 )
   
 
