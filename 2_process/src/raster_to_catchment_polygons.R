@@ -60,9 +60,6 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   end_time <- Sys.time()
   message(end_time - start_time)
   
-  print(raster_per_polygon[1:5])
-  #  tmp <- terra::extract(drb_1960, catchments_vect[1:3,], list = T) %>% 
-  
   ## handling unequal length of classes
   final_raster_table <- rbind.fill.list(raster_per_polygon) %>%
     setNames(paste0(new_cols_prefix, names(.))) %>% 
