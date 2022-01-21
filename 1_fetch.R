@@ -3,7 +3,7 @@ source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
-source('1_fetch/src/fetch_FORESCE.R')
+source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
 
 p1_targets_list <- list(
