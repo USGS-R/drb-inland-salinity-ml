@@ -88,7 +88,7 @@ NLCD_folders <- c(
 # vars for backcasted LC data
 ### Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
 ### Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
-sb_id_backcasting <- '605c987fd34ec5fa65eb6a74'
+sb_id_backcasting_LC <- '605c987fd34ec5fa65eb6a74'
 DRB_Historical_Reconstruction_NLCD_file <- 'DRB_Historical_Reconstruction_1680-2010.zip' 
 
 ## vars for road salt

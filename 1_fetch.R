@@ -137,7 +137,7 @@ p1_targets_list <- list(
   
   ## Read in backcasted LC and subset by years
   ## 
-  tar_target(p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting,
+  tar_target(p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting_LC,
                                             filename = DRB_Historical_Reconstruction_NLCD_file,
                                             download_path = '1_fetch/out',
                                             year = c('2000','1990','1980','1970','1960'),

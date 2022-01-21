@@ -66,14 +66,14 @@ p2_targets_list <- list(
   ),
   
   tar_target(p2_LC_per_catchment, 
-             {lapply(p1_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
+             {lapply(p1_backcasted_LC[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
                                           raster = x, categorical_raster = TRUE,
                                           raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
              }
              ),
 
   tar_target(p2_rdsalt_per_catchment,
-             {lapply(p1_rd_salt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
+             {lapply(p1_rd_salt[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
                                                                                 raster = x, categorical_raster = FALSE,
                                                                                 raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
              }

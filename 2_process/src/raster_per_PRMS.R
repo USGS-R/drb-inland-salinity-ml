@@ -32,17 +32,17 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   ## check vector geometries 
   if(any(!st_is_valid(vector_sf))){
     vector_sf <- st_make_valid(vector_sf)
-    print('shp geometries fixed')
+    message('shp geometries fixed')
     } 
   
   ## match crs
   if(!st_crs(raster) == st_crs(vector_sf)){
-    print('crs are different. Transforming ...')
+    message('crs are different. Transforming ...')
     vector_sf <- st_transform(vector_sf, crs = st_crs(raster))
     if(st_crs(raster) == st_crs(vector_sf)){
-    print('crs now aligned')}
+    message('crs now aligned')}
   }else if(st_crs(raster) == st_crs(vector_sf)){
-    print('crs are already aligned')
+    message('crs are already aligned')
   }
   
   ## convert vector sf object to spatvector compatible to with raster processing with terra
@@ -58,7 +58,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
     #lapply(table) # to get frequency of each categorical value
     lapply(FUN = function(x) {table(x)/sum(table(x))})
   end_time <- Sys.time()
-  print(end_time - start_time)
+  message(end_time - start_time)
   
   print(raster_per_polygon[1:5])
   #  tmp <- terra::extract(drb_1960, catchments_vect[1:3,], list = T) %>% 
@@ -70,8 +70,8 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   
   }
   
-  if(is.null(categorical_raster) || categorical_raster == FALSE){
-    print('extracting cont raster')
+  else{
+    message('extracting cont raster')
     raster_per_polygon <- terra::extract(raster_crop, vector, fun = raster_summary_fun)
     print(head(raster_per_polygon))
     final_raster_table <- data.frame(raster_per_polygon)
