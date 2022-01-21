@@ -135,11 +135,22 @@ p1_targets_list <- list(
                                  Comid_col = 'COMID')
              ),
   
-  
-  tar_target(p1_backcasted_LC, download_backcasted_LC(sb_id = sb_id_backcasting,
-                                                      filename = DRB_Historical_Reconstruction_NLCD,
-                                                      download_path = '1_fetch/out', years = c('2000','1990','1980','1970','1960')
+  ## Read in backcasted LC and subset by years
+  ## 
+  tar_target(p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting,
+                                            filename = DRB_Historical_Reconstruction_NLCD_file,
+                                            download_path = '1_fetch/out',
+                                            year = c('2000','1990','1980','1970','1960'),
+                                            name_unzip_folder = NULL
                                                       ), 
+             format = 'file'),
+  
+  tar_target(p1_rd_salt, download_tifs(rd_salt,
+                                       filename = rd_salt_zip_file,
+                                       download_path = '1_fetch/out',
+                                       overwrite_file = T,
+                                       year = NULL,
+                                       name_unzip_folder = 'rd_salt'), 
              format = 'file')
 )
   

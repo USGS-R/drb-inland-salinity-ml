@@ -90,5 +90,3 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
 
 
 
-
-
