@@ -6,6 +6,9 @@ _targets
 
 #Other local files
 archive/*
+.config/*
+.local/*
+rstudio/*
 
 #R files
 # History files
