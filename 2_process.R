@@ -3,6 +3,7 @@ source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
+source("2_process/src/pair_nhd_catchments.R")
 
 p2_targets_list <- list(
   
@@ -43,15 +44,23 @@ p2_targets_list <- list(
      p2_sites_w_segs,
      get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
   
-  # Pair PRMS segments with NHDPlusV2 reaches
+  # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
     {
-      p1_reaches_sf %>%
+      # find NHDPlusV2 COMID's that intersect PRMS segments
+      reach_to_seg_xwalk <- p1_reaches_sf %>%
         split(.,.$subsegid) %>%
         purrr::map(.,pair_nhd_reaches,nhd_lines=p1_nhdv2reaches_sf) %>%
         purrr::map(.,summarize_paired_comids) %>%
         bind_rows()
+      
+      # find NHDPlusV2 COMID's that drain directly to PRMS segments
+      p1_reaches_sf %>%
+        split(.,.$subsegid) %>%
+        purrr::map(.,pair_nhd_catchments,prms_hrus=p1_catchments_sf,min_area_overlap=0.5,nhd_lines=p1_nhdv2reaches_sf,xwalk_table = reach_to_seg_xwalk) %>%
+        bind_rows() %>%
+        left_join(reach_to_seg_xwalk,.,by="PRMS_segid")
     }
   ),
   
