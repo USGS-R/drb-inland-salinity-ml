@@ -1,4 +1,4 @@
-create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out="NAD83",fileout){
+create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out="NAD83"){
   #' 
   #' @description Function to create one site list that contains unique site locations for modeling
   #'
@@ -9,7 +9,6 @@ create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,
   #' @param nwis_daily_data data frame containing daily data for all NWIS daily sites
   #' @param nwis_inst_data data frame containing instantaneous data for all NWIS instantaneous sites
   #' @param crs_out character string indicating desired crs. Defaults to "NAD83", other options include "WGS84".
-  #' @param fileout file path and name for output data, including the file extension
   #'
   #' @value A data frame containing the id, name, data coverage, spatial coordinates, and data source for each unique data-site location.
 
@@ -89,10 +88,7 @@ create_site_list <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,
     lapply(.,transform_site_locations,crs_out=crs_out) %>%
     do.call(rbind,.)
   
-  # Save site list
-  write_csv(unique_sites_out, file = fileout)
-  
-  return(fileout)
+  return(unique_sites_out)
   
 }
 
@@ -137,6 +133,28 @@ transform_site_locations <- function(site_list_df,crs_out){
   }
   
   return(site_list_transformed) 
+  
+}
+
+
+create_site_list_nontidal <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out="NAD83",site_list_w_segs,fileout){
+  #' 
+  #' @description Function to create filtered site list (omit sites thought to be influenced by tides)
+  #'
+  #' @param site_list_w_segs data frame containing site locations and matched segment id's
+  #' @param fileout file path and name for output data, including the file extension
+  #' see create_site_list for description of other params
+  #' 
+  
+  site_list_filtered <- create_site_list(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out)
+  
+  # Add segment information from site_list_w_segs
+  site_list_filtered_w_segs <- left_join(site_list_filtered,site_list_w_segs[,c("site_id","subsegid","offset","segidnat")],by="site_id")
+  
+  # Save site list
+  write_csv(site_list_filtered_w_segs, file = fileout)
+  
+  return(fileout)
   
 }
 

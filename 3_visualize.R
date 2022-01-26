@@ -23,7 +23,7 @@ p3_targets_list <- list(
   # Create and save log file containing data availability summary
   tar_target(
     p3_sitelist_summary_csv,
-    summarize_site_list(p2_site_list_csv,p1_daily_data,p1_inst_data,fileout = "3_visualize/log/sitelist_summary.csv"),
+    summarize_site_list(p2_site_list_nontidal_csv,p1_daily_data,p1_inst_data,fileout = "3_visualize/log/sitelist_summary.csv"),
     format = "file"),
   
   # Create and save indicator file for NWIS daily data

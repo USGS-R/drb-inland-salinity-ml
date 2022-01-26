@@ -1,3 +1,4 @@
+
 agency_cd,site_no,station_nm,site_tp_cd,dec_lat_va,dec_long_va,coord_acy_cd,dec_coord_datum_cd,alt_va,alt_acy_va,alt_datum_cd,huc_cd,data_type_cd,parm_cd,stat_cd,ts_id,loc_web_ds,medium_grp_cd,parm_grp_cd,srs_id,access_cd,begin_date,end_date,count_nu,count_ts
 USGS,01434498,WEST BRANCH NEVERSINK RIVER AT CLARYVILLE NY,ST,41.92041667,-74.57438889,1,"NAD83",1615.82,0.09,"NAVD88",02040104,uv,00095,NA,259069,NA,wat,NA,1646694,0,2020-01-10,2022-01-02,723,4
 USGS,01434498,WEST BRANCH NEVERSINK RIVER AT CLARYVILLE NY,ST,41.92041667,-74.57438889,1,"NAD83",1615.82,0.09,"NAVD88",02040104,uv,00095,NA,262733,"Side Channel, [Side Channel]",wat,NA,1646694,0,2019-09-18,2022-01-02,837,4
