@@ -155,6 +155,16 @@ p1_targets_list <- list(
                      file_name = "baseflow_partial_model_pred_XX.zip",
                      out_dir="1_fetch/out"),
     format = "file"
+  ),
+  
+  # Unzip monthly natural baseflow file
+  tar_target(
+    p1_natural_baseflow_csv,
+    {
+      unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*.csv"))
+      },
+    format = "file"
   )
 
 )
