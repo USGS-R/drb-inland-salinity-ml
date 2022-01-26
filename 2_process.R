@@ -83,7 +83,6 @@ p2_targets_list <- list(
   ## Estimate LC proportion in PRMS catchment
   # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(p2_PRMS_lc_proportions,
-             proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area,
-                                   catchment_att = "CAT")
+             proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area)
              )
 )
