@@ -1,4 +1,4 @@
-pair_nhd_catchments <- function(prms_line,prms_hrus,min_area_overlap,xwalk_table,nhd_lines){
+pair_nhd_catchments <- function(prms_line,prms_hrus,min_area_overlap,xwalk_table,nhd_lines,drb_segs_spatial){
   #' @description This function finds the NHDPlusV2 catchments that overlap the HRU's for each PRMS segment in the DRB. 
   #' For the majority of DRB segments, this function finds the catchments that directly drain to a given segment 
   #' by navigating the NHDPlusV2 value-added attributes tables.  
@@ -14,6 +14,9 @@ pair_nhd_catchments <- function(prms_line,prms_hrus,min_area_overlap,xwalk_table
   #' @param xwalk_table data frame containing the NHDPlusV2/PRMS reach-to-segment crosswalk information
   #' @param nhd_lines sf object containing NHDPlusV2 flowlines for area of interest
   #' nhd_lines must contain variables COMID, PATHLENGTH, LENGTHKM, and HYDROSEQ
+  #' @param drb_segs_spatial character vector containing the identity of PRMS segments that require special handling
+  #' For these segments, the contributing NHD catchments will be determined using a spatial join with the 
+  #' PRMS HRU polygons
   #' 
   #' @examples pair_nhd_catchments(prms_line = p1_reaches_sf[p1_reaches_sf$subsegid == "3_1",],
   #'                               prms_hrus = p1_catchments_sf,
@@ -21,10 +24,6 @@ pair_nhd_catchments <- function(prms_line,prms_hrus,min_area_overlap,xwalk_table
   #'                               xwalk_table = p2_prms_nhdv2_xwalk,
   #'                               nhd_lines = p1_nhdv2reaches_sf)
   #'                               
-  
-  # Identify PRMS segments that require special handling
-  drb_segs_spatial <- c("31_1","135_1","233_1","236_1","244_1","249_1","332_1","354_1","355_1","358_1","396_1","593_1","1256_1","2137_1",
-                        "2138_1","2757_1","2758_1","2759_1","2765_1","2766_1","2767_1","2772_1","2797_1")
   
   if(prms_line$subsegid %in% drb_segs_spatial){
     # If PRMS segment requires special handling, find contributing NHDPlusV2 catchments through a spatial join with the corresponding PRMS HRU's
@@ -102,7 +101,7 @@ get_upstream_nhd_catchments <- function(nhd_lines,xwalk_table,prms_line){
   # Find all tributaries upstream of comid_down
   nhd_reach_down_UT <- nhdplusTools::get_UT(nhd_lines,xwalk_prms_line$comid_down)
   
-  # Find GF POI's (=respective comid_down's) that are upstream of the PRMS segment of interest
+  # Find Geospatial Fabric (GFv1) POI's (=respective comid_down's) that are upstream of the PRMS segment of interest
   ntw_POI <- xwalk_table %>%
     filter(PRMS_segid != prms_line$subsegid) %>%
     filter(comid_down %in% nhd_reach_down_UT) %>%
