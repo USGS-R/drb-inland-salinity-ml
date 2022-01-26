@@ -5,6 +5,7 @@ source("1_fetch/src/find_sites_multipleTS.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 source("1_fetch/src/get_gf.R")
+source("1_fetch/src/fetch_sb_data.R")
 
 p1_targets_list <- list(
   
@@ -145,6 +146,16 @@ p1_targets_list <- list(
     p1_vars_of_interest,
     read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
   ),
+  
+  # Download monthly natural baseflow for the DRB
+  # from Miller et al. 2021: https://www.sciencebase.gov/catalog/item/6023e628d34e31ed20c874e4
+  tar_target(
+    p1_natural_baseflow_zip,
+    download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
+                     file_name = "baseflow_partial_model_pred_XX.zip",
+                     out_dir="1_fetch/out"),
+    format = "file"
+  )
 
 )
   
