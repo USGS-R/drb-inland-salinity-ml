@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
   # place a space and backslash after the library name (no backslash if it's last in the list).
 
 #add additional R packages to install:
+#I'm not worried about specifying versions here because we specify the R subsubversion in FROM
+#and packages are specific to R subversions.
 RUN install2.r --error \
   dataRetrieval \
   nhdplusTools \
