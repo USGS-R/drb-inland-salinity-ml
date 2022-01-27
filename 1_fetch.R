@@ -113,7 +113,8 @@ p1_targets_list <- list(
     p1_NLCD_data_zipped, 
     download_NHD_data(sb_id = sb_ids_NLCD,
                            out_path = '1_fetch/out',
-                           downloaded_data_folder_name = NLCD_folders),
+                           downloaded_data_folder_name = NLCD_folders,
+                           output_data_parent_folder = 'NLCD_LC_Data'),
     format = 'file'),
   
   ## Unzip all NLCD downloaded datasets 
