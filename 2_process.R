@@ -5,6 +5,7 @@ source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
 source("2_process/src/pair_nhd_catchments.R")
 source("2_process/src/create_GFv1_NHDv2_xwalk.R")
+source("2_process/src/munge_natural_baseflow.R")
 
 p2_targets_list <- list(
   
@@ -62,6 +63,17 @@ p2_targets_list <- list(
     p2_site_list_nontidal_csv,
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
                               hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
-    format = "file")
+    format = "file"),
+  
+  # Return natural baseflow estimates for each PRMS segment
+  tar_target(
+    p2_natural_baseflow,
+    munge_natural_baseflow(baseflow_pred_files = p1_natural_baseflow_csv,
+                           segs_w_comids = p2_prms_nhdv2_xwalk %>% 
+                             select(PRMS_segid,comid_down) %>% 
+                             rename('COMID' = 'comid_down'),
+                           start_year = as.character(lubridate::year(earliest_date)),end_year = "2021")
+      
+  )
 
 )
