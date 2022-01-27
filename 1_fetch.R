@@ -146,18 +146,16 @@ p1_targets_list <- list(
                filter(Theme != 'Chemical')
              ),
   
+  # download NADP data
+  ## source: https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
   tar_target(p1_NADP_data_zipped, download_NHD_data(sb_id = NADP_sb_id, out_path = '1_fetch/out', downloaded_data_folder_name = 'NADP_Data'),
              format = file),
   
+  # unzip NADP data
   tar_target(p1_NADP_data_unzipped, unzip_NHD_data(p1_NADP_data_zipped),
-             format = file),
-  
-  tar_target(p1_NADP_data, do.call(lapply(list.files(p1_NADP_data_unzipped, full.names = T),
-                                                 function(x) read.csv(x, sep = ',') %>%
-                                                   select('COMID' | starts_with('CAT'))))
+             format = file)
   )
   
-  
-)
+
   
 

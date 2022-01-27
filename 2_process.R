@@ -70,9 +70,15 @@ p2_targets_list <- list(
   # target for NADP 
   tar_target(p2_NADP_Data, 
              lapply(list.files(path = p1_NADP_data_unzipped, full.names = T)[1:2], function(x) read.csv(x, sep = ',') %>%
-                    select('COMID' | starts_with('CAT')) %>%
+                    # select only cols starting with cat and COMID co
+                    select(COMID | starts_with('CAT')) %>%
+                    # take only COMIDS in drb  
+                    filter(COMID %in% p1_nhd2reaches_sf$COMID) %>% 
+                    # add year col to ID each dataset
                     mutate(Year = str_extract_all(x, "(\\d+)")) %>% 
+                    # remove year in col name to have all colnames consistent across datasets
                     setNames(gsub('_\\d{4}', '', names(.)))) %>% 
+               # rbind the list of cleaned dfs 
       do.call(rbind, .)
   )
 )
