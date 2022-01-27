@@ -108,6 +108,10 @@ p1_targets_list <- list(
       }
   ),
   
+  tar_target(
+    p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
+  ),
+  
   # Download NLCD datasets 
   tar_target(
     p1_NLCD_data_zipped, 

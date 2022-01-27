@@ -49,15 +49,15 @@ p2_targets_list <- list(
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf,
+    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf_valid,
                             min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
-  tar_target(p2_drb_comids, 
+  tar_target(p2_drb_comids_all_tribs, 
             p2_prms_nhdv2_xwalk %>%
-              tidyr::separate_rows(comid_all,sep=";") %>% 
-              rename(comid = comid_all)
+              tidyr::separate_rows(comid_seg,sep=";") %>% 
+              rename(comid = comid_seg)
   ),
   
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
@@ -65,7 +65,7 @@ p2_targets_list <- list(
   tar_target(p2_LC_w_catchment_area,
              AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM),
                        NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
-                       aoi_comids_df = p2_drb_comids)
+                       aoi_comids_df = p2_drb_comids_all_tribs)
              ),
   
   ## Estimate LC proportion in PRMS catchment
