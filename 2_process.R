@@ -3,6 +3,8 @@ source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
+source("2_process/src/pair_nhd_catchments.R")
+source("2_process/src/create_GFv1_NHDv2_xwalk.R")
 
 p2_targets_list <- list(
   
@@ -43,16 +45,11 @@ p2_targets_list <- list(
      p2_sites_w_segs,
      get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
   
-  # Pair PRMS segments with NHDPlusV2 reaches
+  # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    {
-      p1_reaches_sf %>%
-        split(.,.$subsegid) %>%
-        purrr::map(.,pair_nhd_reaches,nhd_lines=p1_nhdv2reaches_sf) %>%
-        purrr::map(.,summarize_paired_comids) %>%
-        bind_rows()
-    }
+    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf,
+                            min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
   # Filter discrete samples from sites thought to be influenced by tidal extent
