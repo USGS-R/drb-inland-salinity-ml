@@ -1,7 +1,8 @@
 ###-----------------------------------------------------------------------------
-download_NHD_NLCD_data <- function(sb_id,
+download_NHD_data <- function(sb_id,
                                  out_path = '1_fetch/out',
                                  downloaded_data_folder_name = NA,
+                                 output_data_parent_folder = NA,
                                  overwrite_download = T){
   
   #' @description download Land Cover data to the repo's fetch/src folder.
@@ -15,8 +16,10 @@ download_NHD_NLCD_data <- function(sb_id,
   #' @example  download_NHD_NLCD_data(sb_id = c('57855ddee4b0e02680bf37bf','570577fee4b0d4e2b7571d7b'), out_path = '1_fetch/out', downloaded_data_folder_name = c('LandCover_ripbuffer_id_11', 'pct_imperviousness_ripzone_id_11'))
   
   ## Create Land Cover Data sub folder in base directory
-    out_path <- file.path(out_path, "LandCover_Data")
+  if(!is.na(output_data_parent_folder)){
+    out_path <- file.path(out_path, output_data_parent_folder)
     dir.create(out_path, showWarnings = F)
+  }
   
   ## Check lengths of sb_id and downloaded_data_folder_name
   ## first, avoiding error when downloaded_data_folder_name = NA (checking len)
@@ -63,7 +66,7 @@ download_NHD_NLCD_data <- function(sb_id,
 
 ###-----------------------------------------------------------------------------
 
-unzip_NHD_NLCD_data <- function(downloaded_data_folder_path, 
+unzip_NHD_data <- function(downloaded_data_folder_path, 
                                 create_unzip_subfolder = T){
   
   #' @description Unzip downloaded Land Cover data 

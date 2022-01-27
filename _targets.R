@@ -90,6 +90,10 @@ NLCD_folders <- c(
    'NLCD_LandCover_50m_RipZone'
 )
 
+## NADP_sb_id var
+## https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
+NADP_sb_id <- '57e2ac2fe4b0908250045981'
+
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
 

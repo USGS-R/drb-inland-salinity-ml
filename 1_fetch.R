@@ -111,7 +111,7 @@ p1_targets_list <- list(
   # Download NLCD datasets 
   tar_target(
     p1_NLCD_data_zipped, 
-    download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
+    download_NHD_data(sb_id = sb_ids_NLCD,
                            out_path = '1_fetch/out',
                            downloaded_data_folder_name = NLCD_folders),
     format = 'file'),
@@ -119,7 +119,7 @@ p1_targets_list <- list(
   ## Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
   tar_target(p1_NLCD_data_unzipped, 
-             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+             unzip_NHD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
                                  create_unzip_subfolder = T),
              format = 'file'
   ),
@@ -141,9 +141,23 @@ p1_targets_list <- list(
 
   # variables from the Wieczorek dataset that are of interest 
   tar_target(p1_vars_of_interest,
-             read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
-             )
-
+             read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>% 
+               # Remove the NADP from this since we are loading that separately and no not need it in vars of interest
+               filter(Theme != 'Chemical')
+             ),
+  
+  tar_target(p1_NADP_data_zipped, download_NHD_data(sb_id = NADP_sb_id, out_path = '1_fetch/out', downloaded_data_folder_name = 'NADP_Data'),
+             format = file),
+  
+  tar_target(p1_NADP_data_unzipped, unzip_NHD_data(p1_NADP_data_zipped),
+             format = file),
+  
+  tar_target(p1_NADP_data, do.call(lapply(list.files(p1_NADP_data_unzipped, full.names = T),
+                                                 function(x) read.csv(x, sep = ',') %>%
+                                                   select('COMID' | starts_with('CAT'))))
+  )
+  
+  
 )
   
 
