@@ -109,17 +109,17 @@ summarize_paired_comids <- function(paired_nhd_df){
   #'
   #' @param paired_nhd_df data frame containing the paired NHDPlusV2 reaches associated with each PRMS segment,
   #' where each row represents one PRMS segment. comid_down contains the NHDPlusV2 reach at the downstream
-  #' end of the PRMS segment, whereas comid_all represents all of the contributing NHDPlusV2 reaches.
+  #' end of the PRMS segment, whereas comid_seg represents all of the contributing NHDPlusV2 reaches.
   
   comids_out <- paired_nhd_df %>%
     group_by(PRMS_segid) %>% 
-    # concatenate all paired NHDPlusV2 reaches into one column, comid_all
-    mutate(comid_all = paste(sort(unique(COMID)),collapse=";")) %>%
+    # concatenate all paired NHDPlusV2 reaches into one column, comid_seg
+    mutate(comid_seg = paste(sort(unique(COMID)),collapse=";")) %>%
     ungroup() %>%
     # identify most downstream NHDPlusV2 reach (comid_down) for each PRMS segment that does not represent a divergence
     filter(STREAMORDE==STREAMCALC) %>%
     filter(HYDROSEQ==min(HYDROSEQ)) %>% 
-    select(PRMS_segid,COMID,comid_all) %>%
+    select(PRMS_segid,COMID,comid_seg) %>%
     rename(comid_down = COMID)
   
   return(comids_out)

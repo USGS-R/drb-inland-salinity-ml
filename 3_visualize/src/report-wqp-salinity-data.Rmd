@@ -21,8 +21,7 @@ Cl_sites <- data_subset %>%
   summarize(Site = unique(MonitoringLocationIdentifier))
 
 # Load WQP data subsets for specific conductance 
-SC_path <- tar_read(p2_wqp_SC_csv)
-SC_data <- read_csv(SC_path,col_types = cols(ResultDetectionConditionText = col_character())) %>%
+SC_data <- tar_read(p2_wqp_SC_data) %>%
   mutate(site_no = if_else(grepl("USGS",MonitoringLocationIdentifier),substr(MonitoringLocationIdentifier,6,100),MonitoringLocationIdentifier))
 
 # Return SC sites
@@ -73,7 +72,7 @@ SC_data_nwis <- tar_read(p1_daily_data)
 
 
 # Load full site list:
-site_list_path <- tar_read(p2_site_list_csv)
+site_list_path <- tar_read(p2_site_list_nontidal_csv)
 site_list <- read_csv(site_list_path,show_col_types = FALSE)
 site_tally <- read_csv(tar_read(p3_sitelist_summary_csv),show_col_types = FALSE)
 unique_wqp_lat_lon <- SC_data %>% distinct(LatitudeMeasure,LongitudeMeasure) %>% summarize(n_sites=n()) 

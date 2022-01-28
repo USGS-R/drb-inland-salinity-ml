@@ -1,6 +1,7 @@
 source("1_fetch/src/get_nwis_sites.R")
 source("1_fetch/src/get_daily_nwis_data.R")
 source("1_fetch/src/get_inst_nwis_data.R")
+source("1_fetch/src/find_sites_multipleTS.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 source('1_fetch/src/download_tifs_annual.R')
@@ -49,14 +50,9 @@ p1_targets_list <- list(
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    p1_nwis_sites %>%
-      # retain "uv" sites that contain data records after user-specified {earliest_date}
-      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
-      # save record of sites with multiple time series
-      group_by(site_no) %>% mutate(count_ts = length(unique(ts_id))) %>%
-      filter(count_ts > 1) %>%
-      readr::write_csv(.,"3_visualize/log/summary_multiple_inst_ts.csv")),
-  
+    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,"3_visualize/log/summary_multiple_inst_ts.csv"),
+    format = "file"),
+
   # Download NWIS instantaneous data
   tar_target(
     p1_inst_data,
@@ -88,7 +84,7 @@ p1_targets_list <- list(
   # read shapefile into sf object
   tar_target(
     p1_reaches_sf,
-    st_read(p1_reaches_shp)
+    st_read(p1_reaches_shp,quiet=TRUE)
   ),
 
   # Download NHDPlusV2 flowlines for DRB
@@ -107,8 +103,10 @@ p1_targets_list <- list(
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn=p1_catchments_shp,layer="nhru") %>%
-      filter(hru_segment %in% p1_reaches_sf$subsegseg)}
+    {st_read(dsn=p1_catchments_shp,layer="nhru",quiet=TRUE) %>%
+        filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
+        suppressWarnings()
+      }
   ),
 
   # Download NLCD datasets 
@@ -132,9 +130,8 @@ p1_targets_list <- list(
   tar_target(p1_NLCD_data,
              read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
-                                 Comid_col = 'COMID')
+                                 Comid_col = 'COMID'),
              ),
-  
   ## Read in backcasted LC and subset by years
   ## 
   tar_target(p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting_LC,
@@ -151,7 +148,18 @@ p1_targets_list <- list(
                                        overwrite_file = T,
                                        year = NULL,
                                        name_unzip_folder = 'rd_salt'), 
-             format = 'file')
+             format = 'file'),
+
+  # csv of variables from the Wieczorek dataset that are of interest 
+  tar_target(p1_vars_of_interest_csv,
+             '1_fetch/in/NHDVarsOfInterest.csv',
+             format = 'file'
+             ),
+
+  # variables from the Wieczorek dataset that are of interest 
+  tar_target(p1_vars_of_interest,
+             read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
+             )
 )
   
 
