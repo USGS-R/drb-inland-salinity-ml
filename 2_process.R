@@ -48,7 +48,7 @@ p2_targets_list <- list(
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf,
+    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf_valid,
                             min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
@@ -62,20 +62,20 @@ p2_targets_list <- list(
     p2_site_list_nontidal_csv,
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
                               hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
-    format = "file"),
+    format = "file")
   
-  # target for NADP 
-  tar_target(p2_NADP_Data, 
+  # # target for NADP 
+  tar_target(p2_NADP_Data,
              lapply(list.files(path = p1_NADP_data_unzipped, full.names = T), function(x) read.csv(x, sep = ',') %>%
                     # select only cols starting with cat and COMID co
                     select(COMID | starts_with('CAT')) %>%
-                    # take only COMIDS in drb  
-                    filter(COMID %in% p1_nhd2reaches_sf$COMID) %>% 
+                    # take only COMIDS in drb
+                    filter(COMID %in% p2_prms_nhdv2_xwalk$comid_seg) %>%
                     # add year col to ID each dataset - using regex to extract the year between NADP_ and _CONUS
-                    mutate(Year = str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)")) %>% 
+                    mutate(Year = str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)")) %>%
                     # remove year in col name to have all colnames equal across datasets
-                    setNames(gsub('_\\d{4}', '', names(.)))) %>% 
-               # rbind the list of cleaned dfs 
+                    setNames(gsub('_\\d{4}', '', names(.)))) %>%
+               # rbind the list of cleaned dfs
       do.call(rbind, .)
   )
 )

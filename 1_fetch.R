@@ -107,6 +107,10 @@ p1_targets_list <- list(
         suppressWarnings()
       }
   ),
+  
+  tar_target(
+    p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
+  ),
 
   # Download NLCD datasets 
   tar_target(
@@ -144,17 +148,20 @@ p1_targets_list <- list(
   tar_target(p1_vars_of_interest,
              read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>% 
                # Remove the NADP from this since we are loading that separately and no not need it in vars of interest
-               filter(Theme != 'Chemical')
-             ),
+            filter(Theme != c('Chemical', 'Land Cover'))
+            ),
   
-  # download NADP data
-  ## source: https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
-  tar_target(p1_NADP_data_zipped, download_NHD_data(sb_id = NADP_sb_id, out_path = '1_fetch/out', downloaded_data_folder_name = 'NADP_Data'),
-             format = file),
-  
+  # # download NADP data
+  # ## source: https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
+  tar_target(p1_NADP_data_zipped,
+             download_NHD_data(sb_id = NADP_sb_id,
+                               out_path = '1_fetch/out',
+                               downloaded_data_folder_name = 'NADP_Data'),
+             format = 'file'),
+
   # unzip NADP data
   tar_target(p1_NADP_data_unzipped, unzip_NHD_data(p1_NADP_data_zipped),
-             format = file)
+             format = 'file')
   )
   
 
