@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
 
 #add additional R packages to install:
 #I'm not worried about specifying versions here because we specify the R subsubversion in FROM
-#and packages are specific to R subversions.
+#and packages are downloaded from MRAN for the date that the subsubversion was released. 
 RUN install2.r --error \
   dataRetrieval \
   nhdplusTools \
