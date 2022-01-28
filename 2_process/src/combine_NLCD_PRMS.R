@@ -25,36 +25,35 @@ AOI_LC_w_area <- function(NLCD_LC_df, area_att, aoi_comids_df){
   }
 
 ###----
-# Estimate proportion of LC coverage at PRMS catchment ('CAT') scale
+# Estimate prop of LC coverage at PRMS catchment ('CAT') scale
 proportion_lc_by_prms <- function(NLCD_LC_df_w_area){
 
 #' @description This function takes the consolidated df from AOI_LC_w_area() and calculated the proportion share of each LC class at the PRMS segid scale
 #' @param NLCD_LC_df_w_area df output of AOI_LC_w_area that has LC data per COMID & PRMS id and area in (km2)
-#' @param catchment_att Specifies the catchment attribute to subset to. Must be either 'CAT', "ACC", 'TOT'. Default = "CAT"
-#' @example proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area, catchment_att = "CAT")
+#' @example proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area)
 
   area_df <- NLCD_LC_df_w_area %>%
-    # multiply COMID area by the LC proportion for all the cols that start with 'CAT" or "ACC" or "TOT"
+    # multiply COMID area by the LC percent for all the cols that start with 'CAT" - unit km2
     mutate(across(starts_with('CAT'),~(.x/100)*AREASQKM,.names="AREA_{col}")) %>%
     # aggregate to PRMS scale through group_by()
     group_by(PRMS_segid) %>%
     # summarize group by at PRMS catchment scale
     summarize(
-      # Sum to calculate total area of the PRMS  catchment
+      # Sum to calculate total area of the PRMS  catchment - unit km2
       across(AREASQKM, sum, .names='AREASQKM_PRMS'),
       # Sum to calculate  LC area at the PRMS catchment scale per LC class
       across(starts_with(paste0('AREA_','CAT')), sum, .names = 'PRMS_{col}'),
-      # calculate proportional coverage of specified LC class in the entire PRMS catchment
+      # calculate proportion coverage of specified LC class in the entire PRMS catchment - proportion
       across(starts_with(paste0('PRMS_AREA_','CAT')), ~(.x/AREASQKM_PRMS),
-             .names="PERCENT_{col}"),
+             .names="PROP_{col}"),
       # round the new cols 
-      across(starts_with(c('PERCENT','PRMS')), round, 2), 
+      across(starts_with(c('PROP','PRMS')), round, 2), 
     .groups="drop")
   
-  ## Final cleaning - removing LC categories and PRMS_segis that are empty and the empty PRMS (287_1) 
+  ## Final cleaning - removing LC categories and PRMS_segid that are empty and the empty PRMS (287_1) 
   area_df <- area_df %>%
     filter(AREASQKM_PRMS > 0) %>%
-    select(-contains('NLCD11_12'))
+    select(-contains('NLCD11_12')) %>% select(-starts_with('PRMS_AREA_CAT'))
 
   return(area_df)
 
