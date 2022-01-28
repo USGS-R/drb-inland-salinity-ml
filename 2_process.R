@@ -48,7 +48,7 @@ p2_targets_list <- list(
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf,
+    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf_valid,
                             min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
