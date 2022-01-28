@@ -1,17 +1,19 @@
-munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mean","med","p10","p90"),start_year,end_year){
+munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mean","med","p10","p90"),start_year,end_year,fill_all_years=TRUE){
   #' 
   #' @description This function reads in the DRB monthly baseflow tables from Miller et al. 2021 (https://doi.org/10.5066/P9FZG7GZ)
   #' and outputs a data frame containing monthly baseflow estimates for each PRMS segment. The Miller et al. dataset spans
   #' years 1950-2015. If variable {end_year} is later than 2015, monthly values will be filled with long-term monthly averages from
-  #' {start_year} to 2015. 
+  #' {start_year} to 2015 unless stated otherwise (see param fill_all_years).
   #' 
   #' @param baseflow_pred_files file paths of unzipped monthly baseflow tables, including file extension
   #' @param segs_w_comids data frame containing the DRB PRMS segment ids and the comids of interest
-  #' segs_w_comids must contain variables PRMS_segid and comid
+  #' segs_w_comids must contain variables PRMS_segid and COMID
   #' @param vars columns from monthly baseflow tables to retain; can include one or all of "mean","med","p10",or "p90", 
   #' default is to retain all four columns
   #' @param start_year character string indicating the earliest year to return and to include in long-term average monthly baseflows
   #' @param end_year character string indicating the latest year to return and to include in long-term average monthly baseflows
+  #' @param fill_all_years logical; indicates whether to fill missing years with long-term monthly baseflow values if {end_year} > 2015; 
+  #' defaults to true
   #'                                           
   
   # Read in monthly baseflow files
@@ -24,7 +26,7 @@ munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mea
     # Read in monthly tables
     data <- read_csv(x,show_col_types = FALSE) %>%
       # reformat column names to include month
-      rename_with(.cols = p10.Pred:mean.Pred, function(x){paste0(x,"_", month)}) %>%
+      rename_with(.cols = p10.Pred:mean.Pred, function(y){paste0(y,"_", month)}) %>%
       # subset dates
       filter(Year >= start_year, Year <= end_year) %>%
       # retain only desired COMIDs
@@ -56,25 +58,31 @@ munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mea
     summarize(across(contains(vars),mean),
               .groups="drop")
   
-  # If {end_year} > last year in monthly baseflow table, fill in missing years using long-term monthly averages
-  years_to_fill <- seq(start_year,end_year)[which(seq(start_year,end_year) %in% unique(monthly_baseflow$Year) == "FALSE")]
-  
-  if(length(years_to_fill)>0){
-    monthly_baseflow_fill <- years_to_fill %>%
-      lapply(.,function(x){
-        monthly_baseflow_avg$Year <- x
-        return(monthly_baseflow_avg)
-        }) %>%
-      bind_rows() %>%
-      relocate("Year",.after="COMID")
+  # If {fill_all_years} = TRUE and {end_year} > last year in monthly baseflow table, fill in missing years using long-term monthly averages
+  if(fill_all_years == "TRUE"){
     
-    # Bind dynamic monthly natural baseflow with long-term monthly averages to fill missing years
-    monthly_baseflow_out <- bind_rows(monthly_baseflow,monthly_baseflow_fill) %>%
-      select(-COMID)
-    } else {
-      monthly_baseflow_out <- monthly_baseflow %>%
+    years_to_fill <- seq(start_year,end_year)[which(seq(start_year,end_year) %in% unique(monthly_baseflow$Year) == "FALSE")]
+    
+    if(length(years_to_fill)>0){
+      monthly_baseflow_fill <- years_to_fill %>%
+        lapply(.,function(x){
+          monthly_baseflow_avg$Year <- x
+          return(monthly_baseflow_avg)
+          }) %>%
+        bind_rows() %>%
+        relocate("Year",.after="COMID")
+      
+      # Bind dynamic monthly natural baseflow with long-term monthly averages to fill missing years
+      monthly_baseflow_out <- bind_rows(monthly_baseflow,monthly_baseflow_fill) %>%
         select(-COMID)
-    }
+      } else {
+        monthly_baseflow_out <- monthly_baseflow %>%
+          select(-COMID)
+      }
+  } else {
+    monthly_baseflow_out <- monthly_baseflow %>%
+      select(-COMID)
+  }
   
   return(monthly_baseflow_out)
   
