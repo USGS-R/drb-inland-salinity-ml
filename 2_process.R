@@ -57,8 +57,8 @@ p2_targets_list <- list(
   tar_target(p2_drb_comids_all_tribs, 
              p2_prms_nhdv2_xwalk %>%
                tidyr::separate_rows(comid_seg,sep=";") %>% 
-               rename(comid = comid_seg),
-             
+               rename(comid = comid_seg)
+  ),
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
@@ -77,7 +77,7 @@ p2_targets_list <- list(
                     # select only cols starting with cat and COMID co
                     select(COMID | starts_with('CAT')) %>%
                     # take only COMIDS in drb
-                    filter(COMID %in% p2_drb_comids_all_tribs$comid_seg) %>%
+                    filter(COMID %in% p2_drb_comids_all_tribs$comid) %>%
                     # add year col to ID each dataset - using regex to extract the year between NADP_ and _CONUS
                     mutate(Year = str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)")) %>%
                     # remove year in col name to have all colnames equal across datasets
