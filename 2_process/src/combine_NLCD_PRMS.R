@@ -33,14 +33,15 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area){
 #' @example proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area)
 
   area_df <- NLCD_LC_df_w_area %>%
+    mutate(AREASQKM_approx = case_when(AREASQKM == 0 ~ LENGTHKM^2, TRUE  ~ AREASQKM)) %>% 
     # multiply COMID area by the LC percent for all the cols that start with 'CAT" - unit km2
-    mutate(across(starts_with('CAT'),~(.x/100)*AREASQKM,.names="AREA_{col}")) %>%
+    mutate(across(starts_with('CAT'),~(.x/100)*AREASQKM_approx,.names="AREA_{col}")) %>%
     # aggregate to PRMS scale through group_by()
     group_by(PRMS_segid) %>%
     # summarize group by at PRMS catchment scale
     summarize(
       # Sum to calculate total area of the PRMS  catchment - unit km2
-      across(AREASQKM, sum, .names='AREASQKM_PRMS'),
+      across(AREASQKM_approx, sum, .names='AREASQKM_PRMS'),
       # Sum to calculate  LC area at the PRMS catchment scale per LC class
       across(starts_with(paste0('AREA_','CAT')), sum, .names = 'PRMS_{col}'),
       # calculate proportion coverage of specified LC class in the entire PRMS catchment - proportion
@@ -49,11 +50,6 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area){
       # round the new cols 
       across(starts_with(c('PROP','PRMS')), round, 2), 
     .groups="drop")
-  
-  ## Final cleaning - removing LC categories and PRMS_segid that are empty and the empty PRMS (287_1) 
-  area_df <- area_df %>%
-    filter(AREASQKM_PRMS > 0) %>%
-    select(-contains('NLCD11_12')) %>% select(-starts_with('PRMS_AREA_CAT'))
 
   return(area_df)
 

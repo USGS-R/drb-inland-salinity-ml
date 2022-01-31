@@ -57,27 +57,29 @@ p2_targets_list <- list(
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
   tar_target(p2_drb_comids_all_tribs, 
             p2_prms_nhdv2_xwalk %>%
-              tidyr::separate_rows(comid_seg,sep=";") %>% 
-              rename(comid = comid_seg)
+              tidyr::separate_rows(comid_cat,sep=";") %>% 
+              rename(comid = comid_cat)
   ),
   
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(p2_LC_w_catchment_area,
-             AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM),
+             AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM,LENGTHKM),
+                       ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_data
                        NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
                        aoi_comids_df = p2_drb_comids_all_tribs)
-             ),
+    ),
   
   ## Estimate LC proportion in PRMS catchment
   # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(p2_PRMS_lc_proportions,
              proportion_lc_by_prms(p2_LC_w_catchment_area)
-             ),
+    ),
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
-    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)),
+    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)
+    ),
   
   # Filter SC site list
   tar_target(
