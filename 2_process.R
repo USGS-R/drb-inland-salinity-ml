@@ -54,32 +54,37 @@ p2_targets_list <- list(
   
   
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
-  tar_target(p2_drb_comids_all_tribs, 
-             p2_prms_nhdv2_xwalk %>%
-               tidyr::separate_rows(comid_seg,sep=";") %>% 
-               rename(comid = comid_seg)
+  tar_target(
+    p2_drb_comids_all_tribs,
+    p2_prms_nhdv2_xwalk %>%
+      tidyr::separate_rows(comid_seg,sep=";") %>%
+      rename(comid = comid_seg)
   ),
+  
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
-    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)),
+    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)
+  ),
   
   # Filter SC site list
   tar_target(
     p2_site_list_nontidal_csv,
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
                               hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
-    format = "file"),
-  
+    format = "file"
+  ),
+
   # # target for NADP 
-  tar_target(p2_NADP_Data,
-             lapply(list.files(path = p1_NADP_data_unzipped, full.names = T), function(x) read.csv(x, sep = ',') %>%
+  tar_target(
+    p2_NADP_Data,
+    lapply(list.files(path = p1_NADP_data_unzipped, full.names = T), function(x) read.csv(x, sep = ',') %>%
                     # select only cols starting with cat and COMID co
                     select(COMID | starts_with('CAT')) %>%
                     # take only COMIDS in drb
                     filter(COMID %in% p2_drb_comids_all_tribs$comid) %>%
                     # add year col to ID each dataset - using regex to extract the year between NADP_ and _CONUS
-                    mutate(Year = str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)")) %>%
+                    mutate(Year = as.numeric(str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)"))) %>%
                     # remove year in col name to have all colnames equal across datasets
                     setNames(gsub('_\\d{4}', '', names(.)))) %>%
                # rbind the list of cleaned dfs
