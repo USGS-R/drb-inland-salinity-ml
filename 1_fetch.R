@@ -171,7 +171,7 @@ p1_targets_list <- list(
   tar_target(
     p1_NADP_data_unzipped,
     unzip_NHD_data(p1_NADP_data_zipped),
-    format = 'file')
+    format = 'file'
   ),
   
   # Download monthly natural baseflow for the DRB
@@ -193,6 +193,6 @@ p1_targets_list <- list(
       },
     format = "file"
   )
-
+)
   
 
