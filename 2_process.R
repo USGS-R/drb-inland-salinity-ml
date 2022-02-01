@@ -19,59 +19,39 @@ p2_targets_list <- list(
   # Subset discrete SC data from harmonized WQP
   tar_target(
     p2_wqp_SC_data,
-    subset_wqp_SC_data(p2_filtered_wqp_data)),
+    subset_wqp_SC_data(p2_filtered_wqp_data)
+  ),
   
   # Aggregate instantaneous SC data to hourly averages
   tar_target(
     p2_inst_data_hourly,
     aggregate_data_to_hourly(p1_inst_data,output_tz = "UTC"),
-    pattern = map(p1_inst_data)),
+    pattern = map(p1_inst_data)
+  ),
   
   # Aggregate instantaneous SC data to daily min/mean/max
   tar_target(
     p2_inst_data_daily,
-    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")),
+    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")
+  ),
   
   # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
   tar_target(
     p2_daily_combined,
-    bind_rows(p1_daily_data, p2_inst_data_daily)),
+    bind_rows(p1_daily_data, p2_inst_data_daily)
+  ),
   
   # Create a list of unique site id's with SC data  
   tar_target(
     p2_site_list,
     create_site_list(p2_wqp_SC_data,p1_nwis_sites,p1_daily_data,p1_inst_data,
-                     hucs=drb_huc8s,crs_out="NAD83")),
+                     hucs=drb_huc8s,crs_out="NAD83")
+  ),
 
   tar_target(
      p2_sites_w_segs,
-     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
-  
-  # # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
-  # tar_target(
-  #   p2_prms_nhdv2_xwalk,
-  #   {p1_reaches_sf %>%
-  #       split(.,.$subsegid) %>%
-  #       purrr::map(.,pair_nhd_reaches,nhd_lines=p1_nhdv2reaches_sf) %>%
-  #       purrr::map(.,summarize_paired_comids) %>%
-  #       bind_rows()
-  #   }
-  # ),
-  
-  tar_target(p2_LC_per_catchment, 
-             {lapply(p1_backcasted_LC[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
-                                          raster = x, categorical_raster = TRUE,
-                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
-             }
-             ),
-  
-  tar_target(p2_rdsalt_per_catchment,
-             {lapply(p1_rd_salt[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
-                                                                                raster = x, categorical_raster = FALSE,
-                                                                                raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
-             }
-             ),
-  
+     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
+  ),
   
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
@@ -80,12 +60,31 @@ p2_targets_list <- list(
                             min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
+  # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+  tar_target(
+    p2_LC_per_catchment, 
+    {lapply(p1_backcasted_LC[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+                                                                          raster = x, categorical_raster = TRUE,
+                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
+      }
+  ),
+  
+  # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
+  tar_target(
+    p2_rdsalt_per_catchment,
+    {lapply(p1_rd_salt[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+                                                                    raster = x, categorical_raster = FALSE,
+                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
+    }
+  ),
+  
+  
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
     subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)
     
-    ),
+  ),
   
   # Filter SC site list
   tar_target(
@@ -106,5 +105,4 @@ p2_targets_list <- list(
                            fill_all_years = TRUE)
       
   )
-
 )

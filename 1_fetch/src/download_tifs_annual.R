@@ -9,7 +9,7 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = T, ye
 #' @param name_unzip_folder name of subfolder for downloaded tif files. If NULL, name of zip file used as folder name
 #' @example download_tifs(sb_id = '605c987fd34ec5fa65eb6a74', filename = 'DRB_Historical_Reconstruction_1680-2010.zip', download_path = '1_fetch/out', overwrite_file = T, year = c('2000','1990','1980','1970','1960'))
 #' @example download_tifs('5b15a50ce4b092d9651e22b9', filename = '1992_2015.zip', download_path = '1_fetch/out', overwrite_file = T, name_unzip_folder = 'rd_salt')
-
+  
   path_to_downloaded_file <- file.path(download_path, filename)
   
   # Download specified file from sciencebase to 1_fetch/out folder
@@ -32,9 +32,9 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = T, ye
   # Find and delete years that are not needed - negate enables inverse matching
   if(!is.null(year)){
   years_collapsed <- year %>% lapply(function(x) paste0(x,'.tif')) %>% paste(collapse = '|')
-  Backcasting_files_del <- list.files(unzip_folder_path, full.names = T) %>% str_subset(years_collapsed, negate = T)
-  lapply(Backcasting_files_del, file.remove)
-  rm(path_to_downloaded_file, Backcasting_files_del)
+  files_del <- list.files(unzip_folder_path, full.names = T) %>% str_subset(years_collapsed, negate = T)
+  lapply(files_del, file.remove)
+  rm(path_to_downloaded_file, files_del)
   }
 
    return(list.files(unzip_folder_path, full.names = T))

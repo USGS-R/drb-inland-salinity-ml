@@ -112,6 +112,7 @@ p1_targets_list <- list(
       }
   ),
   
+  ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
   tar_target(
     p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
   ),
@@ -133,7 +134,7 @@ p1_targets_list <- list(
     format = 'file'
   ),
   
-  ## read in NLCD datasets and subet by comid in DRB
+  # Read in NLCD datasets and subet by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
   tar_target(
     p1_NLCD_data,
@@ -141,23 +142,31 @@ p1_targets_list <- list(
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                                  Comid_col = 'COMID')
   ),
-  ## Read in FORE-SCE backcasted LC and subset to years we want
+
+  # Downlaod FORE-SCE backcasted LC tif files and subset to years we want
+  ## Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
+  ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
+  
   tar_target(
-    p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting_LC,
-                                            filename = DRB_Historical_Reconstruction_NLCD_file,
+    p1_backcasted_LC, download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
+                                            filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                                             download_path = '1_fetch/out',
-                                            ## Select relevant years for model
+                                            ## Subset downloaded tifs to only process the  years that are relevant model
                                             year = c('2000','1990','1980','1970','1960'),
                                             name_unzip_folder = NULL
                                                       ), 
              format = 'file'
   ),
   
+  # Downlaod Road Salt accumulation data for the drb
+  ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
+  ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
-    p1_rd_salt, download_tifs(rd_salt,
-                              filename = rd_salt_zip_file,
+    p1_rd_salt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+                              filename = '1992_2015.zip',
                               download_path = '1_fetch/out',
                               overwrite_file = T,
+                              ## no year subsetting here as all years with rdsalt data are relevant here
                               year = NULL,
                               name_unzip_folder = 'rd_salt'), 
              format = 'file'
