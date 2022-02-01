@@ -111,6 +111,10 @@ p1_targets_list <- list(
         suppressWarnings()
       }
   ),
+  
+  tar_target(
+    p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
+  ),
 
   # Download NLCD datasets 
   tar_target(
@@ -131,28 +135,31 @@ p1_targets_list <- list(
   
   ## read in NLCD datasets and subet by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
-  tar_target(p1_NLCD_data,
-             read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
+  tar_target(
+    p1_NLCD_data,
+    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                                  Comid_col = 'COMID')
   ),
-  ## Read in backcasted LC and subset by years
-  ## 
-  tar_target(p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting_LC,
+  ## Read in FORE-SCE backcasted LC and subset to years we want
+  tar_target(
+    p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting_LC,
                                             filename = DRB_Historical_Reconstruction_NLCD_file,
                                             download_path = '1_fetch/out',
+                                            ## Select relevant years for model
                                             year = c('2000','1990','1980','1970','1960'),
                                             name_unzip_folder = NULL
                                                       ), 
              format = 'file'
   ),
   
-  tar_target(p1_rd_salt, download_tifs(rd_salt,
-                                       filename = rd_salt_zip_file,
-                                       download_path = '1_fetch/out',
-                                       overwrite_file = T,
-                                       year = NULL,
-                                       name_unzip_folder = 'rd_salt'), 
+  tar_target(
+    p1_rd_salt, download_tifs(rd_salt,
+                              filename = rd_salt_zip_file,
+                              download_path = '1_fetch/out',
+                              overwrite_file = T,
+                              year = NULL,
+                              name_unzip_folder = 'rd_salt'), 
              format = 'file'
   ),
 

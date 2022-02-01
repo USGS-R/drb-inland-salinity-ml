@@ -47,39 +47,45 @@ p2_targets_list <- list(
      p2_sites_w_segs,
      get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
   
-  # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
-  tar_target(
-    p2_prms_nhdv2_xwalk,
-    {p1_reaches_sf %>%
-        split(.,.$subsegid) %>%
-        purrr::map(.,pair_nhd_reaches,nhd_lines=p1_nhdv2reaches_sf) %>%
-        purrr::map(.,summarize_paired_comids) %>%
-        bind_rows()
-    }
-  ),
+  # # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
+  # tar_target(
+  #   p2_prms_nhdv2_xwalk,
+  #   {p1_reaches_sf %>%
+  #       split(.,.$subsegid) %>%
+  #       purrr::map(.,pair_nhd_reaches,nhd_lines=p1_nhdv2reaches_sf) %>%
+  #       purrr::map(.,summarize_paired_comids) %>%
+  #       bind_rows()
+  #   }
+  # ),
   
   tar_target(p2_LC_per_catchment, 
-             {lapply(p1_backcasted_LC[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
+             {lapply(p1_backcasted_LC[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                           raster = x, categorical_raster = TRUE,
                                           raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
              }
              ),
-
+  
   tar_target(p2_rdsalt_per_catchment,
-             {lapply(p1_rd_salt[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf,
+             {lapply(p1_rd_salt[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                                 raster = x, categorical_raster = FALSE,
                                                                                 raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
              }
-             ), 
-              
-    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf,
+             ),
+  
+  
+  # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
+  tar_target(
+    p2_prms_nhdv2_xwalk,          
+    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,prms_hrus = p1_catchments_sf_valid,
                             min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
-    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)),
+    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)
+    
+    ),
   
   # Filter SC site list
   tar_target(
