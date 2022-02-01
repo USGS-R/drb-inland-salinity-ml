@@ -6,6 +6,7 @@ source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
 source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
+source("1_fetch/src/fetch_sb_data.R")
 
 p1_targets_list <- list(
   
@@ -57,7 +58,8 @@ p1_targets_list <- list(
   tar_target(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_inst)),
+    pattern = map(p1_nwis_sites_inst)
+  ),
 
   tar_target(
     p1_reaches_shp_zip,
@@ -68,7 +70,8 @@ p1_targets_list <- list(
     # Because of that and since it's small (<700 Kb) I figured it'd be fine to
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
-    format = "file"),
+    format = "file"
+  ),
 
   # Unzip zipped shapefile
   tar_target(
@@ -96,14 +99,14 @@ p1_targets_list <- list(
   # Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
   tar_target(
     p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/",sb_id = '5362b683e4b0c409c6289bf6',sb_name = gf_data_select),
+    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', sb_name = gf_data_select),
     format = "file"
   ),
   
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn=p1_catchments_shp,layer="nhru",quiet=TRUE) %>%
+    {st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
         filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
         suppressWarnings()
       }
@@ -119,10 +122,11 @@ p1_targets_list <- list(
   
   ## Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
-  tar_target(p1_NLCD_data_unzipped, 
-             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
-                                 create_unzip_subfolder = T),
-             format = 'file'
+  tar_target(
+    p1_NLCD_data_unzipped, 
+    unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+                        create_unzip_subfolder = T),
+    format = 'file'
   ),
   
   ## read in NLCD datasets and subet by comid in DRB
@@ -130,8 +134,8 @@ p1_targets_list <- list(
   tar_target(p1_NLCD_data,
              read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
                                  Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
-                                 Comid_col = 'COMID'),
-             ),
+                                 Comid_col = 'COMID')
+  ),
   ## Read in backcasted LC and subset by years
   ## 
   tar_target(p1_backcasted_LC, download_tifs(sb_id = sb_id_backcasting_LC,
@@ -140,7 +144,8 @@ p1_targets_list <- list(
                                             year = c('2000','1990','1980','1970','1960'),
                                             name_unzip_folder = NULL
                                                       ), 
-             format = 'file'),
+             format = 'file'
+  ),
   
   tar_target(p1_rd_salt, download_tifs(rd_salt,
                                        filename = rd_salt_zip_file,
@@ -148,18 +153,41 @@ p1_targets_list <- list(
                                        overwrite_file = T,
                                        year = NULL,
                                        name_unzip_folder = 'rd_salt'), 
-             format = 'file'),
+             format = 'file'
+  ),
 
   # csv of variables from the Wieczorek dataset that are of interest 
-  tar_target(p1_vars_of_interest_csv,
-             '1_fetch/in/NHDVarsOfInterest.csv',
-             format = 'file'
-             ),
+  tar_target(
+    p1_vars_of_interest_csv,
+    '1_fetch/in/NHDVarsOfInterest.csv',
+    format = 'file'
+  ),
 
   # variables from the Wieczorek dataset that are of interest 
-  tar_target(p1_vars_of_interest,
-             read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
-             )
+  tar_target(
+    p1_vars_of_interest,
+    read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
+  ),
+  
+  # Download monthly natural baseflow for the DRB
+  # from Miller et al. 2021: https://www.sciencebase.gov/catalog/item/6023e628d34e31ed20c874e4
+  tar_target(
+    p1_natural_baseflow_zip,
+    download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
+                     file_name = "baseflow_partial_model_pred_XX.zip",
+                     out_dir="1_fetch/out"),
+    format = "file"
+  ),
+  
+  # Unzip monthly natural baseflow file
+  tar_target(
+    p1_natural_baseflow_csv,
+    {
+      unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*.csv"))
+      },
+    format = "file"
+  )
 )
   
 
