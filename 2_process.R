@@ -18,33 +18,39 @@ p2_targets_list <- list(
   # Subset discrete SC data from harmonized WQP
   tar_target(
     p2_wqp_SC_data,
-    subset_wqp_SC_data(p2_filtered_wqp_data)),
+    subset_wqp_SC_data(p2_filtered_wqp_data)
+  ),
   
   # Aggregate instantaneous SC data to hourly averages
   tar_target(
     p2_inst_data_hourly,
     aggregate_data_to_hourly(p1_inst_data,output_tz = "UTC"),
-    pattern = map(p1_inst_data)),
+    pattern = map(p1_inst_data)
+  ),
   
   # Aggregate instantaneous SC data to daily min/mean/max
   tar_target(
     p2_inst_data_daily,
-    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")),
+    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")
+  ),
   
   # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
   tar_target(
     p2_daily_combined,
-    bind_rows(p1_daily_data, p2_inst_data_daily)),
+    bind_rows(p1_daily_data, p2_inst_data_daily)
+  ),
   
   # Create a list of unique site id's with SC data  
   tar_target(
     p2_site_list,
     create_site_list(p2_wqp_SC_data,p1_nwis_sites,p1_daily_data,p1_inst_data,
-                     hucs=drb_huc8s,crs_out="NAD83")),
+                     hucs=drb_huc8s,crs_out="NAD83")
+  ),
 
   tar_target(
      p2_sites_w_segs,
-     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)),
+     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
+  ),
   
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
@@ -57,6 +63,7 @@ p2_targets_list <- list(
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
   tar_target(p2_drb_comids_all_tribs, 
             p2_prms_nhdv2_xwalk %>%
+              select(PRMS_segid, comid_cat) %>% 
               tidyr::separate_rows(comid_cat,sep=";") %>% 
               rename(comid = comid_cat)
   ),
@@ -68,24 +75,26 @@ p2_targets_list <- list(
                        ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_data
                        NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
                        aoi_comids_df = p2_drb_comids_all_tribs)
-    ),
+  ),
   
   ## Estimate LC proportion in PRMS catchment
   # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(p2_PRMS_lc_proportions,
              proportion_lc_by_prms(p2_LC_w_catchment_area)
-    ),
+  ),
+  
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
     subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)
-    ),
+  ),
   
   # Filter SC site list
   tar_target(
     p2_site_list_nontidal_csv,
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
                               hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
-    format = "file")
+    format = "file"
+  )
 
 )

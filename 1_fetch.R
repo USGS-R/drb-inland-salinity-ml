@@ -11,7 +11,8 @@ p1_targets_list <- list(
   # Load harmonized WQP data product for discrete samples
   tar_target(
     p1_wqp_data,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds")),
+    readRDS(file = "1_fetch/in/DRB.WQdata.rds")
+  ),
   
   # Identify NWIS sites with SC data 
   tar_target(
@@ -20,7 +21,7 @@ p1_targets_list <- list(
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     }
-    ),
+  ),
   
   # Subset daily NWIS sites
   tar_target(
@@ -29,13 +30,15 @@ p1_targets_list <- list(
       # retain "dv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
-      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)),
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
+  ),
   
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
     get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_daily)),
+    pattern = map(p1_nwis_sites_daily)
+  ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
   tar_target(
@@ -44,19 +47,22 @@ p1_targets_list <- list(
       # retain "uv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
-      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)),
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
+  ),
   
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
     find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,"3_visualize/log/summary_multiple_inst_ts.csv"),
-    format = "file"),
+    format = "file"
+  ),
 
   # Download NWIS instantaneous data
   tar_target(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_inst)),
+    pattern = map(p1_nwis_sites_inst)
+  ),
 
   tar_target(
     p1_reaches_shp_zip,
@@ -67,7 +73,8 @@ p1_targets_list <- list(
     # Because of that and since it's small (<700 Kb) I figured it'd be fine to
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
-    format = "file"),
+    format = "file"
+  ),
 
   # Unzip zipped shapefile
   tar_target(
@@ -92,7 +99,7 @@ p1_targets_list <- list(
     get_nhdv2_flowlines(drb_huc8s)),  
   
   # Download PRMS catchments for region 02
-  # Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
+  ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
   tar_target(
     p1_catchments_shp,
     get_gf(out_dir = "1_fetch/out/",sb_id = '5362b683e4b0c409c6289bf6',sb_name = gf_data_select),
@@ -108,6 +115,7 @@ p1_targets_list <- list(
       }
   ),
   
+  # Fix geometry issues tied to the PRMS catchments shapefile by creating 0 buffer
   tar_target(
     p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
   ),
@@ -120,34 +128,36 @@ p1_targets_list <- list(
                            downloaded_data_folder_name = NLCD_folders),
     format = 'file'),
   
-  ## Unzip all NLCD downloaded datasets 
+  # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
-  tar_target(p1_NLCD_data_unzipped, 
-             unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
-                                 create_unzip_subfolder = T),
+  tar_target(
+    p1_NLCD_data_unzipped, 
+    unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+                        create_unzip_subfolder = T),
              format = 'file'
   ),
   
-  ## read in NLCD datasets and subset by comid in DRB
+  # Read in NLCD datasets and subset by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
-  
-  tar_target(p1_NLCD_data,
-             read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
-                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
-                                 Comid_col = 'COMID')
-             ),
+  tar_target(
+    p1_NLCD_data,
+    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped,
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID),
+                        Comid_col = 'COMID')
+  ),
 
+  # Csv of variables from the Wieczorek dataset that are of interest 
+  tar_target(
+    p1_vars_of_interest_csv,
+    '1_fetch/in/NHDVarsOfInterest.csv',
+    format = 'file'
+  ),
 
-  # csv of variables from the Wieczorek dataset that are of interest 
-  tar_target(p1_vars_of_interest_csv,
-             '1_fetch/in/NHDVarsOfInterest.csv',
-             format = 'file'
-             ),
-
-  # variables from the Wieczorek dataset that are of interest 
-  tar_target(p1_vars_of_interest,
-             read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
-             )
+  # Bariables from the Wieczorek dataset that are of interest 
+  tar_target(
+    p1_vars_of_interest,
+    read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
+  )
 
 )
   
