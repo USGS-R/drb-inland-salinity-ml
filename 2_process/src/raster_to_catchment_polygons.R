@@ -58,7 +58,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
     #lapply(table) # to get frequency of each categorical value
     lapply(FUN = function(x) {table(x)/sum(table(x))})
   end_time <- Sys.time()
-  message(end_time - start_time)
+  message('raster extract processing time:', end_time - start_time)
   
   ## handling unequal length of classes
   final_raster_table <- rbind.fill.list(raster_per_polygon) %>%

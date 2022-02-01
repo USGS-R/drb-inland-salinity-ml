@@ -62,8 +62,8 @@ p2_targets_list <- list(
   
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
-    p2_LC_per_catchment, 
-    {lapply(p1_backcasted_LC[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+    p2_FORESCE_LC_per_catchment, 
+    {lapply(p1_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                           raster = x, categorical_raster = TRUE,
                                                                           raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
       }
@@ -72,7 +72,7 @@ p2_targets_list <- list(
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_rdsalt_per_catchment,
-    {lapply(p1_rd_salt[1], function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+    {lapply(p1_rd_salt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                     raster = x, categorical_raster = FALSE,
                                                                     raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
     }
