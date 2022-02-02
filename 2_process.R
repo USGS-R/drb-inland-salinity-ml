@@ -88,7 +88,7 @@ p2_targets_list <- list(
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
-    {lapply(p1_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                           raster = x, categorical_raster = TRUE,
                                                                           raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
       }

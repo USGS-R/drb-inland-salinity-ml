@@ -153,7 +153,7 @@ p1_targets_list <- list(
   ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
   
   tar_target(
-    p1_backcasted_LC, download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
+    p1_FORESCE_backcasted_LC, download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
                                             filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                                             download_path = '1_fetch/out',
                                             ## Subset downloaded tifs to only process the  years that are relevant model
