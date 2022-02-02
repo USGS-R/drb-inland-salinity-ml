@@ -123,6 +123,28 @@ p1_targets_list <- list(
     p1_catchments_sf_valid, 
     st_buffer(p1_catchments_sf,0)
   ),
+  
+  # Download DRB network attributes
+  # Retrieved from: https://www.sciencebase.gov/catalog/item/5f6a289982ce38aaa2449135
+  tar_target(
+    p1_prms_reach_attr_csvs,
+    download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
+                     file_name = c("reach_attributes_drb.csv","distance_matrix_drb.csv"),
+                     out_dir="1_fetch/out"),
+    format="file"
+  ),
+  
+  # Read DRB reach attributes
+  tar_target(
+    p1_prms_reach_attr,
+    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+  ),
+  
+  # Read DRB network adjacency matrix
+  tar_target(
+    p1_ntw_adj_matrix,
+    read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+  ),
 
   # Download NLCD datasets 
   tar_target(
