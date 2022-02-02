@@ -3,6 +3,7 @@ source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/pair_nhd_reaches.R")
+source("2_process/src/raster_to_catchment_polygons.R")
 source("2_process/src/combine_NLCD_PRMS.R")
 source("2_process/src/pair_nhd_catchments.R")
 source("2_process/src/create_GFv1_NHDv2_xwalk.R")
@@ -62,20 +63,22 @@ p2_targets_list <- list(
   ),
   
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
-  tar_target(p2_drb_comids_all_tribs, 
-            p2_prms_nhdv2_xwalk %>%
-              select(PRMS_segid, comid_cat) %>% 
-              tidyr::separate_rows(comid_cat,sep=";") %>% 
-              rename(comid = comid_cat)
+  tar_target(
+    p2_drb_comids_all_tribs, 
+    p2_prms_nhdv2_xwalk %>%
+      select(PRMS_segid, comid_cat) %>% 
+      tidyr::separate_rows(comid_cat,sep=";") %>% 
+      rename(comid = comid_cat)
   ),
   
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
-  tar_target(p2_LC_w_catchment_area,
-             AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM,LENGTHKM),
-                       ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_data
-                       NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
-                       aoi_comids_df = p2_drb_comids_all_tribs)
+  tar_target(
+    p2_LC_w_catchment_area,
+    AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM,LENGTHKM),
+                  ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_data
+                  NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
+                  aoi_comids_df = p2_drb_comids_all_tribs)
   ),
   
   ## Estimate LC proportion in PRMS catchment
@@ -84,6 +87,25 @@ p2_targets_list <- list(
              proportion_lc_by_prms(p2_LC_w_catchment_area)
   ),
   
+  # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+  tar_target(
+    p2_FORESCE_LC_per_catchment, 
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+                                                                          raster = x, categorical_raster = TRUE,
+                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
+      }
+  ),
+  
+  # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
+  tar_target(
+    p2_rdsalt_per_catchment,
+    {lapply(p1_rd_salt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+                                                                    raster = x, categorical_raster = FALSE,
+                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
+    }
+  ),
+
+
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
@@ -109,5 +131,4 @@ p2_targets_list <- list(
                            fill_all_years = TRUE)
       
   )
-
 )
