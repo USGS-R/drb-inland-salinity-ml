@@ -1,16 +1,16 @@
 
-#' @description Function that is variation to plyr::rbind.fill(), rbinds a list of tables and fill missing cols with NA 
-#' @param x list of tables
+#' @description Function that is variation to plyr::rbind.fill(), rbinds a list of tables and fill missing cols with NA. Taken from: https://stackoverflow.com/questions/17308551/do-callrbind-list-for-uneven-number-of-column
+#' @param x list of lists tables
 
 rbind.fill.list <- function(x) {
   # loop through element tables in list and extracts cols 
   colnames <- sapply(x, names)
   # get all unique colnames as a unique list 
   unique_colnames <- unique(unlist(colnames))
-  # Extract length of all elements input list x and apply to empty list with correc length
+  # Extract length of all table lsit elements in input list x and apply to empty list with correct length
   len <- sapply(x, length)
   output_list <- vector("list", length(len))
-  # Create output list of lists with non-na values in correct col
+  # Create output list of lists where all  values are position in correct col
   for (i in seq_along(len)) {
     output_list[[i]] <- unname(x[[i]])[match(unique_colnames, colnames[[i]])]
   }
@@ -26,11 +26,11 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   #' @description Function extracts raster pixel per catchment polygon and calculated proportion of raster class per total
   #'
   #' @param polygon_sf sf object of polygon(s) in aoi
-  #' @param raster path to '.tif' file or raster object of SpatRaster object  
+  #' @param raster path to '.tif' file or raster object or SpatRaster object  
   #' @param categorical_raster logical. If categorical raster, TRUE
   #' @param raster_summary_fun for continuous raster, function to summarize the data by geometry. kept NULL if categorical_raster = TRUE
-  #' @param new_raster_prefix for categorical raster, prefix added to colnames to label raster classes/values
-  #' @value A data frame the same columns as the polygon_sf spatial dataframe with additional columns of the Land Cover classes
+  #' @param new_raster_prefix prefix added to colnames to label raster classes/values
+  #' @value A dataframe with the same columns as the polygon_sf spatial dataframe (except geometry col) with additional columns of the Land Cover classes
   #' @example land cover raster ex: raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid, raster = p1_FORESCE_backcasted_LC, categorical_raster = TRUE, new_cols_prefix = 'lc_)
   #' @example cont. raster ex: raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid, raster = p1_rod_salt, categorical_raster = FALSE, raster_summary_fun = sum, new_cols_prefix = 'cont_raster')
   
@@ -60,7 +60,9 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   ## crop raster to catchment_sf 
   raster_crop <- terra::crop(raster, vector)
   
+  ## Extract and summarize descrete raster values in polygons shapefile 
   if(categorical_raster == TRUE){
+  message('extracting from categorical raster')
   ## Extract rasters pixels in each polygon
   start_time <- Sys.time()
   raster_per_polygon <- terra::extract(raster_crop, vector, list = T) %>% 
@@ -75,9 +77,9 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
     mutate(ID = row_number())
   
   }
-  
+  ## Extract and summarize non-descrete raster values in polygons shapefile  
   else{
-    message('extracting cont raster')
+    message('extracting continuous raster')
     raster_per_polygon <- terra::extract(raster_crop, vector, fun = raster_summary_fun)
     final_raster_table <- data.frame(raster_per_polygon)
     col_len <- length(names(final_raster_table))
