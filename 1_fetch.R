@@ -98,7 +98,8 @@ p1_targets_list <- list(
   # Download NHDPlusV2 flowlines for DRB
   tar_target(
     p1_nhdv2reaches_sf,
-    get_nhdv2_flowlines(drb_huc8s)),  
+    get_nhdv2_flowlines(drb_huc8s)
+  ),  
   
   # Download PRMS catchments for region 02
   ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
@@ -125,17 +126,19 @@ p1_targets_list <- list(
   # Download NLCD datasets 
   tar_target(
     p1_NLCD_data_zipped, 
-    download_NHD_NLCD_data(sb_id = sb_ids_NLCD,
+    download_NHD_data(sb_id = sb_ids_NLCD,
                            out_path = '1_fetch/out',
-                           downloaded_data_folder_name = NLCD_folders),
-    format = 'file'),
+                           downloaded_data_folder_name = NLCD_folders,
+                           output_data_parent_folder = 'NLCD_LC_Data'),
+    format = 'file'
+  ),
   
   # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
   tar_target(
-    p1_NLCD_data_unzipped, 
-    unzip_NHD_NLCD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
-                        create_unzip_subfolder = T),
+    p1_NLCD_data_unzipped,
+    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+                   create_unzip_subfolder = T),
     format = 'file'
   ),
   
@@ -187,7 +190,26 @@ p1_targets_list <- list(
   # variables from the Wieczorek dataset that are of interest 
   tar_target(
     p1_vars_of_interest,
-    read_csv(p1_vars_of_interest_csv, show_col_types = FALSE)
+    read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>%
+      # Remove the NADP from this since we are loading that separately and no not need it in vars of interest
+      filter(!Theme %in% c('Chemical', 'Land Cover'))
+  ),
+  
+  # # download NADP data
+  # ## source: https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
+  tar_target(
+    p1_NADP_data_zipped,
+    download_NHD_data(sb_id = NADP_sb_id,
+                      out_path = '1_fetch/out',
+                      downloaded_data_folder_name = 'NADP_Data'),
+    format = 'file'
+  ),
+
+  # unzip NADP data
+  tar_target(
+    p1_NADP_data_unzipped,
+    unzip_NHD_data(p1_NADP_data_zipped),
+    format = 'file'
   ),
   
   # Download monthly natural baseflow for the DRB
