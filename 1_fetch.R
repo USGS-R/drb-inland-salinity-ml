@@ -4,6 +4,7 @@ source("1_fetch/src/get_inst_nwis_data.R")
 source("1_fetch/src/find_sites_multipleTS.R")
 source('1_fetch/src/get_nlcd_LC.R')
 source("1_fetch/src/get_nhdplusv2.R")
+source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
 
@@ -104,24 +105,24 @@ p1_targets_list <- list(
   ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
   tar_target(
     p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/",sb_id = '5362b683e4b0c409c6289bf6',sb_name = gf_data_select),
+    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', sb_name = gf_data_select),
     format = "file"
   ),
   
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn=p1_catchments_shp,layer="nhru",quiet=TRUE) %>%
+    {st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
         filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
         suppressWarnings()
       }
   ),
   
-  # Fix geometry issues tied to the PRMS catchments shapefile by creating 0 buffer
+  ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
   tar_target(
     p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
   ),
-  
+
   # Download NLCD datasets 
   tar_target(
     p1_NLCD_data_zipped, 
@@ -141,13 +142,42 @@ p1_targets_list <- list(
     format = 'file'
   ),
   
-  # Read in NLCD datasets and subset by comid in DRB
+  # Read in NLCD datasets and subet by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
   tar_target(
     p1_NLCD_data,
-    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped,
-                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID),
-                        Comid_col = 'COMID')
+    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
+                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
+                                 Comid_col = 'COMID')
+  ),
+
+  # Downlaod FORE-SCE backcasted LC tif files and subset to years we want
+  ## Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
+  ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
+  
+  tar_target(
+    p1_FORESCE_backcasted_LC, download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
+                                            filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
+                                            download_path = '1_fetch/out',
+                                            ## Subset downloaded tifs to only process the  years that are relevant model
+                                            year = c('2000','1990','1980','1970','1960'),
+                                            name_unzip_folder = NULL
+                                                      ), 
+             format = 'file'
+  ),
+  
+  # Downlaod Road Salt accumulation data for the drb
+  ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
+  ## Note - only zip file named 1992_2015.zip will be extracted
+  tar_target(
+    p1_rd_salt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+                              filename = '1992_2015.zip',
+                              download_path = '1_fetch/out',
+                              overwrite_file = T,
+                              ## no year subsetting here as all years with rdsalt data are relevant here
+                              year = NULL,
+                              name_unzip_folder = 'rd_salt'), 
+             format = 'file'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
