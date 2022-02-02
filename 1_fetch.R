@@ -192,7 +192,7 @@ p1_targets_list <- list(
     p1_vars_of_interest,
     read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>%
       # Remove the NADP from this since we are loading that separately and no not need it in vars of interest
-      filter(Theme != c('Chemical', 'Land Cover'))
+      filter(!Theme %in% c('Chemical', 'Land Cover'))
   ),
   
   # # download NADP data
