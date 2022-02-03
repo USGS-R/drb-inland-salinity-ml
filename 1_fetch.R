@@ -120,16 +120,52 @@ p1_targets_list <- list(
   
   ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
   tar_target(
-    p1_catchments_sf_valid, st_buffer(p1_catchments_sf,0)
+    p1_catchments_sf_valid, 
+    st_buffer(p1_catchments_sf,0)
+  ),
+  
+  # Download DRB network attributes
+  # Retrieved from: https://www.sciencebase.gov/catalog/item/5f6a289982ce38aaa2449135
+  tar_target(
+    p1_prms_reach_attr_csvs,
+    download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
+                     file_name = c("reach_attributes_drb.csv","distance_matrix_drb.csv","sntemp_inputs_outputs_drb.zip"),
+                     out_dir="1_fetch/out"),
+    format="file"
+  ),
+  
+  # Read DRB reach attributes
+  tar_target(
+    p1_prms_reach_attr,
+    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+  ),
+  
+  # Read DRB network adjacency matrix
+  tar_target(
+    p1_ntw_adj_matrix,
+    read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+  ),
+  
+  # Unzip DRB SNTemp Inputs-Outputs from temperature project
+  tar_target(
+    p1_sntemp_inputs_outputs_csv,
+    unzip(zipfile = grep("sntemp_inputs_outputs",p1_prms_reach_attr_csvs,value=TRUE), exdir = "1_fetch/out", overwrite = TRUE),
+    format = "file"
+  ),
+  
+  # Read DRB SNTemp Inputs-Outputs from temperature project
+  tar_target(
+    p1_sntemp_inputs_outputs,
+    read_csv(p1_sntemp_inputs_outputs_csv,show_col_types = FALSE)
   ),
 
   # Download NLCD datasets 
   tar_target(
     p1_NLCD_data_zipped, 
     download_NHD_data(sb_id = sb_ids_NLCD,
-                           out_path = '1_fetch/out',
-                           downloaded_data_folder_name = NLCD_folders,
-                           output_data_parent_folder = 'NLCD_LC_Data'),
+                      out_path = '1_fetch/out',
+                      downloaded_data_folder_name = NLCD_folders,
+                      output_data_parent_folder = 'NLCD_LC_Data'),
     format = 'file'
   ),
   
@@ -147,37 +183,37 @@ p1_targets_list <- list(
   tar_target(
     p1_NLCD_data,
     read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
-                                 Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
-                                 Comid_col = 'COMID')
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
+                        Comid_col = 'COMID')
   ),
 
   # Downlaod FORE-SCE backcasted LC tif files and subset to years we want
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
   ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
-  
   tar_target(
-    p1_FORESCE_backcasted_LC, download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
-                                            filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
-                                            download_path = '1_fetch/out',
-                                            ## Subset downloaded tifs to only process the  years that are relevant model
-                                            year = c('2000','1990','1980','1970','1960'),
-                                            name_unzip_folder = NULL
-                                                      ), 
-             format = 'file'
+    p1_FORESCE_backcasted_LC, 
+    download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
+                  filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
+                  download_path = '1_fetch/out',
+                  ## Subset downloaded tifs to only process the  years that are relevant model
+                  year = c('2000','1990','1980','1970','1960'),
+                  name_unzip_folder = NULL), 
+    format = 'file'
   ),
   
   # Downlaod Road Salt accumulation data for the drb
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
-    p1_rd_salt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
-                              filename = '1992_2015.zip',
-                              download_path = '1_fetch/out',
-                              overwrite_file = T,
-                              ## no year subsetting here as all years with rdsalt data are relevant here
-                              year = NULL,
-                              name_unzip_folder = 'rd_salt'), 
-             format = 'file'
+    p1_rd_salt, 
+    download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+                  filename = '1992_2015.zip',
+                  download_path = '1_fetch/out',
+                  overwrite_file = T,
+                  ## no year subsetting here as all years with rdsalt data are relevant here
+                  year = NULL,
+                  name_unzip_folder = 'rd_salt'), 
+    format = 'file'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
@@ -227,7 +263,7 @@ p1_targets_list <- list(
     p1_natural_baseflow_csv,
     {
       unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*.csv"))
+      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
       },
     format = "file"
   )
