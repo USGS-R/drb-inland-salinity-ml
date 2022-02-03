@@ -129,7 +129,7 @@ p1_targets_list <- list(
   tar_target(
     p1_prms_reach_attr_csvs,
     download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
-                     file_name = c("reach_attributes_drb.csv","distance_matrix_drb.csv"),
+                     file_name = c("reach_attributes_drb.csv","distance_matrix_drb.csv","sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
     format="file"
   ),
@@ -144,6 +144,19 @@ p1_targets_list <- list(
   tar_target(
     p1_ntw_adj_matrix,
     read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+  ),
+  
+  # Unzip DRB SNTemp Inputs-Outputs from temperature project
+  tar_target(
+    p1_sntemp_inputs_outputs_csv,
+    unzip(zipfile = grep("sntemp_inputs_outputs",p1_prms_reach_attr_csvs,value=TRUE), exdir = "1_fetch/out", overwrite = TRUE),
+    format = "file"
+  ),
+  
+  # Read DRB SNTemp Inputs-Outputs from temperature project
+  tar_target(
+    p1_sntemp_inputs_outputs,
+    read_csv(p1_sntemp_inputs_outputs_csv,show_col_types = FALSE)
   ),
 
   # Download NLCD datasets 
