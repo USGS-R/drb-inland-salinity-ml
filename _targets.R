@@ -4,7 +4,7 @@ options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
-                            'purrr', 'sbtools')) 
+                            'purrr', 'sbtools', 'terra')) 
 
 source("1_fetch.R")
 source("2_process.R")
@@ -93,6 +93,10 @@ NLCD_folders <- c(
    'NLCD_LandCover_2011',
    'NLCD_LandCover_50m_RipZone'
 )
+
+## NADP_sb_id var
+## https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
+NADP_sb_id <- '57e2ac2fe4b0908250045981'
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
