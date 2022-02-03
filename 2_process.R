@@ -105,6 +105,14 @@ p2_targets_list <- list(
     }
   ),
 
+  tar_target(
+    p2_rdsalt_per_catchment_allyrs,
+    Reduce(function(...) merge(..., by = c("POI_ID", "hru_id", "hru_segment_orig",
+                                           "hru_segment_comment", "hru_x", "hru_y", "hru_lat", "hru_area", "hru_segment",
+                                           "region", "Shape_Length", "Shape_Area", "ID")), p2_rdsalt_per_catchment) %>% 
+      mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX'))), na.rm = T) %>% 
+      mutate(rd_salt_prop_drb = rd_salt_all_years/sum(rd_salt_all_years))
+  ),
 
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
