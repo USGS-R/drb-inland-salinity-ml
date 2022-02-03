@@ -17,14 +17,20 @@ RUN apt-get update && apt-get install -y \
 
 #add additional R packages to install:
 #I'm not worried about specifying versions here because we specify the R subsubversion in FROM
-#and packages are downloaded from MRAN for the date that the subsubversion was released. 
-RUN install2.r --error \
+#and packages are downloaded from MRAN for the date that the subsubversion was released.
+#The snapshot date is used here just in case. 
+RUN install2.r --error -r https://cran.microsoft.com/snapshot/2022-01-31 \
   dataRetrieval \
+  lubridate \
   nhdplusTools \
+  purrr \
   sbtools \
   scico \
+  sf \
   targets \
   tarchetypes \
+  terra \
+  tidyverse \
   visNetwork 
   # Add packages in alphanumeric order
   # place a space and backslash after the package name (no backslash if it's last in the list).
