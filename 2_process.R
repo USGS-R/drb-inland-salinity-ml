@@ -104,14 +104,20 @@ p2_targets_list <- list(
                                                                     raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
     }
   ),
-
+  
+  # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
+    # Reduce can iterate through elements in a list 1 after another. Merged by all cols here because otherwise merge causes duplciations
     Reduce(function(...) merge(..., by = c("POI_ID", "hru_id", "hru_segment_orig",
                                            "hru_segment_comment", "hru_x", "hru_y", "hru_lat", "hru_area", "hru_segment",
                                            "region", "Shape_Length", "Shape_Area", "ID")), p2_rdsalt_per_catchment) %>% 
+      # Calculate total salt accumulation across all years 
       mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = T)) %>% 
-      mutate(rd_salt_all_years_prop_drb = round((rd_salt_all_years/sum(rd_salt_all_years)),4))
+      # Calculate prop of catchment rd salt acc across entire basin
+      mutate(rd_salt_all_years_prop_drb = round((rd_salt_all_years/sum(rd_salt_all_years)),4)) %>% 
+      # Remove annual rd_saltXYr cols
+      select(-starts_with('rd_sltX')) %>% arrange(desc(rd_salt_all_years_prop_drb))
   ),
 
   # Filter discrete samples from sites thought to be influenced by tidal extent
