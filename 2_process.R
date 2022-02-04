@@ -74,7 +74,7 @@ p2_targets_list <- list(
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(
-    p2_LC_w_catchment_area,
+    p2_NLCD_LC_w_catchment_area,
     AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM,LENGTHKM),
                   ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_data
                   NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
@@ -83,8 +83,8 @@ p2_targets_list <- list(
   
   ## Estimate LC proportion in PRMS catchment
   # returns df with proportion LC in PRMS catchment in our AOI
-  tar_target(p2_PRMS_lc_proportions,
-             proportion_lc_by_prms(p2_LC_w_catchment_area)
+  tar_target(p2_PRMS_NLCD_lc_proportions,
+             proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area)
   ),
   
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
@@ -147,7 +147,24 @@ p2_targets_list <- list(
                     setNames(gsub('_\\d{4}', '', names(.)))) %>%
                # rbind the list of cleaned dfs
       do.call(rbind, .)
+  ), 
+  
+  tar_target(p2_FORESCE_LC_per_catchment_reclass,
+  {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
+                               reclassify_table_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
+                               reclassify_table_lc_col = 'FORESCE_value', reclassify_table_reclass_col = 'Reclassify_match',
+                               sep = ',',
+                               pivot_longer_contains = 'lcClass'))
+  }),
+  
+  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
+             reclassify_land_cover(land_cover_df = p2_PRMS_NLCD_lc_proportions,
+                                reclassify_table_path = '1_fetch/in/Legend_NLCD_land_Cover.csv', 
+                                reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
+                                sep = ',',
+                                pivot_longer_contains = 'NLCD11')
   )
+
 )
 
 
