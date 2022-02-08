@@ -99,7 +99,7 @@ p2_targets_list <- list(
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_rdsalt_per_catchment,
-    {lapply(p1_rd_salt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+    {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                     raster = x, categorical_raster = FALSE,
                                                                     raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
     }
@@ -122,7 +122,7 @@ p2_targets_list <- list(
       # Calculate total salt accumulation across all years 
       mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = T)) %>% 
       # Calculate prop of catchment rd salt acc across entire basin
-      mutate(rd_salt_all_years_prop_drb = (rd_salt_all_years/sum(rd_salt_all_years))) %>% 
+      mutate(rd_salt_all_years_prop_drb = round((rd_salt_all_years/sum(rd_salt_all_years)),8)) %>% 
       # Remove annual rd_saltXYr cols
       select(-starts_with('rd_sltX')) %>% arrange(desc(rd_salt_all_years_prop_drb))
   ),
