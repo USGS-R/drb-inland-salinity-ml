@@ -80,7 +80,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   ## Extract and summarize non-descrete raster values in polygons shapefile  
   else{
     message('extracting continuous raster')
-    raster_per_polygon <- terra::extract(raster_crop, vector, fun = raster_summary_fun)
+    raster_per_polygon <- terra::extract(raster_crop, vector, fun = raster_summary_fun, na.rm = T)
     final_raster_table <- data.frame(raster_per_polygon)
     col_len <- length(names(final_raster_table))
     names(final_raster_table)[col_len] <- paste0(new_cols_prefix, names(final_raster_table)[col_len])
