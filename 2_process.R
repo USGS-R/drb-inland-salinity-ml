@@ -105,15 +105,20 @@ p2_targets_list <- list(
     }
   ),
   
+  # Aggregate to hru_segment for across each annual road salt df in list of p2_rdsalt_per_catchment
+  tar_target(
+    p2_rdsalt_per_catchment_grped, 
+    lapply(p2_rdsalt_per_catchment, function(x) group_by(x, hru_segment) %>%
+             summarise(across(starts_with('rd_sltX'), sum)))
+  ),
+  
   
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
     # Reduce can iterate through elements in a list 1 after another. 
-    Reduce(function(...) merge(...,
-                               ## merging by all cols besides last one. Every df in list p2_rdsalt_per_catchment has same cols 
-                               by = names(p2_rdsalt_per_catchment[[1]])[-length(names(p2_rdsalt_per_catchment[[1]]))]),
-           p2_rdsalt_per_catchment) %>% 
+    Reduce(function(...) merge(..., by = 'hru_segment'),
+           p2_rdsalt_per_catchment_grped) %>% 
       # Calculate total salt accumulation across all years 
       mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = T)) %>% 
       # Calculate prop of catchment rd salt acc across entire basin
