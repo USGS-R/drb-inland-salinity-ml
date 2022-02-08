@@ -22,17 +22,20 @@ fetch_nhdv2_attributes_from_sb <- function(vars_item,save_dir,comids,delete_loca
   
   # Reformat item_names for monthly average precipitation dataset (CAT)
   if(unique(vars_item$sb_id) == "5734acafe4b0dae0d5de622d"){
-    years <- c(1971:2000)
+    years <- as.integer(c(item_names[!is.na(item_names)]))
+    years <- c(years[1]:years[2])
     item_names <- paste0("PPT",years,"_CAT_CONUS.zip")
   }
   # Reformat item_names for monthly average precipitation dataset (ACC)
   if(unique(vars_item$sb_id) == "5730f062e4b0dae0d5db1fbe"){
-    years <- c(1971:2000)
+    years <- as.integer(c(item_names[!is.na(item_names)]))
+    years <- c(years[1]:years[2])
     item_names <- paste0("PPT",years,"_ACC_CONUS.zip")
   }
   # Reformat item_names for monthly average precipitation dataset (TOT)
   if(unique(vars_item$sb_id) == "573362bce4b0dae0d5dd6193"){
-    years <- c(1971:2000)
+    years <- as.integer(c(item_names[!is.na(item_names)]))
+    years <- c(years[1]:years[2])
     item_names <- paste0("PPT",years,"_TOT_CONUS.zip")
   }
   
@@ -63,7 +66,7 @@ fetch_nhdv2_attributes_from_sb <- function(vars_item,save_dir,comids,delete_loca
   
   # monthly average precipitation data (CAT,ACC,and TOT have different sb_id's):
   if(unique(vars_item$sb_id) %in% c("5734acafe4b0dae0d5de622d","5730f062e4b0dae0d5db1fbe","573362bce4b0dae0d5dd6193")){
-    years <- c(1971:2000)
+    years <- str_extract(out_file,"\\d{2,}")
     col_names <- format_col_names_years(col_names,years,yr_pattern = "YYYY")
   }
   
@@ -104,7 +107,7 @@ unzip_and_clip_sb_data <- function(out_file,col_names,comids,save_dir,delete_loc
   
   # Parse name(s) of unzipped files
   file_name <- basename(out_file)
-  file_name_sans_ext <- substr(file_name,1,nchar(file_name)-4)
+  file_name_sans_ext <- str_split(file_name,".[[:alnum:]]+$")[[1]][1]
   
   # Special handling 
   # in the future consider replacing with fuzzy string matching to create file_name_new
