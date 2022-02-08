@@ -83,8 +83,9 @@ p2_targets_list <- list(
   
   ## Estimate LC proportion in PRMS catchment
   # returns df with proportion LC in PRMS catchment in our AOI
-  tar_target(p2_PRMS_lc_proportions,
-             proportion_lc_by_prms(p2_LC_w_catchment_area)
+  tar_target(
+    p2_PRMS_lc_proportions,
+    proportion_lc_by_prms(p2_LC_w_catchment_area)
   ),
   
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
