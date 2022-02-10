@@ -101,7 +101,7 @@ p2_targets_list <- list(
     p2_rdsalt_per_catchment,
     {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                     raster = x, categorical_raster = FALSE,
-                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt'))
+                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt', , na.rm = T))
     }
   ),
   
