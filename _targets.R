@@ -1,10 +1,14 @@
 library(targets)
+library(paws)
 
 options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
-                            'purrr', 'sbtools', 'terra')) 
+                            'purrr', 'sbtools', 'terra'),
+               resources = tar_resources(
+                 aws = tar_resources_aws(bucket = "drb-inland-salinity"))
+               ) 
 
 source("1_fetch.R")
 source("2_process.R")

@@ -1,7 +1,7 @@
 #Starting with the lastest stable geospatial R image as of 1/20/2022
 #Dockerfile references are here:
 #https://github.com/rocker-org/rocker-versioned2/tree/master/dockerfiles
-#includes Linux Debian OS (stable release)
+#includes Ubuntu 20.04 LTS (stable release)
 #includes R version 4.1.2
 #includes all packages and Linux libraries in the Dockerfile for verse, 
 #which is based on tidyverse, which is based on rstudio, which is based on r-ver.
@@ -10,6 +10,9 @@ FROM rocker/geospatial:4.1.2
 #If needed, install Linux libraries and remove cache
 #you'll know to add libraries if you get an error installing R/Python/etc. packages that you add.
 RUN apt-get update && apt-get install -y \
+  libcurl4-openssl-dev \
+  libssl-dev \
+  libxml2-dev \
   xdg-utils \
   && rm -rf /var/lib/apt/lists/*
   # Add libraries in alphanumeric order
@@ -23,7 +26,10 @@ RUN install2.r --error -r https://cran.microsoft.com/snapshot/2022-01-31 \
   dataRetrieval \
   lubridate \
   nhdplusTools \
+  paws \
   purrr \
+  rgdal \
+  rgeos \
   sbtools \
   scico \
   sf \
