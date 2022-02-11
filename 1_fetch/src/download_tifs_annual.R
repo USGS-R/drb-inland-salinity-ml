@@ -20,7 +20,7 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = T, ye
   # Unzip file
   if(!is.null(name_unzip_folder)){
     unzip_folder_path <- file.path(download_path, name_unzip_folder)
-    dir.create(unzip_folder_path)
+    dir.create(unzip_folder_path, showWarnings = FALSE)
   } else{
     # Taking name of the zip file - Remove '.zip' extension for unzip folder
     unzip_folder_path <- sub('.zip','', path_to_downloaded_file)

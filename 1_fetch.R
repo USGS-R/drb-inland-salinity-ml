@@ -205,15 +205,14 @@ p1_targets_list <- list(
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
-    p1_rd_salt, 
-    download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
-                  filename = '1992_2015.zip',
-                  download_path = '1_fetch/out',
-                  overwrite_file = T,
-                  ## no year subsetting here as all years with rdsalt data are relevant here
-                  year = NULL,
-                  name_unzip_folder = 'rd_salt'), 
-    format = 'file'
+    p1_rdsalt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+                              filename = '1992_2015.zip',
+                              download_path = '1_fetch/out',
+                              overwrite_file = T,
+                              ## no year subsetting here as all years with rdsalt data are relevant here
+                              year = NULL,
+                              name_unzip_folder = 'rd_salt'), 
+             format = 'file'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
