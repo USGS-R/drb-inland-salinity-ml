@@ -238,8 +238,11 @@ p1_targets_list <- list(
   tar_target(
     p1_vars_of_interest_downloaded_csvs,
     p1_vars_of_interest %>%
+      # split VarsOfInterest table into a list containing a data frame for each unique sb_id 
       split(.,.$sb_id) %>%
+      # iterate data download function over each unique sb_id data frame
       lapply(.,fetch_nhdv2_attributes_from_sb,save_dir = "1_fetch/out",comids=p1_nhdv2reaches_sf$COMID,delete_local_copies=TRUE) %>%
+      # concatenate the output file paths for each unique sb_id into one character vector
       do.call('c',.),
     format = "file"
   ),
