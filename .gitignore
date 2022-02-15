@@ -1,5 +1,7 @@
 #Targets directry
-_targets
+_targets/*
+!_targets/.gitignore
+!_targets/meta/meta
 
 #All model output
 */out/*
