@@ -7,6 +7,10 @@
 #which is based on tidyverse, which is based on rstudio, which is based on r-ver.
 FROM rocker/geospatial:4.1.2
 
+# Add DOI CA to local CAs so that SSL can work over VPN
+COPY DOIRootCA2.crt /usr/local/share/ca-certificates
+RUN update-ca-certificates
+
 #If needed, install Linux libraries and remove cache
 #you'll know to add libraries if you get an error installing R/Python/etc. packages that you add.
 RUN apt-get update && apt-get install -y \
@@ -37,9 +41,10 @@ RUN install2.r --error -r https://cran.microsoft.com/snapshot/2022-01-31 \
   tarchetypes \
   terra \
   tidyverse \
-  visNetwork 
+  visNetwork \
+  && rm -rf /tmp/downloaded_packages /tmp/*.rds /tmp/Rtmp*
   # Add packages in alphanumeric order
-  # place a space and backslash after the package name (no backslash if it's last in the list).
+  # place a space and backslash after the package name
 
 # Need this if running python in the project directory
 # RUN python3.6 -m pip install --upgrade pip
