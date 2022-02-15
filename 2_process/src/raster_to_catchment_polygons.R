@@ -19,18 +19,18 @@ rbind.fill.list <- function(x, fill = NULL) {
   # rbind to dataframe
   df <- setNames(as.data.frame(do.call(rbind, output_list), stringsAsFactors=FALSE), unique_colnames) 
   
-  # Option fill of missing values wih given fill value if not NULL
+  # Option fill of missing values with given fill value if not NULL
   if(!is.null(fill)){
     df <- replace(df, is.na(df), fill)
   }
-  print(class(df))
   return(df)
 }
 
 raster_to_catchment_polygons <- function(polygon_sf, raster,
                                          categorical_raster = NULL,
                                          raster_summary_fun = NULL,
-                                         new_cols_prefix = NULL, fill = NULL, ...){
+                                         new_cols_prefix = NULL,
+                                         fill = NULL, ...){
 
   #' @description Function extracts raster pixel per catchment polygon and calculated proportion of raster class per total
   #'
@@ -80,7 +80,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   end_time <- Sys.time()
   message('raster extract processing time:', end_time - start_time)
   
-  ## handling unequal length of classes - filling missing values with give fill argument
+  ## handling unequal length of classes - filling missing values with given fill argument
   final_raster_table <- rbind.fill.list(raster_per_polygon, fill = fill) %>%
     setNames(paste0(new_cols_prefix, names(.))) %>% 
     mutate(ID = row_number())

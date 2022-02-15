@@ -86,6 +86,22 @@ p2_targets_list <- list(
   # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(p2_PRMS_NLCD_lc_proportions,
              proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area)),
+
+  ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
+  # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
+  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
+             reclassify_land_cover(land_cover_df = p2_PRMS_NLCD_lc_proportions,
+                                   reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv', 
+                                   reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
+                                   sep = ',',
+                                   pivot_longer_contains = 'NLCD11') %>%
+               ## some lc classes in NLCD were given NA ultimately - example - alaska onluy shrub - we remove from table
+               select(-contains('NA')) %>% 
+               rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x, fixed = T))
+  ),
+  
+
+  
   
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
@@ -96,61 +112,39 @@ p2_targets_list <- list(
       }
   ),
   
-  ## Standardize the land cover class names for NLCD and FORESCE following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
-  ## 1. we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
-  ## 2. we use '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
-  
-  # 1. reclassify NLCD classes to              
-  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
-             reclassify_land_cover(land_cover_df = p2_PRMS_NLCD_lc_proportions,
-                                   reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv', 
-                                   reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
-                                   sep = ',',
-                                   pivot_longer_contains = 'NLCD11') %>% select(-contains('NA')) %>% 
-               rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x))
-             
-               
-  ),
-  
-  
-  # 2.1 reclassify FORESCE
+  ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
+  # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
+  # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
   tar_target(p2_FORESCE_LC_per_catchment_reclass,
              {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
                                                                                     reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
                                                                                     reclassify_table_lc_col = 'FORESCE_value', reclassify_table_reclass_col = 'Reclassify_match',
                                                                                     sep = ',',
-                                                                                    pivot_longer_contains = 'lcClass'))
-  }),
-  # 2.2 Aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
-  tar_target(p2_PRMS_FORESCE_LC_reclass,
-             lapply(p2_FORESCE_LC_per_catchment_reclass,
-                    function(x) group_by(x, hru_segment) %>%
-                      summarise(across(starts_with('prop_lcClass'), sum)))
-  ),
+                                                                                    pivot_longer_contains = 'lcClass') %>% 
+                       group_by(hru_segment) %>%
+                       summarise(across(starts_with('prop_lcClass'), sum)) %>%
+                       mutate(`PRMS_segid` = paste(hru_segment, "1", sep = '_')) %>% select(PRMS_segid, everything())
+                     )
+    }),
   
-  # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
+  # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
     p2_rdsalt_per_catchment,
     {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                     raster = x, categorical_raster = FALSE,
-                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt', na.rm = T))
+                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt', na.rm = T) %>%
+        group_by(hru_segment) %>%
+        summarise(across(starts_with('rd_sltX'), sum)))
     }
   ),
   
-  # Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
-  tar_target(
-    p2_rdsalt_per_catchment_grped, 
-    lapply(p2_rdsalt_per_catchment, function(x) group_by(x, hru_segment) %>%
-             summarise(across(starts_with('rd_sltX'), sum)))
-  ),
-  
-  
+
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
     # Reduce can iterate through elements in a list 1 after another. 
     Reduce(function(...) merge(..., by = 'hru_segment'),
-           p2_rdsalt_per_catchment_grped) %>% 
+           p2_rdsalt_per_catchment) %>% 
       # Calculate total salt accumulation across all years 
       mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = T)) %>% 
       # Calculate prop of catchment rd salt acc across entire basin
