@@ -8,6 +8,7 @@ source("2_process/src/combine_NLCD_PRMS.R")
 source("2_process/src/pair_nhd_catchments.R")
 source("2_process/src/create_GFv1_NHDv2_xwalk.R")
 source("2_process/src/munge_natural_baseflow.R")
+source('2_process/src/reclassify_land_cover.R')
 
 p2_targets_list <- list(
   
@@ -91,8 +92,40 @@ p2_targets_list <- list(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                           raster = x, categorical_raster = TRUE,
-                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
+                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass', fill = 0))
       }
+  ),
+  
+  ## Standardize the land cover class names for NLCD and FORESCE following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
+  ## 1. we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
+  ## 2. we use '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
+  
+  # 1. reclassify NLCD classes to              
+  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
+             reclassify_land_cover(land_cover_df = p2_PRMS_NLCD_lc_proportions,
+                                   reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv', 
+                                   reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
+                                   sep = ',',
+                                   pivot_longer_contains = 'NLCD11') %>% select(-contains('NA')) %>% 
+               rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x))
+             
+               
+  ),
+  
+  
+  # 2.1 reclassify FORESCE
+  tar_target(p2_FORESCE_LC_per_catchment_reclass,
+             {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
+                                                                                    reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
+                                                                                    reclassify_table_lc_col = 'FORESCE_value', reclassify_table_reclass_col = 'Reclassify_match',
+                                                                                    sep = ',',
+                                                                                    pivot_longer_contains = 'lcClass'))
+  }),
+  # 2.2 Aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
+  tar_target(p2_PRMS_FORESCE_LC_reclass,
+             lapply(p2_FORESCE_LC_per_catchment_reclass,
+                    function(x) group_by(x, hru_segment) %>%
+                      summarise(across(starts_with('prop_lcClass'), sum)))
   ),
   
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
@@ -104,7 +137,7 @@ p2_targets_list <- list(
     }
   ),
   
-  # Aggregate to hru_segment for across each annual road salt df in list of p2_rdsalt_per_catchment
+  # Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
     p2_rdsalt_per_catchment_grped, 
     lapply(p2_rdsalt_per_catchment, function(x) group_by(x, hru_segment) %>%
@@ -167,22 +200,6 @@ p2_targets_list <- list(
                     setNames(gsub('_\\d{4}', '', names(.)))) %>%
                # rbind the list of cleaned dfs
       do.call(rbind, .)
-  ), 
-  
-  tar_target(p2_FORESCE_LC_per_catchment_reclass,
-  {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
-                               reclassify_table_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
-                               reclassify_table_lc_col = 'FORESCE_value', reclassify_table_reclass_col = 'Reclassify_match',
-                               sep = ',',
-                               pivot_longer_contains = 'lcClass'))
-  }),
-  
-  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
-             reclassify_land_cover(land_cover_df = p2_PRMS_NLCD_lc_proportions,
-                                reclassify_table_path = '1_fetch/in/Legend_NLCD_land_Cover.csv', 
-                                reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
-                                sep = ',',
-                                pivot_longer_contains = 'NLCD11')
   )
 
 )
