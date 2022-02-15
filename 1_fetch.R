@@ -224,26 +224,27 @@ p1_targets_list <- list(
     format = 'file'
   ),
 
-  # variables from the Wieczorek dataset that are of interest 
+  # Variables from the Wieczorek dataset that are of interest 
+  # use tar_group to define row groups based on ScienceBase ID; row groups facilitate
+  # branching over subsets of the VarsOfInterest table in downstream targets
   tar_target(
     p1_vars_of_interest,
     read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>%
       # Parse sb_id from sb link 
       mutate(sb_id = str_extract(Science.Base.Link,"[^/]*$")) %>%
-      # Remove the NADP from this since we are loading that separately and no not need it in vars of interest
-      filter(!Theme %in% c('Chemical', 'Land Cover')) 
+      # Omit NADP and LandCover rows since we are loading those separately
+      filter(!Theme %in% c('Chemical', 'Land Cover')) %>%
+      group_by(sb_id) %>%
+      tar_group(),
+    iteration = "group"
   ),
 
-  # Download Wieczorek dataset variables of interest from ScienceBase
+  # Map over variables of interest to download NHDv2 attribute data from ScienceBase
   tar_target(
     p1_vars_of_interest_downloaded_csvs,
-    p1_vars_of_interest %>%
-      # split VarsOfInterest table into a list containing a data frame for each unique sb_id 
-      split(.,.$sb_id) %>%
-      # iterate data download function over each unique sb_id data frame
-      lapply(.,fetch_nhdv2_attributes_from_sb,save_dir = "1_fetch/out",comids=p1_nhdv2reaches_sf$COMID,delete_local_copies=TRUE) %>%
-      # concatenate the output file paths for each unique sb_id into one character vector
-      do.call('c',.),
+    fetch_nhdv2_attributes_from_sb(vars_item = p1_vars_of_interest, save_dir = "1_fetch/out", 
+                                   comids = p1_nhdv2reaches_sf$COMID, delete_local_copies = TRUE),
+    pattern = map(p1_vars_of_interest),
     format = "file"
   ),
   
