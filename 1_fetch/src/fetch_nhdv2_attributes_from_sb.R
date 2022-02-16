@@ -102,12 +102,12 @@ unzip_and_clip_sb_data <- function(out_file,col_names,comids,save_dir,delete_loc
   #' delete_local_copies defaults to TRUE
   #' 
   
-  # Unzip downloaded files
+  # Unzip downloaded file
   unzip(zipfile = out_file, exdir = save_dir, overwrite = TRUE)
   
-  # Parse name(s) of unzipped files
+  # Parse name of unzipped file
   file_name <- basename(out_file)
-  file_name_sans_ext <- str_split(file_name,".[[:alnum:]]+$")[[1]][1]
+  file_name_sans_ext <- tools::file_path_sans_ext(file_name)
   
   # Special handling 
   # in the future consider replacing with fuzzy string matching to create file_name_new
