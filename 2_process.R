@@ -63,6 +63,14 @@ p2_targets_list <- list(
                             min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
   ),
   
+  # Simple target pairing PRMS_segids with hru_segment:
+  tar_target(p2_PRMS_hru_segment,
+             p2_prms_nhdv2_xwalk %>% mutate(PRMS_segid_split_col = PRMS_segid) %>%
+               separate(col = PRMS_segid_split_col, sep = '_', into =c('hru_segment', "PRMS_segment_suffix")) %>%
+               select(PRMS_segid, hru_segment) %>% mutate(hru_segment = as.integer(hru_segment))
+  ),
+  
+  
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
   tar_target(
     p2_drb_comids_all_tribs, 
@@ -123,7 +131,7 @@ p2_targets_list <- list(
                                                                                     pivot_longer_contains = 'lcClass') %>% 
                        group_by(hru_segment) %>%
                        summarise(across(starts_with('prop_lcClass'), sum)) %>%
-                       mutate(`PRMS_segid` = paste(hru_segment, "1", sep = '_')) %>% select(PRMS_segid, everything())
+                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid, everything())
                      )
     }),
   
