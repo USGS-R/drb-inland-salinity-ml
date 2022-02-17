@@ -54,7 +54,7 @@ p2_targets_list <- list(
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    read_csv(GFv1_NHDv2_xwalk_url)
+    read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
