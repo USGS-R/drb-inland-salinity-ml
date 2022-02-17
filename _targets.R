@@ -55,7 +55,7 @@ mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1
                             "376_1","351_1","344_1","346_1","333_1")
 
 # Define the url for the NHGFv1 to NHDv2 crosswalk
-GFv1_NHDv2_xwalk_url = "https://github.com/USGS-R/drb-network-prep/tree/main/2_process/out/GFv1_NHDv2_xwalk.csv"
+GFv1_NHDv2_xwalk_url = "https://raw.githubusercontent.com/USGS-R/drb-network-prep/main/2_process/out/GFv1_NHDv2_xwalk.csv"
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
