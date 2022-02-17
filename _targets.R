@@ -89,7 +89,6 @@ sb_ids_NLCD <- c(
   )
 
 # Define Land Cover dataset download folders:
-
 NLCD_folders <- c(
    'ImperviousnessPct_2011',
    'Imperviousness100m_RipZone',
@@ -101,6 +100,10 @@ NLCD_folders <- c(
 ## NADP_sb_id var
 ## https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
 NADP_sb_id <- '57e2ac2fe4b0908250045981'
+
+# Define the target save file formats
+format_file = 'file'
+format_rds = 'rds'
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
