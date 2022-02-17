@@ -9,14 +9,14 @@ FORESCE_value,FORESCE_description,Reclassify_match,Reclassify_description
 7,Tobacco,3,Cultivated Crops
 8,Other Crops,3,Cultivated Crops
 9,Open Water,1,Water
-10,Developed Low Intensity,4,Developed Areas
-11,Developed Med-High Intensity,4,Developed Areas
-12,Barren,5,Barren
-13,Deciduous Forest,6,Forest
-14,Evergreen Forest,6,Forest
-15,Mixed Forest,6,Forest
-16,Shrubland,7,Shrub
-17,Grassland / Pasture,8,Grassland
-18,Woody Wetlands,9,Wetlands
-19,Herbaceous Wetlands,9,Wetlands
+10,Developed Low Intensity,4,Developed Areas - Low Intensity
+11,Developed Med-High Intensity,5,Developed Areas - Med-High Intensity
+12,Barren,6,Barren
+13,Deciduous Forest,7,Forest
+14,Evergreen Forest,7,Forest
+15,Mixed Forest,7,Forest
+16,Shrubland,8,Shrub
+17,Grassland / Pasture,9,Grassland
+18,Woody Wetlands,10,Wetlands
+19,Herbaceous Wetlands,10,Wetlands
 20,"Perennial grasses - Representing switchgrass, miscanthus, prairie grasses, or other heavily managed grass crops used for cellulosic biofuel feedstock ",2,Pasture/Hay
