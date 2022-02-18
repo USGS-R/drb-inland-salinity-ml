@@ -2,11 +2,8 @@ source("2_process/src/filter_wqp_data.R")
 source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
-source("2_process/src/pair_nhd_reaches.R")
 source("2_process/src/raster_to_catchment_polygons.R")
 source("2_process/src/combine_NLCD_PRMS.R")
-source("2_process/src/pair_nhd_catchments.R")
-source("2_process/src/create_GFv1_NHDv2_xwalk.R")
 source("2_process/src/munge_natural_baseflow.R")
 
 p2_targets_list <- list(
@@ -66,10 +63,7 @@ p2_targets_list <- list(
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,
-                            prms_hrus = p1_catchments_sf_valid,
-                            min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial),
-	format = format_rds
+    read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
   ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
