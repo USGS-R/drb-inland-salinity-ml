@@ -7,6 +7,7 @@ source("1_fetch/src/get_nhdplusv2.R")
 source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
+source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 
 p1_targets_list <- list(
   
@@ -178,7 +179,7 @@ p1_targets_list <- list(
     format = 'file'
   ),
   
-  # Read in NLCD datasets and subet by comid in DRB
+  # Read in NLCD datasets and subset by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
   tar_target(
     p1_NLCD_data,
@@ -222,12 +223,28 @@ p1_targets_list <- list(
     format = 'file'
   ),
 
-  # variables from the Wieczorek dataset that are of interest 
+  # Variables from the Wieczorek dataset that are of interest 
+  # use tar_group to define row groups based on ScienceBase ID; row groups facilitate
+  # branching over subsets of the VarsOfInterest table in downstream targets
   tar_target(
     p1_vars_of_interest,
     read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>%
-      # Remove the NADP from this since we are loading that separately and no not need it in vars of interest
-      filter(!Theme %in% c('Chemical', 'Land Cover'))
+      # Parse sb_id from sb link 
+      mutate(sb_id = str_extract(Science.Base.Link,"[^/]*$")) %>%
+      # Omit NADP and LandCover rows since we are loading those separately
+      filter(!Theme %in% c('Chemical', 'Land Cover')) %>%
+      group_by(sb_id) %>%
+      tar_group(),
+    iteration = "group"
+  ),
+
+  # Map over variables of interest to download NHDv2 attribute data from ScienceBase
+  tar_target(
+    p1_vars_of_interest_downloaded_csvs,
+    fetch_nhdv2_attributes_from_sb(vars_item = p1_vars_of_interest, save_dir = "1_fetch/out", 
+                                   comids = p1_nhdv2reaches_sf$COMID, delete_local_copies = TRUE),
+    pattern = map(p1_vars_of_interest),
+    format = "file"
   ),
   
   # # download NADP data
