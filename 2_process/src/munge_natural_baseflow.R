@@ -24,7 +24,7 @@ munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mea
     month <- str_extract(x, "[0-9]{2}")
     
     # Read in monthly tables
-    data <- read_csv(x,show_col_types = FALSE) %>%
+    data <- read_csv(x, col_types = 'cidddd', show_col_types = FALSE) %>%
       # reformat column names to include month
       rename_with(.cols = p10.Pred:mean.Pred, function(y){paste0(y,"_", month)}) %>%
       # subset dates
