@@ -57,13 +57,21 @@ p2_targets_list <- list(
     read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
-  ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
+  # Melt PRMS-NHDv2 xwalk table to return all COMIDs that drain to each PRMS segment
   tar_target(
     p2_drb_comids_all_tribs, 
     p2_prms_nhdv2_xwalk %>%
       select(PRMS_segid, comid_cat) %>% 
       tidyr::separate_rows(comid_cat,sep=";") %>% 
       rename(comid = comid_cat)
+  ),
+  
+  # Melt PRMS-NHDv2 xwalk table to return the COMID located at the downstream end of each PRMS segment
+  tar_target(
+    p2_drb_comids_seg,
+    p2_prms_nhdv2_xwalk %>% 
+      select(PRMS_segid,comid_down) %>% 
+      rename(comid = comid_down)
   ),
   
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
@@ -108,7 +116,6 @@ p2_targets_list <- list(
              summarise(across(starts_with('rd_sltX'), sum)))
   ),
   
-  
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
@@ -147,7 +154,6 @@ p2_targets_list <- list(
                            start_year = as.character(lubridate::year(earliest_date)),
                            end_year = as.character(lubridate::year(dummy_date)),
                            fill_all_years = TRUE)
-    
   ),
 
   # Target for NADP initial Processing  
@@ -165,6 +171,7 @@ p2_targets_list <- list(
                # rbind the list of cleaned dfs
       do.call(rbind, .)
   )
+  
 )
 
 
