@@ -31,7 +31,8 @@ p3_targets_list <- list(
     p3_sitelist_summary_csv,
     summarize_site_list(p2_site_list_nontidal_csv,p1_daily_data,p1_inst_data,
                         fileout = "3_visualize/log/sitelist_summary.csv"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Create and save indicator file for NWIS daily data
@@ -39,7 +40,8 @@ p3_targets_list <- list(
     p3_daily_timeseries_ind_csv,
     command = save_target_ind_files("3_visualize/log/daily_timeseries_ind.csv",
                                     names(p3_daily_timeseries_png)),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Create and save indicator file for NWIS instantaneous data
@@ -47,14 +49,16 @@ p3_targets_list <- list(
     p3_inst_timeseries_ind_csv,
     command = save_target_ind_files("3_visualize/log/inst_timeseries_ind.csv",
                                     names(p3_hourly_timeseries_png)),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Create and save indicator file for WQP data
   tar_target(
     p3_wqp_ind_csv,
     command = save_target_ind_files("3_visualize/log/wqp_data_ind.csv","p2_wqp_SC_csv"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Create and save summary log file for NWIS daily data
@@ -63,7 +67,8 @@ p3_targets_list <- list(
     command = target_summary_stats(p1_daily_data,
                                    "Value",
                                    "3_visualize/log/daily_timeseries_summary.csv"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Create and save summary log file for NWIS instantaneous data
@@ -72,13 +77,15 @@ p3_targets_list <- list(
     command = target_summary_stats(p1_inst_data,
                                    "Value_Inst",
                                    "3_visualize/log/inst_timeseries_summary.csv"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Render data summary report (note that tar_render returns a target with format="file") 
   tarchetypes::tar_render(p3_SC_report, 
                           "3_visualize/src/report-wqp-salinity-data.Rmd",
-                          output_dir = "3_visualize/out"
+                          output_dir = "3_visualize/out",
+                          deployment = 'main'
   )
 )
 

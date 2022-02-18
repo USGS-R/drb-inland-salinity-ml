@@ -23,7 +23,8 @@ p1_targets_list <- list(
     {
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
-    }
+    },
+    deployment = 'main'
   ),
   
   # Subset daily NWIS sites
@@ -42,7 +43,8 @@ p1_targets_list <- list(
     p1_daily_data,
     get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,
                         start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_daily)
+    pattern = map(p1_nwis_sites_daily),
+    deployment = 'main'
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -61,7 +63,8 @@ p1_targets_list <- list(
     p1_nwis_sites_inst_multipleTS_csv,
     find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,
                           "3_visualize/log/summary_multiple_inst_ts.csv"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
 
   # Download NWIS instantaneous data
@@ -69,7 +72,8 @@ p1_targets_list <- list(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,
                        start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_inst)
+    pattern = map(p1_nwis_sites_inst),
+    deployment = 'main'
   ),
 
   tar_target(
@@ -104,7 +108,8 @@ p1_targets_list <- list(
   # Download NHDPlusV2 flowlines for DRB
   tar_target(
     p1_nhdv2reaches_sf,
-    get_nhdv2_flowlines(drb_huc8s)
+    get_nhdv2_flowlines(drb_huc8s),
+    deployment = 'main'
   ),  
   
   # Download PRMS catchments for region 02
@@ -114,7 +119,8 @@ p1_targets_list <- list(
     p1_catchments_shp,
     get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', 
            sb_name = gf_data_select),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Read PRMS catchment shapefile into sf object and filter to DRB
@@ -141,7 +147,8 @@ p1_targets_list <- list(
                                    "distance_matrix_drb.csv",
                                    "sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
-    format="file"
+    format="file",
+    deployment = 'main'
   ),
   
   # Read DRB reach attributes
@@ -179,7 +186,8 @@ p1_targets_list <- list(
                       out_path = '1_fetch/out',
                       downloaded_data_folder_name = NLCD_folders,
                       output_data_parent_folder = 'NLCD_LC_Data'),
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
   
   # Unzip all NLCD downloaded datasets 
@@ -214,7 +222,8 @@ p1_targets_list <- list(
                   ## Subset downloaded tifs to only process the  years that are relevant model
                   year = c('2000','1990','1980','1970','1960'),
                   name_unzip_folder = NULL), 
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
   
   # Downlaod Road Salt accumulation data for the drb
@@ -229,7 +238,8 @@ p1_targets_list <- list(
                              ## rdsalt data are relevant here
                              year = NULL,
                              name_unzip_folder = 'rd_salt'), 
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
@@ -261,7 +271,8 @@ p1_targets_list <- list(
                                    comids = p1_nhdv2reaches_sf$COMID, 
                                    delete_local_copies = TRUE),
     pattern = map(p1_vars_of_interest),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # # download NADP data
@@ -271,7 +282,8 @@ p1_targets_list <- list(
     download_NHD_data(sb_id = NADP_sb_id,
                       out_path = '1_fetch/out',
                       downloaded_data_folder_name = 'NADP_Data'),
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
 
   # unzip NADP data
@@ -288,7 +300,8 @@ p1_targets_list <- list(
     download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
                      file_name = "baseflow_partial_model_pred_XX.zip",
                      out_dir="1_fetch/out"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Unzip monthly natural baseflow file
