@@ -32,14 +32,16 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "dv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
-      # for sites with multiple time series (ts_id), retain the most recent time series for site_info
+      # for sites with multiple time series (ts_id), 
+      # retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
   ),
   
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
-    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,start_date=earliest_date,end_date=dummy_date),
+    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,
+                        start_date=earliest_date,end_date=dummy_date),
     pattern = map(p1_nwis_sites_daily)
   ),
   
@@ -49,21 +51,24 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "uv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
-      # for sites with multiple time series (ts_id), retain the most recent time series for site_info
+      # for sites with multiple time series (ts_id), 
+      # retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
   ),
   
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,"3_visualize/log/summary_multiple_inst_ts.csv"),
+    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,
+                          "3_visualize/log/summary_multiple_inst_ts.csv"),
     format = "file"
   ),
 
   # Download NWIS instantaneous data
   tar_target(
     p1_inst_data,
-    get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
+    get_inst_nwis_data(p1_nwis_sites_inst,parameter,
+                       start_date=earliest_date,end_date=dummy_date),
     pattern = map(p1_nwis_sites_inst)
   ),
 
@@ -103,10 +108,12 @@ p1_targets_list <- list(
   ),  
   
   # Download PRMS catchments for region 02
-  ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
+  ## Downloaded from ScienceBase: 
+  ## https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
   tar_target(
     p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', sb_name = gf_data_select),
+    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', 
+           sb_name = gf_data_select),
     format = "file"
   ),
   
@@ -130,7 +137,9 @@ p1_targets_list <- list(
   tar_target(
     p1_prms_reach_attr_csvs,
     download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
-                     file_name = c("reach_attributes_drb.csv","distance_matrix_drb.csv","sntemp_inputs_outputs_drb.zip"),
+                     file_name = c("reach_attributes_drb.csv",
+                                   "distance_matrix_drb.csv",
+                                   "sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
     format="file"
   ),
@@ -138,19 +147,22 @@ p1_targets_list <- list(
   # Read DRB reach attributes
   tar_target(
     p1_prms_reach_attr,
-    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),
+             show_col_types = FALSE)
   ),
   
   # Read DRB network adjacency matrix
   tar_target(
     p1_ntw_adj_matrix,
-    read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+    read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),
+             show_col_types = FALSE)
   ),
   
   # Unzip DRB SNTemp Inputs-Outputs from temperature project
   tar_target(
     p1_sntemp_inputs_outputs_csv,
-    unzip(zipfile = grep("sntemp_inputs_outputs",p1_prms_reach_attr_csvs,value=TRUE), exdir = "1_fetch/out", overwrite = TRUE),
+    unzip(zipfile = grep("sntemp_inputs_outputs",p1_prms_reach_attr_csvs,value=TRUE), 
+          exdir = "1_fetch/out", overwrite = TRUE),
     format = "file"
   ),
   
@@ -180,11 +192,14 @@ p1_targets_list <- list(
   ),
   
   # Read in NLCD datasets and subset by comid in DRB
-  ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
+  ## Note that this returns a vector of dfs if more than one NLCD data is in
+  ## p1_NLCD_data_unzipped
   tar_target(
     p1_NLCD_data,
     read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
-                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% 
+                          st_drop_geometry() %>% 
+                          select(COMID), 
                         Comid_col = 'COMID')
   ),
 
@@ -207,13 +222,14 @@ p1_targets_list <- list(
   ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
     p1_rdsalt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
-                              filename = '1992_2015.zip',
-                              download_path = '1_fetch/out',
-                              overwrite_file = T,
-                              ## no year subsetting here as all years with rdsalt data are relevant here
-                              year = NULL,
-                              name_unzip_folder = 'rd_salt'), 
-             format = 'file'
+                             filename = '1992_2015.zip',
+                             download_path = '1_fetch/out',
+                             overwrite_file = T,
+                             ## no year subsetting here as all years with 
+                             ## rdsalt data are relevant here
+                             year = NULL,
+                             name_unzip_folder = 'rd_salt'), 
+    format = 'file'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
@@ -242,7 +258,8 @@ p1_targets_list <- list(
   tar_target(
     p1_vars_of_interest_downloaded_csvs,
     fetch_nhdv2_attributes_from_sb(vars_item = p1_vars_of_interest, save_dir = "1_fetch/out", 
-                                   comids = p1_nhdv2reaches_sf$COMID, delete_local_copies = TRUE),
+                                   comids = p1_nhdv2reaches_sf$COMID, 
+                                   delete_local_copies = TRUE),
     pattern = map(p1_vars_of_interest),
     format = "file"
   ),
@@ -278,9 +295,12 @@ p1_targets_list <- list(
   tar_target(
     p1_natural_baseflow_csv,
     {
-      unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
-      },
+      unzip(zipfile=p1_natural_baseflow_zip,
+            exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+      file.path(dirname(p1_natural_baseflow_zip), 
+                list.files(path = dirname(p1_natural_baseflow_zip),
+                           pattern = "*baseflow.*.csv"))
+    },
     format = "file"
   )
 )
