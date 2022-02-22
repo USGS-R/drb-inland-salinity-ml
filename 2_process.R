@@ -67,9 +67,9 @@ p2_targets_list <- list(
       rename(comid = comid_cat)
   ),
   
-  # Melt PRMS-NHDv2 xwalk table to return the COMID located at the downstream end of each PRMS segment
+  # Subset PRMS-NHDv2 xwalk table to return the COMID located at the downstream end of each PRMS segment
   tar_target(
-    p2_drb_comids_seg,
+    p2_drb_comids_down,
     p2_prms_nhdv2_xwalk %>% 
       select(PRMS_segid,comid_down) %>% 
       rename(comid = comid_down)
@@ -181,7 +181,7 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_attr_upstream,
     process_cumulative_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
-                                  segs_w_comids = p2_drb_comids_seg,
+                                  segs_w_comids = p2_drb_comids_down,
                                   cols = c("TOT")),
     pattern = map(p1_vars_of_interest_downloaded_csvs),
     iteration = "list"
