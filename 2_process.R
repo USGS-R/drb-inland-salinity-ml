@@ -131,6 +131,7 @@ p2_targets_list <- list(
                                                                                     reclassify_table_reclass_col = 'Reclassify_match',
                                                                                     sep = ',',
                                                                                     pivot_longer_contains = 'lcClass') %>% 
+                       # See documentation in function
                        aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
                                                   proportion_col_prefix = 'prop_lcClass',
                                                   hru_area_colname = hru_area,
