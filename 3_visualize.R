@@ -3,6 +3,8 @@ source("3_visualize/src/plot_inst_data.R")
 source("3_visualize/src/map_SC_sites.R")
 source("3_visualize/src/summarize_site_list.R")
 source("3_visualize/src/summarize_timeseries.R")
+source("3_visualize/src/plot_nhdv2_attr.R")
+source("3_visualize/src/summarize_nhdv2_attr.R")
 
 p3_targets_list <- list(
   
@@ -59,6 +61,23 @@ p3_targets_list <- list(
   ),
   
   # Render data summary report (note that tar_render returns a target with format="file") 
-  tarchetypes::tar_render(p3_SC_report, "3_visualize/src/report-wqp-salinity-data.Rmd",output_dir = "3_visualize/out")
+  tarchetypes::tar_render(p3_SC_report, "3_visualize/src/report-wqp-salinity-data.Rmd",output_dir = "3_visualize/out"),
+  
+  # Plot distribution of NHDv2 attribute variables across the PRMS network
+  tar_target(
+    p3_nhdv2_attr_upstream_png,
+    plot_nhdv2_attr(attr_data = p2_nhdv2_attr_upstream,
+                    network_geometry = p1_reaches_sf,
+                    file_path = "3_visualize/out/nhdv2_attr_png"),
+    format = "file"
+  ),
+  
+  # Create and save a summary table that describes variation in the NHDv2 attribute variables across the PRMS network
+  tar_target(
+    p3_nhdv2_attr_summary_csv,
+    summarize_nhdv2_attr(p2_nhdv2_attr_upstream,"3_visualize/out/nhdv2_attr_summary.csv"),
+    format = "file"
+  )
+  
 )
 

@@ -4,7 +4,8 @@ options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
-                            'purrr', 'sbtools', 'terra')) 
+                            'purrr', 'sbtools', 'terra',
+                            'patchwork')) 
 
 source("1_fetch.R")
 source("2_process.R")
@@ -16,6 +17,7 @@ dir.create("3_visualize/out/", showWarnings = FALSE)
 dir.create("3_visualize/log/", showWarnings = FALSE)
 dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
+dir.create("3_visualize/out/nhdv2_attr_png/",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -54,9 +56,8 @@ mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1
                             "2753_1","2755_1","2772_1","388_1","389_1","385_1","386_1","383_1","382_1","377_1","378_1",
                             "376_1","351_1","344_1","346_1","333_1")
 
-# Define PRMS segments that require special handling for the Geospatial Fabric (GFv1) to NHDplusV2 crosswalk target
-drb_segs_spatial <- c("31_1","135_1","233_1","236_1","244_1","249_1","332_1","354_1","355_1","358_1","396_1","593_1","1256_1","2137_1",
-                      "2138_1","2757_1","2758_1","2759_1","2765_1","2766_1","2767_1","2772_1","2797_1")
+# Define the url for the NHGFv1 to NHDv2 crosswalk
+GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/main/2_process/out/GFv1_NHDv2_xwalk.csv"
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")

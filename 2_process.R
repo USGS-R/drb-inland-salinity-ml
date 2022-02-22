@@ -2,14 +2,12 @@ source("2_process/src/filter_wqp_data.R")
 source("2_process/src/munge_inst_timeseries.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
-source("2_process/src/pair_nhd_reaches.R")
 source("2_process/src/raster_to_catchment_polygons.R")
 source("2_process/src/combine_NLCD_PRMS.R")
-source("2_process/src/pair_nhd_catchments.R")
-source("2_process/src/create_GFv1_NHDv2_xwalk.R")
 source("2_process/src/munge_natural_baseflow.R")
 source('2_process/src/reclassify_land_cover.R')
 source('2_process/src/FORESCE_agg_lc_props.R')
+source("2_process/src/process_nhdv2_attr.R")
 
 p2_targets_list <- list(
   
@@ -59,9 +57,7 @@ p2_targets_list <- list(
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
   tar_target(
     p2_prms_nhdv2_xwalk,
-    create_GFv1_NHDv2_xwalk(prms_lines = p1_reaches_sf,nhd_lines = p1_nhdv2reaches_sf,
-                            prms_hrus = p1_catchments_sf_valid,
-                            min_area_overlap = 0.5,drb_segs_spatial = drb_segs_spatial)
+    read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
   # Simple target pairing PRMS_segids with hru_segment:
@@ -71,14 +67,21 @@ p2_targets_list <- list(
                select(PRMS_segid, hru_segment) %>% mutate(hru_segment = as.integer(hru_segment))
   ),
   
-  
-  ## Melt PRMS_nhdv2_xwalk to get all cols of comids Ids and PRMS ids filtered to drb 
+  # Melt PRMS-NHDv2 xwalk table to return all COMIDs that drain to each PRMS segment
   tar_target(
     p2_drb_comids_all_tribs, 
     p2_prms_nhdv2_xwalk %>%
       select(PRMS_segid, comid_cat) %>% 
       tidyr::separate_rows(comid_cat,sep=";") %>% 
       rename(comid = comid_cat)
+  ),
+  
+  # Subset PRMS-NHDv2 xwalk table to return the COMID located at the downstream end of each PRMS segment
+  tar_target(
+    p2_drb_comids_down,
+    p2_prms_nhdv2_xwalk %>% 
+      select(PRMS_segid,comid_down) %>% 
+      rename(comid = comid_down)
   ),
   
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
@@ -152,7 +155,13 @@ p2_targets_list <- list(
     }
   ),
   
-
+  # Aggregate to hru_segment for across each annual road salt df in list of p2_rdsalt_per_catchment
+  tar_target(
+    p2_rdsalt_per_catchment_grped, 
+    lapply(p2_rdsalt_per_catchment, function(x) group_by(x, hru_segment) %>%
+             summarise(across(starts_with('rd_sltX'), sum)))
+  ),
+  
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
@@ -191,7 +200,6 @@ p2_targets_list <- list(
                            start_year = as.character(lubridate::year(earliest_date)),
                            end_year = as.character(lubridate::year(dummy_date)),
                            fill_all_years = TRUE)
-    
   ),
 
   # Target for NADP initial Processing  
@@ -208,8 +216,22 @@ p2_targets_list <- list(
                     setNames(gsub('_\\d{4}', '', names(.)))) %>%
                # rbind the list of cleaned dfs
       do.call(rbind, .)
-  )
-
+  ),
+  
+  # Process NHDv2 attributes referenced to cumulative upstream area;
+  # returns object target of class "list". List elements for CAT_PPT
+  # and ACC_PPT (if TOT is selected below) will only contain the 
+  # PRMS_segid and so will functionally be omitted in the target that 
+  # combines the output of p2_nhdv2_attr_upstream and p2_nhdv2_attr_catchment (forthcoming)
+  tar_target(
+    p2_nhdv2_attr_upstream,
+    process_cumulative_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
+                                  segs_w_comids = p2_drb_comids_down,
+                                  cols = c("TOT")),
+    pattern = map(p1_vars_of_interest_downloaded_csvs),
+    iteration = "list"
+  ) 
+ )
 )
 
 
