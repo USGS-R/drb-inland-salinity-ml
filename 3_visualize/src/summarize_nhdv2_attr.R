@@ -23,7 +23,8 @@ summarize_nhdv2_attr <- function(attr_data,fileout){
     select(where(is.numeric)) %>%
     pivot_longer(everything()) %>%
     group_by(name) %>%
-    summarise_at(vars(value), list(Min = min, Mean = mean, Max = max, Sd = sd, num_NA = num_NA))
+    summarise_at(vars(value), list(Min = min, Mean = mean, Max = max, Sd = sd, num_NA = num_NA)) %>%
+    mutate_if(is.numeric, round, 3)
   
   # Save data summary
   readr::write_csv(attr_summary,fileout)
