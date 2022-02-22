@@ -9,6 +9,7 @@ source("2_process/src/pair_nhd_catchments.R")
 source("2_process/src/create_GFv1_NHDv2_xwalk.R")
 source("2_process/src/munge_natural_baseflow.R")
 source('2_process/src/reclassify_land_cover.R')
+source('2_process/src/FORESCE_agg_lc_props.R')
 
 p2_targets_list <- list(
   
@@ -126,21 +127,16 @@ p2_targets_list <- list(
   tar_target(p2_FORESCE_LC_per_catchment_reclass,
              {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
                                                                                     reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
-                                                                                    reclassify_table_lc_col = 'FORESCE_value', reclassify_table_reclass_col = 'Reclassify_match',
+                                                                                    reclassify_table_lc_col = 'FORESCE_value',
+                                                                                    reclassify_table_reclass_col = 'Reclassify_match',
                                                                                     sep = ',',
                                                                                     pivot_longer_contains = 'lcClass') %>% 
-                       # Create temp cols with the area of lc class per area - NOTE: simply mutate current cols, so col names are not rep of value as its not a prop. This is only temp 
-                       mutate(across(starts_with('prop_lcClass'),  ~(.x * hru_area))) %>% 
-                      # group by hru segments - dropping from 761 row to 416 - to get a single "PRMS" catchment per PRMS segment
-                       group_by(hru_segment) %>%
-                       summarise(
-                         # calc total area of aggregated "PRMS" catchments 
-                         total_hru_area = sum(hru_area),
-                         # calc new proportion with new catchment area 
-                         across(starts_with('prop_lcClass'), ~(sum(.x)/total_hru_area))
-                         ) %>% 
-                       # Join with PRMS_segment id table + clear col order with select()
-                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid, everything())
+                       aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
+                                                  proportion_col_prefix = 'prop_lcClass',
+                                                  hru_area_colname = hru_area,
+                                                  new_area_colname = total_PRMS_area) %>% ## n = 416
+                       ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
+                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid, everything())  ## n = 418
                      )
     }),
   
