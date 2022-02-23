@@ -65,8 +65,8 @@ p3_targets_list <- list(
   
   # Plot distribution of NHDv2 attribute variables across the PRMS network
   tar_target(
-    p3_nhdv2_attr_upstream_png,
-    plot_nhdv2_attr(attr_data = p2_nhdv2_attr_upstream,
+    p3_nhdv2_attr_png,
+    plot_nhdv2_attr(attr_data = p2_nhdv2_attr,
                     network_geometry = p1_reaches_sf,
                     file_path = "3_visualize/out/nhdv2_attr_png"),
     format = "file"

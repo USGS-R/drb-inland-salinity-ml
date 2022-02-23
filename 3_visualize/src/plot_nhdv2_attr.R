@@ -2,26 +2,22 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path){
   #' 
   #' @description This function visualizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
-  #' @param attr_data list containing the processed NHDv2 attribute data; data frames must include column "PRMS_segid" 
-  #' @param network_geometry sf object containing the network flowline geometry
+  #' @param attr_data data frame containing the processed NHDv2 attribute data; 
+  #' must include column "PRMS_segid"
+  #' @param network_geometry sf object containing the network flowline geometry; 
+  #' must include columns "subsegid" and "geometry"
   #' @param file_path a character string that indicates the location of the saved plot
   #'
   #' @value Returns a png file containing a violin plot showing distribution of each NHDv2 attribute variable
   
   message("Plotting individual NHDv2 attribute variables")
   
-  # Bind all columns representing unique NHDv2 attribute variables
-  attr_data_df <- attr_data %>%
-    Reduce(full_join,.) %>%
-    # hide messages that data frames are being joined by column 'PRMS_segid'
-    suppressMessages()
-  
   plot_names <- vector('character', length = 0L)
   
   # For each column/attribute variable, plot the distribution of the data across all PRMS segments
-  for(i in 2:dim(attr_data_df)[2]){
+  for(i in 2:dim(attr_data)[2]){
     
-    dat_subset <- attr_data_df[,c(1,i)]
+    dat_subset <- attr_data[,c(1,i)]
     col_name <- names(dat_subset)[2]
     
     # plot the distribution of attr values on a linear scale
