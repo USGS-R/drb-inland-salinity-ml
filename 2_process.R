@@ -185,6 +185,18 @@ p2_targets_list <- list(
                                   cols = c("TOT")),
     pattern = map(p1_vars_of_interest_downloaded_csvs),
     iteration = "list"
+  ),
+  
+  # Process NHDv2 attributes scaled to the catchment that directly drains to each PRMS segment;
+  # returns object target of class "list" 
+  tar_target(
+    p2_nhdv2_attr_catchment,
+    process_catchment_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
+                                 vars_table = p1_vars_of_interest,
+                                 segs_w_comids = p2_drb_comids_all_tribs,
+                                 nhd_lines = p1_nhdv2reaches_sf),
+    pattern = map(p1_vars_of_interest_downloaded_csvs),
+    iteration = "list"
   )
   
 )

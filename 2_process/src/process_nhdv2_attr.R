@@ -86,3 +86,126 @@ process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   
 }
 
+
+
+process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_lines){
+  #' 
+  #' @description Function to read in downloaded NHDv2 attribute data and aggregate to river segment ID's
+  #' based on the CAT aggregation operation defined in the VarsOfInterest table
+  #'
+  #' @param file_path file path of downloaded NHDv2 attribute data table, including file extension
+  #' @param vars_table VarsOfInterest table
+  #' @param segs_w_comids data frame containing the PRMS segment ids and the comids of interest
+  #' segs_w_comids must contain variables PRMS_segid and COMID
+  #' @param nhd_lines sf object containing NHDPlusV2 flowlines for area of interest
+  #' nhd_lines must contain variables COMID,AREASQKM, and LENGTHKM
+  #'
+  #' @value A data frame containing PRMS_id and columns representing the NHDv2 attribute data scaled to the 
+  #' local PRMS catchment. 
+  #' 
+  
+  # 1. Parse dataset name from file_path
+  data_name <- str_split(basename(file_path),".[[:alnum:]]+$")[[1]][1]
+  
+  # 2. Format inputs {nhd_lines} and {segs_w_comids} 
+  nhd_reaches <- nhd_lines %>%
+    sf::st_drop_geometry() %>%
+    select(COMID,AREASQKM,LENGTHKM) %>%
+    mutate(COMID = as.character(COMID))
+  
+  segs_w_comids <- segs_w_comids %>%
+    rename(COMID = grep("comid",names(segs_w_comids),ignore.case = TRUE,value = TRUE))
+  
+  # 3. Read in downloaded data file
+  # only specify col_type for COMID since cols will differ for each downloaded data file
+  dat <- read_csv(file_path, col_types = cols(COMID = "c"), show_col_types = FALSE)
+  
+  # For PPT data we want to return the long-term (1971-2000) monthly averages 
+  # instead of the monthly values for each year
+  if(grepl("PPT_CAT",file_path)){
+    message("Calculating long-term monthly average precipitation from annual data")
+    dat <- calc_monthly_avg_ppt(dat)
+  }
+  
+  # 4. Identify columns of interest
+  # Subset VarsOfInterest table to retain the desired dataset {data_name} 
+  vars_item <- vars_table %>%
+    filter(Dataset_name == data_name) 
+  
+  col_names <- tibble(col_name = vars_item$Catchment.Item.Name,
+                      cat_agg_op = vars_item$CAT_aggregation_operation) %>%
+    filter(!is.na(col_name)) 
+  
+  # Reformat col_names for certain datasets with year suffixes on column names
+  # Function `format_col_names_years` sourced from 1_fetch/fetch_nhdv2_attributes_from_sb.R
+  # National Inventory of Dams data:
+  if(unique(vars_item$sb_id) == "58c301f2e4b0f37a93ed915a"){
+    years <- unique(str_extract(names(dat),"\\d{2,}"))
+    years <- years[!is.na(years)]
+    cols <- format_col_names_years(col_names$col_name,years,yr_pattern = "YYYY")
+    cols <- cols[cols != "COMID"]
+    col_names <- tibble(col_name = cols,
+                        cat_agg_op = rep(vars_item$CAT_aggregation_operation,length(years))) 
+  }
+  
+  # HDENS data:
+  if(unique(vars_item$sb_id) == "5910de31e4b0e541a03ac983"){
+    years <- unique(str_extract(names(dat),"\\d{2,}"))
+    years <- years[!is.na(years)]
+    cols <- format_col_names_years(col_names$col_name,years,yr_pattern = "XX")
+    cols <- cols[cols != "COMID"]
+    col_names <- tibble(col_name = cols,
+                        cat_agg_op = rep(vars_item$CAT_aggregation_operation,length(years)))
+  }
+  
+  # monthly average precipitation data:
+  if(unique(vars_item$sb_id) %in% c("5734acafe4b0dae0d5de622d")){
+    col_names$col_name <- names(dat)[names(dat) != "COMID"]
+  }
+  
+  # Separate columns based on the aggregation operation we need to scale the NHD-catchment-values to PRMS-scale values
+  cols_sum <- col_names$col_name[col_names$cat_agg_op=="sum"]
+  cols_area_wtd_mean <- col_names$col_name[col_names$cat_agg_op=="area_weighted_mean"]
+  cols_min <- col_names$col_name[col_names$cat_agg_op=="min"]
+  cols_max <- col_names$col_name[col_names$cat_agg_op=="max"]
+  
+  # 5. Munge downloaded data
+  dat_proc <- dat %>%
+    # retain CAT columns from NHDv2 attributes dataset
+    select(c(COMID,starts_with("CAT"))) %>%
+    # join data to {segs_w_comids} data frame by COMID
+    right_join(.,segs_w_comids,by=c("COMID")) %>%
+    # join data to {nhd_reaches} by COMID since we need the AREASQKM and LENGTHKM attributes not
+    # included in the downloaded NHDv2 attribute datasets
+    left_join(.,nhd_reaches,by="COMID") %>%
+    relocate("PRMS_segid",.before="COMID") 
+  
+  # Flag columns with undesired flag values (e.g. -9999)
+  flag_cols <- dat_proc %>%
+    select(where(function(x) -9999 %in% x)) %>% 
+    names()
+  
+  # For columns with undesired flag values, replace -9999 with NA, else use existing value
+  dat_proc_out <- dat_proc %>%
+    mutate(across(all_of(flag_cols), ~case_when(. == -9999 ~ NA_real_, TRUE ~ as.numeric(.))))
+  
+  # 6. Scale NHDv2 attributes to PRMS catchments
+  dat_proc_aggregated <- dat_proc_out %>%
+    # summarize the data for each unique PRMS_segid
+    group_by(PRMS_segid) %>%
+    # approximate NHDv2 catchment area for all COMID's where AREASQKM equals zero
+    mutate(AREASQKM_approx = case_when(AREASQKM == 0 ~ LENGTHKM^2, TRUE ~ AREASQKM)) %>%
+    # apply desired aggregation operations to appropriate columns
+    summarize(
+      AREASQKM_PRMS = sum(AREASQKM_approx), 
+      across(any_of(cols_area_wtd_mean), weighted.mean, w = AREASQKM_approx, na.rm = T, .names = "{col}_area_wtd"),
+      across(any_of(cols_sum), sum, na.rm = T, .names = "{col}_sum"),
+      across(any_of(cols_min), min, na.rm = T, .names = "{col}_min"),
+      across(any_of(cols_max), max, na.rm = T, .names = "{col}_max")) 
+  
+  
+  return(dat_proc_aggregated)
+  
+}
+
+
