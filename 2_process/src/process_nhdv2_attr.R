@@ -1,3 +1,27 @@
+create_nhdv2_attr_table <- function(attr_data_upstream,attr_data_catchment){
+  #'
+  #' @description Function to combine two lists containing cumulative upstream and catchment-scale
+  #' NHDv2 attributes
+  #' 
+  #' @param attr_data_upstream list object containing NHDv2 attributes referenced to the cumulative upstream watershed
+  #' @param attr_data_catchment list object containing NHDv2 attributes scaled to the local contributing catchment
+  #' 
+  #' @value returns a data frame with one row per PRMS segment and one column for each unique NHDv2 attribute variable
+  #'
+  
+  # loop through both lists simultaneously and join data frames by PRMS_segid
+  attr_data_df <- purrr::map2(attr_data_catchment, attr_data_upstream, full_join, by = "PRMS_segid") %>%
+    # bind all columns containing into a single data frame
+    Reduce(full_join,.) %>%
+    # hide messages that data frames are being joined by column 'PRMS_segid'
+    suppressMessages()
+  
+  return(attr_data_df)
+  
+}
+
+
+
 calc_monthly_avg_ppt <- function(ppt_data){
   #' 
   #' @description Function to calculate long-term monthly average precipitation for each NHDPlusV2 reach, represented by a unique COMID
