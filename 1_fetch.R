@@ -197,8 +197,11 @@ p1_targets_list <- list(
                   filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                   download_path = '1_fetch/out',
                   ## Subset downloaded tifs to only process the  years that are relevant model
-                  year = c('2000','1990','1980','1970','1960'),
-                  name_unzip_folder = NULL), 
+                  year = c('1960','1970','1980','1990','2000'),
+                  name_unzip_folder = NULL,
+                  overwrite_file = TRUE,
+                  name = c('1960','1970','1980','1990','2000')
+                  ), 
     format = 'file'
   ),
   
@@ -277,9 +280,8 @@ p1_targets_list <- list(
   # Unzip monthly natural baseflow file
   tar_target(
     p1_natural_baseflow_csv,
-    {
-      unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
+    {unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+     file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
       },
     format = "file"
   )

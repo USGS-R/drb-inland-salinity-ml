@@ -109,16 +109,13 @@ p2_targets_list <- list(
                rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x, fixed = T))
   ),
   
-
-  
-  
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                           raster = x, categorical_raster = TRUE,
                                                                           raster_summary_fun = NULL, new_cols_prefix = 'lcClass', fill = 0))
-      }
+    }
   ),
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'

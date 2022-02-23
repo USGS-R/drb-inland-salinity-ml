@@ -1,4 +1,5 @@
-download_tifs <- function(sb_id, filename, download_path, overwrite_file = T, year = NULL, name_unzip_folder = NULL){
+download_tifs <- function(sb_id, filename, download_path, overwrite_file = TRUE,
+                          year = NULL, name_unzip_folder = NULL, name = NULL){
   
 #' @description Download and unzip specified file from sciencebase
 #' @param sb_id str. Sciencebase id. accepts a single str.
@@ -32,13 +33,21 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = T, ye
   # Find and delete years that are not needed - negate enables inverse matching
   if(!is.null(year)){
   years_collapsed <- year %>% lapply(function(x) paste0(x,'.tif')) %>% paste(collapse = '|')
-  files_del <- list.files(unzip_folder_path, full.names = T) %>% str_subset(years_collapsed, negate = T)
+  files_del <- list.files(unzip_folder_path, full.names = TRUE) %>% stringr::str_subset(years_collapsed, negate = T)
   lapply(files_del, file.remove)
   rm(path_to_downloaded_file, files_del)
   }
-
-   return(list.files(unzip_folder_path, full.names = T))
   
+  final_list <- list.files(unzip_folder_path, full.names = TRUE)
+
+  if(!is.null(name)){
+    
+    names(final_list) <- name
+    
+    }
+
+  print(final_list)
+  return(final_list)
 }
 
 
