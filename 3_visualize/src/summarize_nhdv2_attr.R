@@ -2,7 +2,8 @@ summarize_nhdv2_attr <- function(attr_data,fileout){
   #' 
   #' @description This function summarizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
-  #' @param attr_data list containing the processed NHDv2 attribute data; data frames must include column "PRMS_segid" 
+  #' @param attr_data data frame containing the processed NHDv2 attribute data;
+  #' must include column "PRMS_segid"
   #' @param fileout a character string that indicates the name of the output file, including path and extension
   #'
   #' @value Returns a csv file containing summary statistics for each NHDv2 attribute variable
