@@ -7,23 +7,20 @@ summarize_nhdv2_attr <- function(attr_data,fileout){
   #'
   #' @value Returns a csv file containing summary statistics for each NHDv2 attribute variable
   
-  # Bind all columns representing unique NHDv2 attribute variables
-  attr_data_df <- attr_data %>%
-    Reduce(full_join,.) %>%
-    # hide messages that data frames are being joined by column 'PRMS_segid'
-    suppressMessages()
-  
+
   # Define function to summarize the number of NA's in numeric vector x
-  num_NA <- function(x){
+  # The argument `na.rm = TRUE` is included so that the `summarize_at` line will run in the code
+  # chunk below that generates `attr_summary`; it does not remove NA values in `num_NA()`
+  num_NA <- function(x,na.rm=TRUE){
     sum(is.na(x))
   }
   
   # Calculate summary statistics for each variable's time series
-  attr_summary <- attr_data_df %>%
+  attr_summary <- attr_data %>%
     select(where(is.numeric)) %>%
     pivot_longer(everything()) %>%
     group_by(name) %>%
-    summarise_at(vars(value), list(Min = min, Mean = mean, Max = max, Sd = sd, num_NA = num_NA)) %>%
+    summarize_at(vars(value), list(Min = min, Mean = mean, Max = max, Sd = sd, num_NA = num_NA),na.rm=TRUE) %>%
     mutate_if(is.numeric, round, 3)
   
   # Save data summary

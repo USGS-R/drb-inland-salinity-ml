@@ -75,7 +75,7 @@ p3_targets_list <- list(
   # Create and save a summary table that describes variation in the NHDv2 attribute variables across the PRMS network
   tar_target(
     p3_nhdv2_attr_summary_csv,
-    summarize_nhdv2_attr(p2_nhdv2_attr_upstream,"3_visualize/out/nhdv2_attr_summary.csv"),
+    summarize_nhdv2_attr(p2_nhdv2_attr,"3_visualize/out/nhdv2_attr_summary.csv"),
     format = "file"
   )
   
