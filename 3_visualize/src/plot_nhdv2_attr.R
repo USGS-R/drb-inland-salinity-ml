@@ -34,7 +34,7 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path){
       left_join(.,network_geometry[,c("subsegid","geometry")],by=c("PRMS_segid"="subsegid")) %>%
       sf::st_as_sf() %>%
       ggplot() + 
-      geom_sf(aes(color=.data[[col_name]])) + 
+      geom_sf(aes(color=.data[[col_name]]), size = 0.3) + 
       scale_color_viridis_c(option="plasma") + 
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,2), "cm"),
