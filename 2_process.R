@@ -116,8 +116,10 @@ p2_targets_list <- list(
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
-                                                                          raster = x, categorical_raster = TRUE,
-                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass', fill = 0))
+                                                  raster = x, categorical_raster = TRUE,
+                                                  raster_summary_fun = NULL,
+                                                  new_cols_prefix = 'lcClass',
+                                                  fill = 0))
     }
   ),
   
@@ -125,21 +127,24 @@ p2_targets_list <- list(
   # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
   # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
   tar_target(p2_FORESCE_LC_per_catchment_reclass,
-             {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
-                                                                                    reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
-                                                                                    reclassify_table_lc_col = 'FORESCE_value',
-                                                                                    reclassify_table_reclass_col = 'Reclassify_match',
-                                                                                    sep = ',',
-                                                                                    pivot_longer_contains = 'lcClass') %>% 
+             {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
+                          .y = FORESCE_years, 
+                          .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                                                       reclassify_table_lc_col = 'FORESCE_value',
+                                                       reclassify_table_reclass_col = 'Reclassify_match',
+                                                       sep = ',',
+                                                       pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
                        aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
                                                   proportion_col_prefix = 'prop_lcClass',
                                                   hru_area_colname = hru_area,
                                                   new_area_colname = total_PRMS_area) %>% ## n = 416
                        ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
-                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid, everything())  ## n = 418
-                     )
-    }),
+                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid,  everything()) %>% ## n = 418
+                       ## Adding Year column
+                       mutate(Year = .y)}
+                       )}
+    ),
   
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(

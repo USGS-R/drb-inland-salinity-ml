@@ -197,11 +197,10 @@ p1_targets_list <- list(
                   filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                   download_path = '1_fetch/out',
                   ## Subset downloaded tifs to only process the  years that are relevant model
-                  year = c('1960','1970','1980','1990','2000'),
+                  year = FORESCE_years,
                   name_unzip_folder = NULL,
                   overwrite_file = TRUE,
-                  name = c('1960','1970','1980','1990','2000')
-                  ), 
+                  name = FORESCE_years), 
     format = 'file'
   ),
   
