@@ -210,8 +210,17 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
     names()
   
   # For columns with undesired flag values, replace -9999 with NA, else use existing value
-  dat_proc_out <- dat_proc %>%
-    mutate(across(all_of(flag_cols), ~case_when(. == -9999 ~ NA_real_, TRUE ~ as.numeric(.))))
+  
+  # For STATSGO variables related to HYDGRP, TEXT, and LAYER, the metadata indicate 
+  # that -9999 denotes NODATA usually water. For these soils variables only, 
+  # change -9999 values to 0.
+  if(unique(vars_item$sb_id) %in% c("5728d93be4b0b13d3918a99f","5728decfe4b0b13d3918a9aa","5728dd46e4b0b13d3918a9a7")){
+    dat_proc_out <- dat_proc %>%
+      mutate(across(all_of(flag_cols), ~case_when(. == -9999 ~ 0, TRUE ~ as.numeric(.))))
+  } else {
+    dat_proc_out <- dat_proc %>%
+      mutate(across(all_of(flag_cols), ~case_when(. == -9999 ~ NA_real_, TRUE ~ as.numeric(.))))
+  }
   
   # 6. Scale NHDv2 attributes to PRMS catchments
   dat_proc_aggregated <- dat_proc_out %>%
