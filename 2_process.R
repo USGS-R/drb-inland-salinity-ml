@@ -121,7 +121,7 @@ p2_targets_list <- list(
                               ## some lc classes in NLCD were given NA ultimately - example: alaska only shrub - we remove from table
                               select(-contains('NA'))
                              }
-                           )
+                           ) %>% reduce(inner_join, by = c('PRMS_segid', 'AREASQKM_PRMS'))
              ),
 
   # Extract baccasted historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
