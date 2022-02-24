@@ -113,7 +113,8 @@ p2_targets_list <- list(
               ## reclassify by individual year df
                purrr::map2(.x = .,
                            .y = NLCD_year_suffix,
-                           .f = ~{reclassify_land_cover(land_cover_df = .x, reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv',
+                           .f = ~{reclassify_land_cover(land_cover_df = .x,
+                                                        reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv',
                                                         reclassify_table_lc_col = 'NLCD_value',
                                                         reclassify_table_reclass_col = 'Reclassify_match',
                                                         sep = ',',
@@ -124,7 +125,7 @@ p2_targets_list <- list(
                            ) %>% reduce(inner_join, by = c('PRMS_segid', 'AREASQKM_PRMS'))
              ),
 
-  # Extract baccasted historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+  # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
