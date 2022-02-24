@@ -103,12 +103,13 @@ unzip_NHD_data <- function(downloaded_data_folder_path,
 
 read_subset_LC_data <- function(LC_data_folder_path,
                                 Comids_in_AOI_df,
-                                Comid_col){
+                                Comid_col, NLCD_type = NULL){
   
   #' @description Read in and subset lc data after data is downloaded and unzipped
-  #' @param LC_data_folder_path: LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
-  #' @param Comids_in_AOI_df: dataframe of all comid ids
-  #' @param Comid_col: str. key Comid col in Xwalk table. e.g. "comid" | "COMID"
+  #' @param LC_data_folder_path LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
+  #' @param Comids_in_AOI_df dataframe of all comid ids
+  #' @param Comid_col str. key comid col in Xwalk table. e.g. "comid" | "COMID"
+  #' @param NLCD_file_pattern str. Default NULL. Options are either CAT, ACC, or TOT. Use NULL if all three are selected
   #' @example read_subset_LC_data(LC_data_folder_path = "1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
   #'  Comids_in_AOI_df = PRMSxWalk,  Comid_col = 'comid_down')
   #' @example read_subset_LC_data(LC_data_folder_path = c("1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
@@ -120,38 +121,42 @@ read_subset_LC_data <- function(LC_data_folder_path,
   
   # Loop through sub-folders, combine datasets, and subset through Join
   for(LC_data in LC_data_folder_path){
-    
-  ## Read in
+  
+  ## G
     LC_data_path <- unlist(LC_data)
-    files <- list.files(path = LC_data_path, pattern = '*.txt|*.TXT', full.names = T)
     
-    data_list <- lapply(files, function(x){ read_csv(x, show_col_types = FALSE)})
+    if(!is.null(NLCD_type)){
+      files <- list.files(path = LC_data_path, pattern = glue('*{NLCD_type}_CONUS.txt|*{NLCD_type}_CONUS.TXT'), full.names = TRUE)
+    }
+    else{
+      files <- list.files(path = LC_data_path, pattern = '*_CONUS.txt|*_CONUS.TXT', full.names = TRUE)
+    }
+    
+    ## Read in and subset by comid_id's from Xwalk  
+    data_list <- lapply(files, function(x){ read_csv(x, show_col_types = FALSE) %>% 
+        right_join(Comids_in_AOI_df,
+                   by = c('COMID' = Comid_col),
+                   keep = F)
+      })
   
   ## Combine
-    cbind_df <-data_list %>%
+    cbind_subsetted_df <-data_list %>%
       reduce(inner_join, by = 'COMID') ## possibly add as full_join
 
-  ## Subset by comid_id's from Xwalk
-    data_subsetted <-cbind_df %>%
-      right_join(Comids_in_AOI_df,
-               by = c('COMID' = Comid_col),
-               keep = F)
-
   ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
-    if(endsWith(LC_data, 'unzipped')){
-      name <- str_split(LC_data, pattern = '/', simplify = T)
+    if(endsWith(LC_data, 'unzipped') | endsWith(LC_data, '')){
+      name <- str_split(LC_data, pattern = '/', simplify = TRUE)
       name <- name[length(name) - 1]
     }
     else{
-      name <- str_split(LC_data, pattern = '/', simplify = T)
+      name <- str_split(LC_data, pattern = '/', simplify = TRUE)
       name <-name[length(name)]
     }
     
-    all_data_subsetted[[name]] <- data_subsetted
+    all_data_subsetted[[name]] <- cbind_subsetted_df
     }
    ## if only one NLCD table loaded, set as a df
     if(length(all_data_subsetted) == 1){
-      print(TRUE)
       all_data_subsetted <-  all_data_subsetted[[1]]
     }
       
