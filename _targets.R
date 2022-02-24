@@ -99,7 +99,7 @@ NLCD_folders <- c(
 ## https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
 NADP_sb_id <- '57e2ac2fe4b0908250045981'
 
-
+## FORESCE list of FORESCE years
 FORESCE_years <- c('1960', '1970', '1980', '1990', '2000')
 
 # Return the complete list of targets
