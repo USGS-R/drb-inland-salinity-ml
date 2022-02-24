@@ -8,6 +8,7 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = TRUE,
 #' @param overwrite_file binary T/F. Whether to re-download if specific downloaded file exists in directory. Default True
 #' @param year str or vector. years of interest. See sb metadata to know which years are of available
 #' @param name_unzip_folder name of subfolder for downloaded tif files. If NULL, name of zip file used as folder name
+#' @param name list of labels for list. default NULL.
 #' @example download_tifs(sb_id = '605c987fd34ec5fa65eb6a74', filename = 'DRB_Historical_Reconstruction_1680-2010.zip', download_path = '1_fetch/out', overwrite_file = T, year = c('2000','1990','1980','1970','1960'))
 #' @example download_tifs('5b15a50ce4b092d9651e22b9', filename = '1992_2015.zip', download_path = '1_fetch/out', overwrite_file = T, name_unzip_folder = 'rd_salt')
   
@@ -40,7 +41,7 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = TRUE,
   
   lst <- list.files(unzip_folder_path, full.names = TRUE)
 
-  ## labeling list with the names parameter given
+  ## labeling list when names param given
   if(!is.null(name)){
     names(lst) <- name
     }
