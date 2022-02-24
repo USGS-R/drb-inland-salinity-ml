@@ -106,11 +106,11 @@ p2_targets_list <- list(
   # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
 
   tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
-             ## spliting the df into list of dfs by individual years
+             ## spiting the df into list of dfs by individual years
              purrr::map(.x = NLCD_year_suffix,
                         .f = ~{p2_PRMS_NLCD_lc_proportions %>% select(PRMS_segid, AREASQKM_PRMS, contains(glue('NLCD', .x)))}
                         ) %>% 
-              ## reclassify by individual year df
+              # reclassify by individual year df
                purrr::map2(.x = .,
                            .y = NLCD_year_suffix,
                            .f = ~{reclassify_land_cover(land_cover_df = .x,
@@ -119,10 +119,14 @@ p2_targets_list <- list(
                                                         reclassify_table_reclass_col = 'Reclassify_match',
                                                         sep = ',',
                                                         pivot_longer_contains = glue('NLCD',.y)) %>% 
-                              ## some lc classes in NLCD were given NA ultimately - example: alaska only shrub - we remove from table
-                              select(-contains('NA'))
+                              # some lc classes in NLCD were given NA ultimately - example: alaska only shrub - we remove from table
+                              select(-contains('NA')) %>% 
+                              # Renaming col names 
+                               rename_with(.fn = function(x) sub("(_\\d+$)", "_lcClass\\1", x), .cols = starts_with("prop_"))
                              }
-                           ) %>% reduce(inner_join, by = c('PRMS_segid', 'AREASQKM_PRMS'))
+                           ) %>% 
+               # cbind all NLCD years
+               reduce(inner_join, by = c('PRMS_segid', 'AREASQKM_PRMS'))
              ),
 
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
