@@ -33,7 +33,7 @@ reclassify_land_cover <- function(land_cover_df,
     select(-c(old_class, merge_col, reclassify_table_reclass_col))
 
   # pivot_wider to return lcClass labels to columns. Summarizing via a sum
-  final_df <- pivot_wider(new_classes_df, names_from = new_class, names_prefix = 'prop_', values_from = Prop_class_in_catchment, values_fn = sum)
+  final_df <- pivot_wider(new_classes_df, names_from = new_class, names_prefix = 'prop', values_from = Prop_class_in_catchment, values_fn = sum)
   
   return(final_df)
   

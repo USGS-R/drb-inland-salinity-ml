@@ -112,19 +112,19 @@ p2_targets_list <- list(
                         ) %>% 
               ## reclassify by individual year df
                purrr::map2(.x = .,
-                           .y= NLCD_year_suffix,
+                           .y = NLCD_year_suffix,
                            .f = ~{reclassify_land_cover(land_cover_df = .x, reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv',
                                                         reclassify_table_lc_col = 'NLCD_value',
                                                         reclassify_table_reclass_col = 'Reclassify_match',
                                                         sep = ',',
                                                         pivot_longer_contains = glue('NLCD',.y)) %>% 
-                              ## some lc classes in NLCD were given NA ultimately - example - alaska onluy shrub - we remove from table
-                              select(-contains('NA'))}
+                              ## some lc classes in NLCD were given NA ultimately - example: alaska only shrub - we remove from table
+                              select(-contains('NA'))
+                             }
                            )
              ),
 
-
-  # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+  # Extract baccasted historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
