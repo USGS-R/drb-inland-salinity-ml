@@ -106,7 +106,7 @@ p2_targets_list <- list(
                                    reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv', 
                                    reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
                                    sep = ',',
-                                   pivot_longer_contains = 'NLCD11') %>%
+                                   pivot_longer_contains = 'NLCD') %>%
                ## some lc classes in NLCD were given NA ultimately - example - alaska onluy shrub - we remove from table
                select(-contains('NA')) %>% 
                rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x, fixed = T))
