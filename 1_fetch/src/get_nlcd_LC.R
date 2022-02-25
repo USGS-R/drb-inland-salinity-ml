@@ -122,7 +122,6 @@ read_subset_LC_data <- function(LC_data_folder_path,
   # Loop through sub-folders, combine datasets, and subset through Join
   for(LC_data in LC_data_folder_path){
   
-  ## G
     LC_data_path <- unlist(LC_data)
     
     if(!is.null(NLCD_type)){
