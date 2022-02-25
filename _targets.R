@@ -100,7 +100,7 @@ NLCD_folders <- c(
 NADP_sb_id <- '57e2ac2fe4b0908250045981'
 
 ## FORESCE list of FORESCE years
-FORESCE_years <- c('1960', '1970', '1980', '1990', '2000')
+FORESCE_years <- c('1940', '1950', '1960', '1970', '1980', '1990', '2000')
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
