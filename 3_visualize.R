@@ -77,6 +77,14 @@ p3_targets_list <- list(
     p3_nhdv2_attr_summary_csv,
     summarize_nhdv2_attr(p2_nhdv2_attr,"3_visualize/out/nhdv2_attr_summary.csv"),
     format = "file"
+  ),
+  
+  # Create and save a summary table that indicates the NA's among contributing 
+  # NHDv2 catchments for each PRMS segment and attribute variable
+  tar_target(
+    p3_nhdv2_attr_missing_data_csv,
+    summarize_catchment_nhdv2_attr_missing(p2_nhdv2_attr_catchment,"3_visualize/out/nhdv2_attr_missing_data.csv"),
+    format = "file"
   )
   
 )
