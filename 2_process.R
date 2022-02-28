@@ -188,7 +188,8 @@ p2_targets_list <- list(
   ),
   
   # Process NHDv2 attributes scaled to the catchment that directly drains to each PRMS segment;
-  # returns object target of class "list" 
+  # returns object target of class "list" that is nested and contains the aggregated data as well 
+  # as a separate NA diagnostics data table for each NHDv2 attribute
   tar_target(
     p2_nhdv2_attr_catchment,
     process_catchment_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,

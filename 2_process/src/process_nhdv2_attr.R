@@ -4,14 +4,21 @@ create_nhdv2_attr_table <- function(attr_data_upstream,attr_data_catchment){
   #' NHDv2 attributes
   #' 
   #' @param attr_data_upstream list object containing NHDv2 attributes referenced to the cumulative upstream watershed
-  #' @param attr_data_catchment list object containing NHDv2 attributes scaled to the local contributing catchment
+  #' @param attr_data_catchment list object containing NHDv2 attributes scaled to the local contributing catchment;
+  #' attr_data_catchment should be a nested list such that the first element represents a unique attribute dataset
+  #' and the second element represents data frames containing the aggregated datasets and the NA diagnostics for
+  #' the attribute dataset. 
   #' 
   #' @value returns a data frame with one row per PRMS segment and one column for each unique NHDv2 attribute variable
   #'
   
+  # For the attribute variables scaled to the PRMS catchment-scale, select the list elements containing the data and 
+  # omit the list elements containing the NA diagnostics information. 
+  attr_data_catchment_dat <- lapply(attr_data_catchment, "[[", 1)
+  
   # loop through both lists simultaneously and join data frames by PRMS_segid
-  attr_data_df <- purrr::map2(attr_data_catchment, attr_data_upstream, full_join, by = "PRMS_segid") %>%
-    # bind all columns containing into a single data frame
+  attr_data_df <- purrr::map2(attr_data_catchment_dat, attr_data_upstream, full_join, by = "PRMS_segid") %>%
+    # bind all columns containing NHDv2 attributes into a single data frame
     Reduce(full_join,.) %>%
     # hide messages that data frames are being joined by column 'PRMS_segid'
     suppressMessages()
@@ -124,8 +131,9 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   #' @param nhd_lines sf object containing NHDPlusV2 flowlines for area of interest
   #' nhd_lines must contain variables COMID,AREASQKM, and LENGTHKM
   #'
-  #' @value A data frame containing PRMS_id and columns representing the NHDv2 attribute data scaled to the 
-  #' local PRMS catchment. 
+  #' @value Returns a list that includes a data table containing the PRMS_id and columns representing the NHDv2 
+  #' attribute data scaled to the local PRMS catchment, and a data table containing NA diagnostic information
+  #' for each variable and PRMS segment.
   #' 
   
   # 1. Parse dataset name from file_path
@@ -202,14 +210,29 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
     # join data to {nhd_reaches} by COMID since we need the AREASQKM and LENGTHKM attributes not
     # included in the downloaded NHDv2 attribute datasets
     left_join(.,nhd_reaches,by="COMID") %>%
+    # approximate NHDv2 catchment area for all COMID's where AREASQKM equals zero
+    mutate(AREASQKM_approx = case_when(AREASQKM == 0 ~ LENGTHKM^2, TRUE ~ AREASQKM)) %>%
+    # format columns
     relocate("PRMS_segid",.before="COMID") 
   
+  # 5b. Handle missing values and flagged values
   # Flag columns with undesired flag values (e.g. -9999)
   flag_cols <- dat_proc %>%
-    select(where(function(x) -9999 %in% x)) %>% 
+    select(where(function(x) -9999 %in% x | any(is.na(x)))) %>% 
     names()
   
-  # For columns with undesired flag values, replace -9999 with NA, else use existing value
+  # Before replacing flagged values, tally the number of -9999's as well as the 
+  # proportion of total NHD area where the value is -9999 to use for diagnostics
+  flag_tally <- dat_proc %>%
+    group_by(PRMS_segid) %>%
+    summarize(
+      AREASQKM_PRMS = sum(AREASQKM_approx), 
+      num_NHDv2cats = length(unique(COMID)),
+      across(all_of(flag_cols), ~length(which(. == -9999 | is.na(.))), .names = "{col}_num_NA"),
+      across(all_of(flag_cols), ~round(sum(AREASQKM_approx[which(. == -9999 | is.na(.))]/AREASQKM_PRMS), 4), .names = "{col}_propAREA_NA")
+    ) 
+  
+  # 5c. For columns with undesired flag values, replace -9999 with NA, else use existing value
   
   # For STATSGO variables related to HYDGRP, TEXT, and LAYER, the metadata indicate 
   # that -9999 denotes NODATA usually water. For these soils variables only, 
@@ -226,18 +249,22 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   dat_proc_aggregated <- dat_proc_out %>%
     # summarize the data for each unique PRMS_segid
     group_by(PRMS_segid) %>%
-    # approximate NHDv2 catchment area for all COMID's where AREASQKM equals zero
-    mutate(AREASQKM_approx = case_when(AREASQKM == 0 ~ LENGTHKM^2, TRUE ~ AREASQKM)) %>%
     # apply desired aggregation operations to appropriate columns
     summarize(
       AREASQKM_PRMS = sum(AREASQKM_approx), 
       across(any_of(cols_area_wtd_mean), weighted.mean, w = AREASQKM_approx, na.rm = T, .names = "{col}_area_wtd"),
       across(any_of(cols_sum), sum, na.rm = T, .names = "{col}_sum"),
       across(any_of(cols_min), min, na.rm = T, .names = "{col}_min"),
-      across(any_of(cols_max), max, na.rm = T, .names = "{col}_max")) 
+      across(any_of(cols_max), max, na.rm = T, .names = "{col}_max")) %>%
+    # For segments where all values of a column were NA (thus generating NAN's), replace NAN with NA
+    mutate(across(where(is.numeric), ~if_else(is.nan(.),NA_real_,.)))
+    
+  # 7. Return a list containing the aggregated data table and a table with NA diagnostics for each 
+  # attribute and segment ID.
+  dat_proc_list <- list(data = dat_proc_aggregated, NA_diagnostics = flag_tally)
   
   
-  return(dat_proc_aggregated)
+  return(dat_proc_list)
   
 }
 
