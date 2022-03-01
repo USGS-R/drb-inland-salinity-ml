@@ -5,6 +5,8 @@ source("2_process/src/match_sites_reaches.R")
 source("2_process/src/raster_to_catchment_polygons.R")
 source("2_process/src/combine_NLCD_PRMS.R")
 source("2_process/src/munge_natural_baseflow.R")
+source('2_process/src/reclassify_land_cover.R')
+source('2_process/src/FORESCE_agg_lc_props.R')
 source("2_process/src/process_nhdv2_attr.R")
 
 p2_targets_list <- list(
@@ -58,6 +60,13 @@ p2_targets_list <- list(
     read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
+  # Simple target pairing PRMS_segids with hru_segment:
+  tar_target(p2_PRMS_hru_segment,
+             p2_prms_nhdv2_xwalk %>% mutate(PRMS_segid_split_col = PRMS_segid) %>%
+               separate(col = PRMS_segid_split_col, sep = '_', into =c('hru_segment', "PRMS_segment_suffix")) %>%
+               select(PRMS_segid, hru_segment) %>% mutate(hru_segment = as.integer(hru_segment))
+  ),
+  
   # Melt PRMS-NHDv2 xwalk table to return all COMIDs that drain to each PRMS segment
   tar_target(
     p2_drb_comids_all_tribs, 
@@ -78,7 +87,7 @@ p2_targets_list <- list(
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(
-    p2_LC_w_catchment_area,
+    p2_NLCD_LC_w_catchment_area,
     AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,AREASQKM,TOTDASQKM,LENGTHKM),
                   ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_data
                   NLCD_LC_df = p1_NLCD_data$NLCD_LandCover_2011,
@@ -87,34 +96,65 @@ p2_targets_list <- list(
   
   ## Estimate LC proportion in PRMS catchment
   # returns df with proportion LC in PRMS catchment in our AOI
-  tar_target(
-    p2_PRMS_lc_proportions,
-    proportion_lc_by_prms(p2_LC_w_catchment_area)
+  tar_target(p2_PRMS_NLCD_lc_proportions,
+             proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area)),
+
+  ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
+  # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
+  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
+             reclassify_land_cover(land_cover_df = p2_PRMS_NLCD_lc_proportions,
+                                   reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv', 
+                                   reclassify_table_lc_col = 'NLCD_value', reclassify_table_reclass_col = 'Reclassify_match',
+                                   sep = ',',
+                                   pivot_longer_contains = 'NLCD') %>%
+               ## some lc classes in NLCD were given NA ultimately - example - alaska onluy shrub - we remove from table
+               select(-contains('NA')) %>% 
+               rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x, fixed = T))
   ),
   
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
-                                                                          raster = x, categorical_raster = TRUE,
-                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass'))
-      }
+                                                  raster = x, categorical_raster = TRUE,
+                                                  raster_summary_fun = NULL,
+                                                  new_cols_prefix = 'lcClass',
+                                                  fill = 0))
+    }
   ),
   
-  # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons
+  ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
+  # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
+  # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
+  tar_target(p2_FORESCE_LC_per_catchment_reclass,
+             {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
+                          .y = FORESCE_years, 
+                          .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                                                       reclassify_table_lc_col = 'FORESCE_value',
+                                                       reclassify_table_reclass_col = 'Reclassify_match',
+                                                       sep = ',',
+                                                       pivot_longer_contains = 'lcClass') %>% 
+                       # See documentation in function
+                       aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
+                                                  proportion_col_prefix = 'prop_lcClass',
+                                                  hru_area_colname = hru_area,
+                                                  new_area_colname = total_PRMS_area) %>% ## n = 416
+                       ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
+                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid,  everything()) %>% ## n = 418
+                       ## Adding Year column
+                       mutate(Year = .y)}
+                       )}
+    ),
+  
+  # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
     p2_rdsalt_per_catchment,
     {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
                                                                     raster = x, categorical_raster = FALSE,
-                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt', na.rm = T))
+                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt', na.rm = T) %>%
+        group_by(hru_segment) %>%
+        summarise(across(starts_with('rd_sltX'), sum)))
     }
-  ),
-  
-  # Aggregate to hru_segment for across each annual road salt df in list of p2_rdsalt_per_catchment
-  tar_target(
-    p2_rdsalt_per_catchment_grped, 
-    lapply(p2_rdsalt_per_catchment, function(x) group_by(x, hru_segment) %>%
-             summarise(across(starts_with('rd_sltX'), sum)))
   ),
   
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
@@ -122,7 +162,7 @@ p2_targets_list <- list(
     p2_rdsalt_per_catchment_allyrs,
     # Reduce can iterate through elements in a list 1 after another. 
     Reduce(function(...) merge(..., by = 'hru_segment'),
-           p2_rdsalt_per_catchment_grped) %>% 
+           p2_rdsalt_per_catchment) %>% 
       # Calculate total salt accumulation across all years 
       mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = T)) %>% 
       # Calculate prop of catchment rd salt acc across entire basin
@@ -185,12 +225,8 @@ p2_targets_list <- list(
                                   cols = c("TOT")),
     pattern = map(p1_vars_of_interest_downloaded_csvs),
     iteration = "list"
-  )
-  
-)
-
-
-
+  ) 
+ )
 
 
 
