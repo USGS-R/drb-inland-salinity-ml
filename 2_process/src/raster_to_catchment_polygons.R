@@ -1,8 +1,10 @@
 
+rbind.fill.list <- function(x, fill = NULL) {
+
 #' @description Function that is variation to plyr::rbind.fill(), rbinds a list of tables and fill missing cols with NA. Taken from: https://stackoverflow.com/questions/17308551/do-callrbind-list-for-uneven-number-of-column
 #' @param x list of lists tables
+#' @param fill Default NULL. 
 
-rbind.fill.list <- function(x) {
   # loop through element tables in list and extracts cols 
   colnames <- sapply(x, names)
   # get all unique colnames as a unique list 
@@ -15,13 +17,20 @@ rbind.fill.list <- function(x) {
     output_list[[i]] <- unname(x[[i]])[match(unique_colnames, colnames[[i]])]
   }
   # rbind to dataframe
-  setNames(as.data.frame(do.call(rbind, output_list), stringsAsFactors=FALSE), unique_colnames)
+  df <- setNames(as.data.frame(do.call(rbind, output_list), stringsAsFactors=FALSE), unique_colnames) 
+  
+  # Option fill of missing values with given fill value if not NULL
+  if(!is.null(fill)){
+    df <- replace(df, is.na(df), fill)
+  }
+  return(df)
 }
 
 raster_to_catchment_polygons <- function(polygon_sf, raster,
                                          categorical_raster = NULL,
                                          raster_summary_fun = NULL,
-                                         new_cols_prefix = NULL, ...){
+                                         new_cols_prefix = NULL,
+                                         fill = NULL, ...){
 
   #' @description Function extracts raster pixel per catchment polygon and calculated proportion of raster class per total
   #'
@@ -71,12 +80,13 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   end_time <- Sys.time()
   message('raster extract processing time:', end_time - start_time)
   
-  ## handling unequal length of classes
-  final_raster_table <- rbind.fill.list(raster_per_polygon) %>%
+  ## handling unequal length of classes - filling missing values with given fill argument
+  final_raster_table <- rbind.fill.list(raster_per_polygon, fill = fill) %>%
     setNames(paste0(new_cols_prefix, names(.))) %>% 
     mutate(ID = row_number())
   
   }
+  
   ## Extract and summarize non-descrete raster values in polygons shapefile  
   else{
     message('extracting continuous raster')

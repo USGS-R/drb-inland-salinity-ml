@@ -48,7 +48,7 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area){
       across(starts_with(paste0('PRMS_AREA_','CAT')), ~(.x/AREASQKM_PRMS),
              .names="PROP_{col}"),
       # round the new cols 
-      across(starts_with(c('PROP','PRMS')), round, 2), 
+      across(starts_with(c('PROP','PRMS')), round, 4), 
     .groups="drop") %>% 
     select(-starts_with('PRMS_AREA_CAT'))
 

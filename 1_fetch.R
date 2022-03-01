@@ -197,8 +197,10 @@ p1_targets_list <- list(
                   filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                   download_path = '1_fetch/out',
                   ## Subset downloaded tifs to only process the  years that are relevant model
-                  year = c('2000','1990','1980','1970','1960'),
-                  name_unzip_folder = NULL), 
+                  year = FORESCE_years,
+                  name_unzip_folder = NULL,
+                  overwrite_file = TRUE,
+                  name = FORESCE_years), 
     format = 'file'
   ),
   
@@ -206,13 +208,14 @@ p1_targets_list <- list(
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
-    p1_rdsalt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
-                              filename = '1992_2015.zip',
-                              download_path = '1_fetch/out',
-                              overwrite_file = T,
-                              ## no year subsetting here as all years with rdsalt data are relevant here
-                              year = NULL,
-                              name_unzip_folder = 'rd_salt'), 
+    p1_rdsalt, 
+    download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+                  filename = '1992_2015.zip',
+                  download_path = '1_fetch/out',
+                  overwrite_file = T,
+                  ## no year subsetting here as all years with rdsalt data are relevant here
+                  year = NULL,
+                  name_unzip_folder = 'rd_salt'), 
              format = 'file'
   ),
 
@@ -277,9 +280,8 @@ p1_targets_list <- list(
   # Unzip monthly natural baseflow file
   tar_target(
     p1_natural_baseflow_csv,
-    {
-      unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
+    {unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+     file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
       },
     format = "file"
   )
