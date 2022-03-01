@@ -216,8 +216,8 @@ p2_targets_list <- list(
   # Process NHDv2 attributes referenced to cumulative upstream area;
   # returns object target of class "list". List elements for CAT_PPT
   # and ACC_PPT (if TOT is selected below) will only contain the 
-  # PRMS_segid and so will functionally be omitted in the target that 
-  # combines the output of p2_nhdv2_attr_upstream and p2_nhdv2_attr_catchment (forthcoming)
+  # PRMS_segid column and so will functionally be omitted when  
+  # creating the `p2_nhdv2_attr` target below
   tar_target(
     p2_nhdv2_attr_upstream,
     process_cumulative_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
@@ -225,8 +225,32 @@ p2_targets_list <- list(
                                   cols = c("TOT")),
     pattern = map(p1_vars_of_interest_downloaded_csvs),
     iteration = "list"
-  ) 
- )
+  ),
+  
+  # Process NHDv2 attributes scaled to the catchment that directly drains to each PRMS segment;
+  # returns object target of class "list" that is nested and contains the aggregated data as well 
+  # as a separate NA diagnostics data table for each NHDv2 attribute
+  tar_target(
+    p2_nhdv2_attr_catchment,
+    process_catchment_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
+                                 vars_table = p1_vars_of_interest,
+                                 segs_w_comids = p2_drb_comids_all_tribs,
+                                 nhd_lines = p1_nhdv2reaches_sf),
+    pattern = map(p1_vars_of_interest_downloaded_csvs),
+    iteration = "list"
+  ),
+  
+  # Create combined NHDv2 attribute data frame that includes both the cumulative upstream and catchment-scale values
+  tar_target(
+    p2_nhdv2_attr,
+    create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+  )
+  
+)
+
+
+
+
 
 
 
