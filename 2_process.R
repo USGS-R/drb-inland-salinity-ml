@@ -133,8 +133,10 @@ p2_targets_list <- list(
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
-                                                                          raster = x, categorical_raster = TRUE,
-                                                                          raster_summary_fun = NULL, new_cols_prefix = 'lcClass', fill = 0))
+                                                  raster = x, categorical_raster = TRUE,
+                                                  raster_summary_fun = NULL,
+                                                  new_cols_prefix = 'lcClass',
+                                                  fill = 0))
     }
   ),
   
@@ -142,21 +144,24 @@ p2_targets_list <- list(
   # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
   # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
   tar_target(p2_FORESCE_LC_per_catchment_reclass,
-             {lapply(p2_FORESCE_LC_per_catchment, function(x) reclassify_land_cover(land_cover_df = x,
-                                                                                    reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv', 
-                                                                                    reclassify_table_lc_col = 'FORESCE_value',
-                                                                                    reclassify_table_reclass_col = 'Reclassify_match',
-                                                                                    sep = ',',
-                                                                                    pivot_longer_contains = 'lcClass') %>% 
+             {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
+                          .y = FORESCE_years, 
+                          .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                                                       reclassify_table_lc_col = 'FORESCE_value',
+                                                       reclassify_table_reclass_col = 'Reclassify_match',
+                                                       sep = ',',
+                                                       pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
                        aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
                                                   proportion_col_prefix = 'prop_lcClass',
                                                   hru_area_colname = hru_area,
                                                   new_area_colname = total_PRMS_area) %>% ## n = 416
                        ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
-                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid, everything())  ## n = 418
-                     )
-    }),
+                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid,  everything()) %>% ## n = 418
+                       ## Adding Year column
+                       mutate(Year = .y)}
+                       )}
+    ),
   
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
@@ -167,13 +172,6 @@ p2_targets_list <- list(
         group_by(hru_segment) %>%
         summarise(across(starts_with('rd_sltX'), sum)))
     }
-  ),
-  
-  # Aggregate to hru_segment for across each annual road salt df in list of p2_rdsalt_per_catchment
-  tar_target(
-    p2_rdsalt_per_catchment_grped, 
-    lapply(p2_rdsalt_per_catchment, function(x) group_by(x, hru_segment) %>%
-             summarise(across(starts_with('rd_sltX'), sum)))
   ),
   
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
@@ -235,8 +233,8 @@ p2_targets_list <- list(
   # Process NHDv2 attributes referenced to cumulative upstream area;
   # returns object target of class "list". List elements for CAT_PPT
   # and ACC_PPT (if TOT is selected below) will only contain the 
-  # PRMS_segid and so will functionally be omitted in the target that 
-  # combines the output of p2_nhdv2_attr_upstream and p2_nhdv2_attr_catchment (forthcoming)
+  # PRMS_segid column and so will functionally be omitted when  
+  # creating the `p2_nhdv2_attr` target below
   tar_target(
     p2_nhdv2_attr_upstream,
     process_cumulative_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
@@ -244,8 +242,32 @@ p2_targets_list <- list(
                                   cols = c("TOT")),
     pattern = map(p1_vars_of_interest_downloaded_csvs),
     iteration = "list"
-  ) 
- )
+  ),
+  
+  # Process NHDv2 attributes scaled to the catchment that directly drains to each PRMS segment;
+  # returns object target of class "list" that is nested and contains the aggregated data as well 
+  # as a separate NA diagnostics data table for each NHDv2 attribute
+  tar_target(
+    p2_nhdv2_attr_catchment,
+    process_catchment_nhdv2_attr(p1_vars_of_interest_downloaded_csvs,
+                                 vars_table = p1_vars_of_interest,
+                                 segs_w_comids = p2_drb_comids_all_tribs,
+                                 nhd_lines = p1_nhdv2reaches_sf),
+    pattern = map(p1_vars_of_interest_downloaded_csvs),
+    iteration = "list"
+  ),
+  
+  # Create combined NHDv2 attribute data frame that includes both the cumulative upstream and catchment-scale values
+  tar_target(
+    p2_nhdv2_attr,
+    create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+  )
+  
+)
+
+
+
+
 
 
 

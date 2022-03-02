@@ -14,8 +14,8 @@ reclassify_land_cover <- function(land_cover_df,
   
   # Load reclassification csv only taking class values, not description cols
   reclassify_table <- read.csv(reclassify_table_csv_path, sep = sep) %>% 
-    select(reclassify_table_lc_col, reclassify_table_reclass_col)
-  
+    select({{reclassify_table_lc_col}}, {{reclassify_table_reclass_col}})
+
   ## Pivoted + join 
   # doing as df in case its a list item and needed reseting to df 
   new_classes_df <- as.data.frame(land_cover_df) %>% 
@@ -26,13 +26,13 @@ reclassify_land_cover <- function(land_cover_df,
     # add col that extracts the original raster class values. This will allow for a merge
     mutate(merge_col = as.numeric(stringr::str_extract(old_class, '\\d+$'))) %>% 
     # join reclassification table
-    left_join(reclassify_table, by = c('merge_col' = reclassify_table_lc_col)) %>% 
+    left_join(reclassify_table, by = c('merge_col' = {{reclassify_table_lc_col}})) %>% 
     # add col that will end up being the name of column (can ultimately be removed if we use `names_prefix` in pivot_wider())
     mutate(new_class = paste0(pivot_longer_contains, '_', .[[reclassify_table_reclass_col]])) %>% 
     # remove cols no longer needed
-    select(-c(old_class, merge_col, reclassify_table_reclass_col))
+    select(-c(old_class, merge_col, {{reclassify_table_reclass_col}}))
 
-  # pivot_wider to return lcClass labels to columns. Summarizing via a sum
+  ## pivot_wider to return lcClass labels to columns. Summarizing via a sum
   final_df <- pivot_wider(new_classes_df, names_from = new_class, names_prefix = 'prop_', values_from = Prop_class_in_catchment, values_fn = sum)
   
   return(final_df)

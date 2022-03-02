@@ -39,14 +39,8 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = TRUE,
   rm(path_to_downloaded_file, files_del)
   }
   
-  lst <- list.files(unzip_folder_path, full.names = TRUE)
+  final_list <- list.files(unzip_folder_path, full.names = TRUE)
 
-  ## labeling list when names param given
-  if(!is.null(name)){
-    names(lst) <- name
-    }
-
-  final_list <- lst
   return(final_list)
   
 }
