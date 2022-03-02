@@ -109,7 +109,7 @@ p2_targets_list <- list(
                                    pivot_longer_contains = 'NLCD') %>%
                ## some lc classes in NLCD were given NA ultimately - example - alaska onluy shrub - we remove from table
                select(-contains('NA')) %>% 
-               rename_with(~ gsub('prop_NLCD11',"prop_lcClass", .x, fixed = T))
+               rename_with(~ gsub('prop_NLCD',"prop_lcClass", .x, fixed = T))
   ),
   
   # Extract baccasted historical LC data raster values catchments polygond FORE-SCE  in the DRB - general function raster_to_catchment_polygons
