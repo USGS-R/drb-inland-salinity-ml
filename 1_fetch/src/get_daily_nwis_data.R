@@ -42,6 +42,11 @@ get_daily_nwis_data <- function(site_info,parameter,stat_cd_select,start_date = 
                                  Value_cd = `.Discontinued._Value_cd`,
                                  Value_Max = `.Discontinued._Value_Max`,
                                  Value_Max_cd = `.Discontinued._Value_Max_cd`) %>%
+                          select(agency_cd,site_no,Date,Value,Value_cd,Value_Max,Value_Max_cd),
+                        # 01434498: Returned data contains time series from 'Side.Channel' 
+                        # and multiple piezometers. Select data that are representative 
+                        # of the main river channel:
+                        "01434498" = site_data %>%
                           select(agency_cd,site_no,Date,Value,Value_cd,Value_Max,Value_Max_cd))
   }
   
