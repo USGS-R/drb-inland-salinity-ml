@@ -30,6 +30,7 @@ RUN install2.r --error -r https://cran.microsoft.com/snapshot/2022-01-31 \
   dataRetrieval \
   lubridate \
   nhdplusTools \
+  patchwork \
   paws \
   purrr \
   rgdal \
