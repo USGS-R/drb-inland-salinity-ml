@@ -88,10 +88,10 @@ p2_targets_list <- list(
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(
     p2_NLCD_LC_w_catchment_area,
-    AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID,
-                                                                                  AREASQKM,
-                                                                                  TOTDASQKM,
-                                                                                  LENGTHKM),
+    AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% 
+                                                st_drop_geometry() %>% 
+                                                select(COMID, AREASQKM,
+                                                           TOTDASQKM, LENGTHKM),
                   ## NOTE - the NLCD_LC_df selected in the Land Cover 2011 - to be looped across all items of p1_NLCD_LC_data
                   NLCD_LC_df = p1_NLCD_LC_data,
                   aoi_comids_df = p2_drb_comids_all_tribs)
