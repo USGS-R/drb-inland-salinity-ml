@@ -21,6 +21,10 @@ Linux filesystem: I cloned our repo to /home/jsmith/
 
 `docker build -t drb-insal-gs:v0.1 /home/jsmith/drb-inland-salinity-ml/docker/`
 
+### Tagging the container registry's image:
+The tag format required for the registry is <registry repo name>:<tag>. This will allow you to push the image to the registry after it is built.
+
+`docker build -t code.usgs.gov:5001/wma/wp/drb-inland-salinity-container:v0.1 /home/jsmith/drb-inland-salinity-ml/docker/`
 
 ## Running Rstudio in the container
 For git repo stored in WSL or Linux directory:
