@@ -16,7 +16,7 @@ get_daily_nwis_data <- function(site_info,parameter,stat_cd_select,start_date = 
   #' get_daily_nwis_data(site_info = daily_sites,parameter="00095",stat_cd_select="00003",start_date = "2020-10-01",end_date="2021-09-30")
   
   message(sprintf('Retrieving daily data for %s', site_info$site_no))
-
+  
   # Download daily data
   site_data <- dataRetrieval::readNWISdv(
     siteNumbers = site_info$site_no,parameterCd=parameter,statCd=stat_cd_select,startDate = start_date,endDate = end_date) %>%
@@ -47,6 +47,8 @@ get_daily_nwis_data <- function(site_info,parameter,stat_cd_select,start_date = 
                         # and multiple piezometers. Select data that are representative 
                         # of the main river channel:
                         "01434498" = site_data %>%
+                          mutate(Value = `..4.._Value`,
+                                 Value_cd = `..4.._Value_cd`) %>%
                           select(agency_cd,site_no,Date,Value,Value_cd,Value_Max,Value_Max_cd))
   }
   
@@ -59,7 +61,7 @@ get_daily_nwis_data <- function(site_info,parameter,stat_cd_select,start_date = 
   
   # Filter daily data
   site_data_out <- site_data %>%
-           # omit rows with no data
+    # omit rows with no data
     filter(!(is.na(Value) & is.na(Value_Max)),
            # omit rows where daily mean > daily max
            (is.na(Value)|is.na(Value_Max)|(!Value > Value_Max)),
