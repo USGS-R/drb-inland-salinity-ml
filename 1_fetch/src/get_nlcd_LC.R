@@ -109,7 +109,7 @@ read_subset_LC_data <- function(LC_data_folder_path,
   #' @param LC_data_folder_path LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
   #' @param Comids_in_AOI_df dataframe of all comid ids
   #' @param Comid_col str. key comid col in Xwalk table. e.g. "comid" | "COMID"
-  #' @param NLCD_file_pattern str. Default NULL. Options are either CAT, ACC, or TOT. Use NULL if all three are selected
+  #' @param NLCD_type str. Default NULL. Options are either CAT, ACC, or TOT. Use NULL if all three are selected
   #' @example read_subset_LC_data(LC_data_folder_path = "1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
   #'  Comids_in_AOI_df = PRMSxWalk,  Comid_col = 'comid_down')
   #' @example read_subset_LC_data(LC_data_folder_path = c("1_fetch/out/LandCover_Data/ImperviousnessPct_2011/unzipped",
