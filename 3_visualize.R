@@ -43,7 +43,12 @@ p3_targets_list <- list(
   # Create and save indicator file for WQP data
   tar_target(
     p3_wqp_ind_csv,
-    command = save_target_ind_files("3_visualize/log/wqp_data_ind.csv","p2_wqp_SC_csv"),
+    command = {
+      #forcing dependency to the target because the character string 
+      #of the target name does not enforce it
+      force_dep <- p2_wqp_SC_data
+      save_target_ind_files("3_visualize/log/wqp_data_ind.csv", "p2_wqp_SC_data")
+      },
     format = "file"),
   
   # Create and save summary log file for NWIS daily data
