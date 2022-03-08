@@ -99,37 +99,32 @@ p2_targets_list <- list(
                   aoi_comids_df = p2_drb_comids_all_tribs)
   ),
   
-  ## Estimate LC proportion in PRMS catchment
+  ## Estimate LC proportion in PRMS catchment - CAT
   # returns df with proportion LC in PRMS catchment in our AOI
-  tar_target(p2_PRMS_NLCD_lc_proportions,
-             proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area) %>% select(-contains('NODATA'))),
+  tar_target(p2_PRMS_NLCD_lc_proportions_cat,
+             proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area, catchment_att = 'CAT') %>% select(-contains('NODATA'))),
 
+  ## Estimate LC proportion in PRMS catchment - TOT
+  # returns df with proportion LC in PRMS catchment in our AOI
+  tar_target(p2_PRMS_NLCD_lc_proportions_tot,
+             proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area, catchment_att = 'TOT') %>% select(-contains('NODATA'))),  
+  
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
-
-  tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
-             ## splitting the df into list of dfs by individual years
-             purrr::map(.x = NLCD_year_suffix,
-                        .f = ~{p2_PRMS_NLCD_lc_proportions %>% select(PRMS_segid, AREASQKM_PRMS, contains(glue('NLCD', .x)))}
-                        ) %>% 
-              # reclassify by individual year df
-               purrr::map2(.x = .,
-                           .y = NLCD_year_suffix,
-                           .f = ~{reclassify_land_cover(land_cover_df = .x,
-                                                        reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv',
-                                                        reclassify_table_lc_col = 'NLCD_value',
-                                                        reclassify_table_reclass_col = 'Reclassify_match',
-                                                        sep = ',',
-                                                        pivot_longer_contains = glue('NLCD',.y)) %>% 
-                              # some lc classes in NLCD were given NA ultimately - example: alaska only shrub - we remove from table
-                              select(-contains('NA')) %>%
-                              # adding year column
-                               mutate(Year = paste0('20',.y)) %>% 
-                              # Renaming col names - removing the col to be consistent across dataframes
-                               rename_with(.fn = function(x) sub("NLCD\\d+", "lcClass\\1", x), .cols = starts_with("prop_"))
-                             }
-                           ) 
-             ),
+  # For Cat
+  tar_target(
+    p2_PRMS_NLCD_lc_proportions_reclass_cat,
+    reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_cat,
+                           NLCD_year_suffix,
+                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+  ),
+  # For Tot
+  tar_target(
+    p2_PRMS_NLCD_lc_proportions_reclass_tot,
+    reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_tot,
+                           NLCD_year_suffix,
+                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+  ),
 
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
@@ -138,7 +133,8 @@ p2_targets_list <- list(
                                                   raster = x, categorical_raster = TRUE,
                                                   raster_summary_fun = NULL,
                                                   new_cols_prefix = 'lcClass',
-                                                  fill = 0))
+                                                  fill = 0)
+            )
     }
   ),
   
