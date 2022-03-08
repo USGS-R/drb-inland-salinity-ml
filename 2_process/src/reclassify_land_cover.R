@@ -40,23 +40,25 @@ reclassify_land_cover <- function(land_cover_df,
   
 }
 
-## -- Specific function for the NLCD reclassification process
+## -- Specific function for the NLCD reclassifying NLCD land cover classes
 
-reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df, year_suffix, reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'){
+reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
+                                   years_suffix,
+                                   reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'){
 
   #' @description placing the process if reclassifying  the NLCD (2000 +) land cover df in a tailored function (works with NLCD catchment att Cat and Tot)
   #' @param NLCD_lc_proportions_df list of NLCD dataframes with lc classes as cols - output of proportion_lc_by_prms()
-  #' @param year_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix 
-  #' @param reclassify_table_csv_path path to reclassification lookup table for NLCD
+  #' @param years_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix 
+  #' @param reclassify_table_csv_path path to reclassification lookup table for NLCD. Default path from pipeline
   #' @value output is a list of land cover dfs split by year and updated with new cols representing the new classes 
   
    df <- purrr::map(
-     .x = year_suffix,
+     .x = years_suffix,
      ## first 
      .f = ~{NLCD_lc_proportions_df %>% select(PRMS_segid, AREASQKM_PRMS, contains(glue('NLCD', .x)))}) %>% 
     # Reclassify by individual year df
     purrr::map2(.x = .,
-              .y = year_suffix,
+              .y = years_suffix,
               .f = ~{reclassify_land_cover(land_cover_df = .x,
                                            reclassify_table_csv_path = reclassify_table_csv_path,
                                            reclassify_table_lc_col = 'NLCD_value',

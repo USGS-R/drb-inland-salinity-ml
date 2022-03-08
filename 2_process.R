@@ -97,16 +97,14 @@ p2_targets_list <- list(
                   aoi_comids_df = p2_drb_comids_all_tribs)
   ),
   
-  ## Estimate LC proportion in PRMS catchment - CAT
+  ## Estimate LC proportion in PRMS catchment - CAT, TOT, and ACC
   # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(
     p2_PRMS_NLCD_lc_proportions_cat,
              proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area,
                                    catchment_att = 'CAT') %>%
                select(-contains('NODATA'))),
-
-  ## Estimate LC proportion in PRMS catchment - TOT
-  # returns df with proportion LC in PRMS catchment in our AOI
+  
   tar_target(
     p2_PRMS_NLCD_lc_proportions_tot,
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area %>%
@@ -115,8 +113,6 @@ p2_targets_list <- list(
                           catchment_att = 'TOT') %>%
       select(-contains('NODATA'))),  
   
-  ## Estimate LC proportion in PRMS catchment - TOT
-  # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(
     p2_PRMS_NLCD_lc_proportions_acc,
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area %>%
@@ -130,10 +126,11 @@ p2_targets_list <- list(
   # For Cat
   tar_target(
     p2_PRMS_NLCD_lc_proportions_reclass_cat,
-    reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_cat,
-                           NLCD_year_suffix,
+    reclassify_LC_for_NLCD(NLCD_lc_proportions_df = p2_PRMS_NLCD_lc_proportions_cat,
+                          years_suffix = NLCD_year_suffix,
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
   ),
+  
   # For Tot
   tar_target(
     p2_PRMS_NLCD_lc_proportions_reclass_tot,
@@ -142,7 +139,7 @@ p2_targets_list <- list(
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
   ),
 
-  # For Tot
+  # For Acc
   tar_target(
     p2_PRMS_NLCD_lc_proportions_reclass_acc,
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_acc,
@@ -165,27 +162,29 @@ p2_targets_list <- list(
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
   # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
-  tar_target(p2_FORESCE_LC_per_catchment_reclass_cat,
-             {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
-                          .y = FORESCE_years, 
-                          .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
-                                                       reclassify_table_lc_col = 'FORESCE_value',
-                                                       reclassify_table_reclass_col = 'Reclassify_match',
-                                                       sep = ',',
-                                                       pivot_longer_contains = 'lcClass') %>% 
+  tar_target(
+    p2_FORESCE_LC_per_catchment_reclass_cat,
+    {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
+                 .y = FORESCE_years, 
+                 .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                                              reclassify_table_lc_col = 'FORESCE_value',
+                                              reclassify_table_reclass_col = 'Reclassify_match',
+                                              sep = ',',
+                                              pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
-                       aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
-                                                  proportion_col_prefix = 'prop_lcClass',
-                                                  hru_area_colname = hru_area,
-                                                  new_area_colname = total_PRMS_area) %>% ## n = 416
-                       ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
-                       left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid,  everything()) %>% ## n = 418
-                       ## Adding Year column
-                       mutate(Year = .y)}
-                       )}
-    ),
+                     aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
+                                                proportion_col_prefix = 'prop_lcClass',
+                                                hru_area_colname = hru_area,
+                                                new_area_colname = total_PRMS_area) %>% ## n = 416
+                     ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
+                     left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid,  everything()) %>% ## n = 418
+                     ## Adding Year column
+                     mutate(Year = .y)}
+                 )
+    }
+  ),
   
-  ## produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target
+  ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target
   tar_target(
     p2_prms_attribute_df, 
     p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
@@ -209,9 +208,9 @@ p2_targets_list <- list(
         # group by PRMS id 
         group_by(PRMS_segid, Year) %>% 
         summarise(
-          ## cal total area
+          # calc total area
           total_upstream_PRMS_area = sum(total_PRMS_area),
-          ## get proportions for the new total area
+          # get proportions for the new total area
           across(starts_with('prop'), ~(sum((.x*total_PRMS_area)/total_upstream_PRMS_area))),
           .groups = 'drop_last') %>%
         drop_na()
@@ -222,10 +221,12 @@ p2_targets_list <- list(
   tar_target(
     p2_rdsalt_per_catchment,
     {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
-                                                                    raster = x, categorical_raster = FALSE,
-                                                                    raster_summary_fun = sum, new_cols_prefix = 'rd_slt', na.rm = T) %>%
-        group_by(hru_segment) %>%
-        summarise(across(starts_with('rd_sltX'), sum)))
+                                                                raster = x,
+                                                                categorical_raster = FALSE,
+                                                                raster_summary_fun = sum,
+                                                                new_cols_prefix = 'rd_slt', na.rm = T) %>%
+              group_by(hru_segment) %>%
+              summarise(across(starts_with('rd_sltX'), sum)))
     }
   ),
   
@@ -272,7 +273,8 @@ p2_targets_list <- list(
   # Target for NADP initial Processing  
   tar_target(
     p2_NADP_Data,
-    lapply(list.files(path = p1_NADP_data_unzipped, full.names = T), function(x) read.csv(x, sep = ',') %>%
+    lapply(list.files(path = p1_NADP_data_unzipped, full.names = T),
+           function(x) read.csv(x, sep = ',') %>%
                     # select only cols starting with cat and COMID co
                     select(COMID | starts_with('CAT')) %>%
                     # take only COMIDS in drb

@@ -22,7 +22,7 @@ download_NHD_data <- function(sb_id,
   }
   
   ## Check lengths of sb_id and downloaded_data_folder_name
-  ## first, avoiding error when downloaded_data_folder_name = NA (checking len)
+  # first, avoiding error when downloaded_data_folder_name = NA (checking len)
   if(!(is.null(downloaded_data_folder_name) && length(downloaded_data_folder_name) == 1)){
     if(length(downloaded_data_folder_name) != length(sb_id)){
       stop('Downloaded_data_name must be same length as sb_id')
@@ -31,11 +31,11 @@ download_NHD_data <- function(sb_id,
   
   ## Create data folder for downloaded data if non given
   if(any(is.na(downloaded_data_folder_name))){
-    ## if its set at default and downloaded_data_folder_name = NA, folder_name(s) are the sb_ids
+    # if its set at default and downloaded_data_folder_name = NA, folder_name(s) are the sb_ids
     if(length(downloaded_data_folder_name == 1)){
       downloaded_data_folder_name <- sb_id
     } else{
-    ## if na present in list of folder names, loop through the names and assign folder_name or sb_id  
+    # if na present in list of folder names, loop through the names and assign folder_name or sb_id  
       downloaded_data_folder_name <- purrr::map2(.x = downloaded_data_folder_name,
                                                  .y = sb_id,
                                                  .f = ifelse(is.na(.x), .y, .x))
@@ -49,11 +49,9 @@ download_NHD_data <- function(sb_id,
   downloaded_data_folder <- c()
 
   for(i in 1:length(sb_id_labeled)){
-    
     # Create folder for specific sb_id
     file_path <- file.path(out_path, names(sb_id_labeled[i]))
     dir.create(file_path, showWarnings = F)
-    
     # Download to specified folder
     sbtools::item_file_download(sb_id = sb_id_labeled[[i]], dest_dir = file_path, overwrite_file = overwrite_download)
     
@@ -71,7 +69,7 @@ unzip_NHD_data <- function(downloaded_data_folder_path,
   
   #' @description Unzip downloaded Land Cover data 
   #' @param downloaded_data_folder_path: path to folder(s) where zipped data is saved. Input should be output of download_NHD_NLCD_data()
-  #' @param create_unzip_subfolder: Default True. Create unzipped sub-folder in downloaded data folder.
+  #' @param create_unzip_subfolder: Default TRUE. Create unzipped sub-folder in downloaded data folder.
   #' @example unzip_NHD_NLCD_data(downloaded_data_folder_path = pct_imperviousness_id_11', create_unzip_subfolder = T)
   #' @example unzip_NHD_NLCD_data(downloaded_data_folder_path = 'pct_imperviousness_id_11', create_unzip_subfolder = T) 
   
@@ -103,7 +101,8 @@ unzip_NHD_data <- function(downloaded_data_folder_path,
 
 read_subset_LC_data <- function(LC_data_folder_path,
                                 Comids_in_AOI_df,
-                                Comid_col, NLCD_type = NULL){
+                                Comid_col,
+                                NLCD_type = NULL){
   
   #' @description Read in and subset lc data after data is downloaded and unzipped
   #' @param LC_data_folder_path LC data folder path or vector of LC data folder paths - last subfolder often 'unzipped'
@@ -142,7 +141,9 @@ read_subset_LC_data <- function(LC_data_folder_path,
     cbind_subsetted_df <-data_list %>%
       reduce(inner_join, by = 'COMID') ## possibly add as full_join
 
+    # using str_replace_all to standardize file paths from OS or Windows 
     LC_data <- str_replace_all(LC_data, '\\\\','/')
+    
   ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
     if(endsWith(LC_data, 'unzipped') | endsWith(LC_data, '')){
       name <- str_split(LC_data, pattern = '/', simplify = TRUE)
