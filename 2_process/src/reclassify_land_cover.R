@@ -1,6 +1,7 @@
 reclassify_land_cover <- function(land_cover_df,
                                   reclassify_table_csv_path, sep = ',',
-                                  reclassify_table_lc_col, reclassify_table_reclass_col,
+                                  reclassify_table_lc_col,
+                                  reclassify_table_reclass_col,
                                   pivot_longer_contains){
   
   #' @description Reclassify land cover df with cols as individual lc classes to pre-defined land cover class
@@ -39,7 +40,7 @@ reclassify_land_cover <- function(land_cover_df,
   
 }
 
-## -- Specific function for the 
+## -- Specific function for the NLCD reclassification process
 
 reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df, year_suffix, reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'){
 

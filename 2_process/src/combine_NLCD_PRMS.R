@@ -25,7 +25,8 @@ AOI_LC_w_area <- function(NLCD_LC_df, area_att, aoi_comids_df){
   }
 
 ###----
-# Estimate prop of LC coverage at PRMS catchment ('CAT') scale
+
+# Estimate prop of LC coverage at PRMS catchment scale
 proportion_lc_by_prms <- function(NLCD_LC_df_w_area, catchment_att = 'CAT'){
 
 #' @description This function takes the consolidated df from AOI_LC_w_area() and calculated the proportion share of each LC class at the PRMS segid scale
