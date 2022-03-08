@@ -8,6 +8,8 @@ source("2_process/src/munge_natural_baseflow.R")
 source('2_process/src/reclassify_land_cover.R')
 source('2_process/src/FORESCE_agg_lc_props.R')
 source("2_process/src/process_nhdv2_attr.R")
+source("2_process/src/recursive_fun.R")
+
 
 p2_targets_list <- list(
   
@@ -143,7 +145,7 @@ p2_targets_list <- list(
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
   # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
-  tar_target(p2_FORESCE_LC_per_catchment_reclass,
+  tar_target(p2_FORESCE_LC_per_catchment_reclass_cat,
              {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
                           .y = FORESCE_years, 
                           .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
@@ -162,6 +164,31 @@ p2_targets_list <- list(
                        mutate(Year = .y)}
                        )}
     ),
+  
+  tar_target(p2_prms_attribute_df, 
+             p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
+               mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F))
+             ),
+  
+  tar_target(p2_FORESCE_LC_per_catchment_reclass_tot,
+             {lapply(p2_FORESCE_LC_per_catchment_reclass_cat, function(x) 
+               p2_prms_attribute_df %>% rowwise() %>%
+               mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = p2_prms_attribute_df, col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
+               ## unest to have new rows for each upstream catchment
+               unnest(all_from_segs, keep_empty = TRUE) %>%
+               ## change col type to be able to compute
+               dplyr::mutate(all_from_segs = as.integer(all_from_segs)) %>%
+               ## join prop calculations
+               left_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
+               ## group by PRMS id 
+               group_by(PRMS_segid, Year) %>% 
+               summarise(
+                 ## cal total area
+                 total_upstream_PRMS_area = sum(total_PRMS_area),
+                 ## get proportions for the new total area
+                 across(starts_with('prop'), ~(sum((.x*total_PRMS_area)/total_upstream_PRMS_area)))) %>% mutate(sum = rowSums(across(starts_with('prop')))) %>% drop_na()
+             )}
+      ),
   
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
