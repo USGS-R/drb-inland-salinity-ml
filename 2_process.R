@@ -108,7 +108,7 @@ p2_targets_list <- list(
   # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
 
   tar_target(p2_PRMS_NLCD_lc_proportions_reclass,
-             ## spiting the df into list of dfs by individual years
+             ## splitting the df into list of dfs by individual years
              purrr::map(.x = NLCD_year_suffix,
                         .f = ~{p2_PRMS_NLCD_lc_proportions %>% select(PRMS_segid, AREASQKM_PRMS, contains(glue('NLCD', .x)))}
                         ) %>% 
@@ -122,13 +122,13 @@ p2_targets_list <- list(
                                                         sep = ',',
                                                         pivot_longer_contains = glue('NLCD',.y)) %>% 
                               # some lc classes in NLCD were given NA ultimately - example: alaska only shrub - we remove from table
-                              select(-contains('NA')) %>% 
-                              # Renaming col names 
-                               rename_with(.fn = function(x) sub("(_\\d+$)", "_lcClass\\1", x), .cols = starts_with("prop_"))
+                              select(-contains('NA')) %>%
+                              # adding year column
+                               mutate(Year = paste0('20',.y)) %>% 
+                              # Renaming col names - removing the col to be consistent across dataframes
+                               rename_with(.fn = function(x) sub("NLCD\\d+", "lcClass\\1", x), .cols = starts_with("prop_"))
                              }
-                           ) %>% 
-               # cbind all NLCD years
-               reduce(inner_join, by = c('PRMS_segid', 'AREASQKM_PRMS'))
+                           ) 
              ),
 
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
@@ -178,8 +178,8 @@ p2_targets_list <- list(
                unnest(all_from_segs, keep_empty = TRUE) %>%
                ## change col type to be able to compute
                dplyr::mutate(all_from_segs = as.integer(all_from_segs)) %>%
-               ## join prop calculations
-               left_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
+               ## join prop calculations - selected inner join because at the moment, p2_prms_attribute_df has more PRMS_segids than p2_FORESCE_LC_per_catchment_reclass_cat due to outdated catchmetns file
+               inner_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
                ## group by PRMS id 
                group_by(PRMS_segid, Year) %>% 
                summarise(
