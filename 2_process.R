@@ -115,6 +115,16 @@ p2_targets_list <- list(
                           catchment_att = 'TOT') %>%
       select(-contains('NODATA'))),  
   
+  ## Estimate LC proportion in PRMS catchment - TOT
+  # returns df with proportion LC in PRMS catchment in our AOI
+  tar_target(
+    p2_PRMS_NLCD_lc_proportions_acc,
+    proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area %>%
+                            # filtering to only the comid_downs of each PRMS - nrow = ~459
+                            filter(comid %in% p2_drb_comids_down$comid),
+                          catchment_att = 'ACC') %>%
+      select(-contains('NODATA'))), 
+  
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
   # For Cat
@@ -132,6 +142,14 @@ p2_targets_list <- list(
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
   ),
 
+  # For Tot
+  tar_target(
+    p2_PRMS_NLCD_lc_proportions_reclass_acc,
+    reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_acc,
+                           NLCD_year_suffix,
+                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+  ),
+  
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
