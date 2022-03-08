@@ -46,7 +46,7 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                                    years_suffix,
                                    reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'){
 
-  #' @description placing the process if reclassifying  the NLCD (2000 +) land cover df in a tailored function (works with NLCD catchment att Cat and Tot)
+  #' @description placing the process of reclassifying the NLCD (2000 +) land cover df into this tailored function. Works with NLCD catchment att Cat and Tot)
   #' @param NLCD_lc_proportions_df list of NLCD dataframes with lc classes as cols - output of proportion_lc_by_prms()
   #' @param years_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix 
   #' @param reclassify_table_csv_path path to reclassification lookup table for NLCD. Default path from pipeline
