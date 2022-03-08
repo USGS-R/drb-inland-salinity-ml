@@ -142,6 +142,7 @@ read_subset_LC_data <- function(LC_data_folder_path,
     cbind_subsetted_df <-data_list %>%
       reduce(inner_join, by = 'COMID') ## possibly add as full_join
 
+    LC_data <- str_replace_all(LC_data, '\\\\','/')
   ## Assign to list - note name of item in list is LC_data (e.g. all_data_subsetted$NLCD_LandCover_2011) 
     if(endsWith(LC_data, 'unzipped') | endsWith(LC_data, '')){
       name <- str_split(LC_data, pattern = '/', simplify = TRUE)
