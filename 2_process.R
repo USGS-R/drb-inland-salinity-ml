@@ -244,6 +244,21 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+  ),
+  
+  #Refine the attributes that are used for modeling
+  tar_target(
+    p2_nhdv2_attr_refined,
+    {
+      #Detect variables that are all equal across the modeling domain and remove them
+      #check for the length of unique values
+      #removes "BEDPERM_4" and "HGAC"
+      unique_col_vals <- apply(p2_nhdv2_attr, 2, FUN = len_unique)
+      p2_nhdv2_attr <- p2_nhdv2_attr[, which(unique_col_vals > 1)]
+      
+      #Remove columns that do not have enough spatial variation
+      select(p2_nhdv2_attr, !contains(c("PHYSIO_AREA")))
+    }
   )
   
 )
