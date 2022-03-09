@@ -20,7 +20,6 @@ recursive_fun<- function(x, df, col1, col2){
       upstream_segs <- unique(c(upstream_segs, from_segs[i], Recall(x = from_segs[i],df = df, col1 = col1, col2 = col2)))
     }
   }
-  #this returns nothing, otherwise the last element in the vector is NA. should return a characters
 return(upstream_segs)
     
 }
