@@ -222,8 +222,10 @@ p1_targets_list <- list(
                   filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                   download_path = '1_fetch/out',
                   ## Subset downloaded tifs to only process the  years that are relevant model
-                  year = c('2000','1990','1980','1970','1960'),
-                  name_unzip_folder = NULL), 
+                  year = FORESCE_years,
+                  name_unzip_folder = NULL,
+                  overwrite_file = TRUE,
+                  name = FORESCE_years), 
     format = format_file
   ),
   
@@ -232,7 +234,7 @@ p1_targets_list <- list(
   ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
     p1_rdsalt, 
-	download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+    download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
                   filename = '1992_2015.zip',
                   download_path = '1_fetch/out',
                   overwrite_file = T,
@@ -261,7 +263,8 @@ p1_targets_list <- list(
       filter(!Theme %in% c('Chemical', 'Land Cover')) %>%
       group_by(sb_id) %>%
       tar_group(),
-    iteration = "group"
+    iteration = "group",
+    format = format_rds
   ),
 
   # Map over variables of interest to download NHDv2 attribute data from ScienceBase
@@ -303,12 +306,9 @@ p1_targets_list <- list(
   # Unzip monthly natural baseflow file
   tar_target(
     p1_natural_baseflow_csv,
-    {
-      unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),
-            overwrite=TRUE)
-      file.path(dirname(p1_natural_baseflow_zip), 
-                list.files(path = dirname(p1_natural_baseflow_zip),
-                           pattern = "*baseflow.*.csv"))
+    {unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+     file.path(dirname(p1_natural_baseflow_zip), 
+	           list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
       },
     format = format_file
   )

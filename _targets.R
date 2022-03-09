@@ -5,10 +5,15 @@ options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
-                            'purrr', 'sbtools', 'terra'),
+                            'purrr', 'sbtools', 'terra',
+                            'patchwork'),
                resources = tar_resources(
                  aws = tar_resources_aws(bucket = "drb-inland-salinity"))
                ) 
+
+## Define the target save file formats
+format_file <- 'file'
+format_rds <- 'rds'
 
 source("1_fetch.R")
 source("2_process.R")
@@ -20,6 +25,7 @@ dir.create("3_visualize/out/", showWarnings = FALSE)
 dir.create("3_visualize/log/", showWarnings = FALSE)
 dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
+dir.create("3_visualize/out/nhdv2_attr_png/",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -100,11 +106,8 @@ NLCD_folders <- c(
 ## https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
 NADP_sb_id <- '57e2ac2fe4b0908250045981'
 
-# Define the target save file formats
-format_file = 'file'
-format_rds = 'rds'
+## FORESCE list of FORESCE years
+FORESCE_years <- c('1940', '1950', '1960', '1970', '1980', '1990', '2000')
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
-
-
