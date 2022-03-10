@@ -17,7 +17,7 @@ recursive_fun<- function(x, df, col1, col2){
   from_segs <- df[[col2]][row_num][[1]]
   for (i in 1:length(from_segs)){
     if(!is.na(from_segs[i])){
-      upstream_segs <- unique(c(upstream_segs, from_segs[i], Recall(x = from_segs[i],df = df, col1 = col1, col2 = col2)))
+      upstream_segs <- unique(c(upstream_segs, Recall(x = from_segs[i],df = df, col1 = col1, col2 = col2)))
     }
   }
 return(upstream_segs)
