@@ -114,18 +114,16 @@ p1_targets_list <- list(
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
+    sf::st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
         filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
-        suppressWarnings()
-      }
+        suppressWarnings() 
   ),
   
   ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
   tar_target(
     p1_catchments_sf_valid, 
-    st_buffer(p1_catchments_sf,0)
+    sf::st_buffer(p1_catchments_sf,0)
   ),
-  
   
   # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
   tar_target(
