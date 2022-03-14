@@ -72,11 +72,11 @@ dummy_date <- "2021-12-31"
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'
 
 ## NLCD 
-# path all NLCD LC data 2001-2019
-NLCD_LC_path <-'/Users/msleckman/OneDrive - DOI/40.2 Data-driven salinity/Data/DRB-Inland/NLCDs_Final2/NLCDs_Final/'
+# path all NLCD LC data 2001-2019 - NOTE: data should be downloaded from sharepoint project Data folder (`NLCD_final/NLCD_final/``)
+dir.create('1_fetch/in/NLCDs_2001_2019', showWarnings = F) 
+NLCD_LC_path <- file.path('1_fetch/in/NLCDs_2001_2019')
 
 NLCD_year_suffix <- c('01','04','06','08','11','13','16','19')
-
 
 # Define land cover datasets to extract 
 sb_ids_NLCD2011 <- c(
