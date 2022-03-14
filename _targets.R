@@ -72,10 +72,11 @@ dummy_date <- "2021-12-31"
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'
 
 ## NLCD 
-# path all NLCD LC data 2001-2019 - NOTE: data should be downloaded from sharepoint project Data folder (`NLCD_final/NLCD_final/``)
-dir.create('1_fetch/in/NLCDs_2001_2019', showWarnings = F) 
+# path to all NLCD LC data 2001-2019 
+# Note: this data should be manually downloaded from the project Data folder in sharepoint (`NLCD_final/NLCD_final/`)
+dir.create('1_fetch/in/NLCDs_2001_2019/', showWarnings = F) 
 NLCD_LC_path <- file.path('1_fetch/in/NLCDs_2001_2019')
-
+# last two digit suffix of years of NLCD data
 NLCD_year_suffix <- c('01','04','06','08','11','13','16','19')
 
 # Define land cover datasets to extract 
