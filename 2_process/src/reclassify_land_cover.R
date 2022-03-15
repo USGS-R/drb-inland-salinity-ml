@@ -37,7 +37,6 @@ reclassify_land_cover <- function(land_cover_df,
   final_df <- pivot_wider(new_classes_df, names_from = new_class, names_prefix = 'prop_', values_from = Prop_class_in_catchment, values_fn = sum)
   
   return(final_df)
-  
 }
 
 ## -- Specific function for the NLCD reclassifying NLCD land cover classes
@@ -46,11 +45,11 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                                    years_suffix,
                                    reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'){
 
-  #' @description placing the process of reclassifying the NLCD (2000 +) land cover df into this tailored function. Works with NLCD catchment att Cat and Tot)
+  #' @description placing the process of reclassifying the NLCD (2000 +) land cover df into this tailored function. Works with NLCD catchment attribute ACC, CAT, and TOT)
   #' @param NLCD_lc_proportions_df list of NLCD dataframes with lc classes as cols - output of proportion_lc_by_prms()
-  #' @param years_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix 
+  #' @param years_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix
   #' @param reclassify_table_csv_path path to reclassification lookup table for NLCD. Default path from pipeline
-  #' @value output is a list of land cover dfs split by year and updated with new cols representing the new classes 
+  #' @value output is a list of land cover dfs split by year and updated with new cols representing the new classes
   
    df <- purrr::map(
      .x = years_suffix,
@@ -73,6 +72,8 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                   rename_with(.fn = function(x) sub("NLCD\\d+", "lcClass\\1", x), .cols = starts_with("prop_"))
               }
     )
+  
   return(df)
+  
 }
 
