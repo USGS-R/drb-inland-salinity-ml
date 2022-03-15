@@ -61,8 +61,8 @@ mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1
 GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/c45f469098dfb245a2d686b807a58afa00b9d0b2/2_process/out/GFv1_NHDv2_xwalk.csv"
 
 # Define the url for the edited HRU polygons
-# see https://github.com/USGS-R/drb-network-prep/commit/c45f469098dfb245a2d686b807a58afa00b9d0b2
-GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/c45f469098dfb245a2d686b807a58afa00b9d0b2/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
+# see https://github.com/USGS-R/drb-network-prep/commit/940073e8d77c911b6fb9dc4e3657aeab1162a158
+GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/940073e8d77c911b6fb9dc4e3657aeab1162a158/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
