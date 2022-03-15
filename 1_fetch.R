@@ -8,6 +8,7 @@ source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
 source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
+source("1_fetch/src/download_file.R")
 
 p1_targets_list <- list(
   
@@ -113,16 +114,30 @@ p1_targets_list <- list(
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
+    sf::st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
         filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
-        suppressWarnings()
-      }
+        suppressWarnings() 
   ),
   
   ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
   tar_target(
     p1_catchments_sf_valid, 
-    st_buffer(p1_catchments_sf,0)
+    sf::st_buffer(p1_catchments_sf,0)
+  ),
+  
+  # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
+  tar_target(
+    p1_catchments_edited_gpkg,
+    download_file(GFv1_HRUs_edited_url,
+                  fileout = "1_fetch/out/GFv1_catchments_edited.gpkg", 
+                  mode = "wb", quiet = TRUE),
+    format = "file"
+  ),
+  
+  # Read in edited HRU polygons
+  tar_target(
+    p1_catchments_edited_sf,
+    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE)
   ),
   
   # Download DRB network attributes
