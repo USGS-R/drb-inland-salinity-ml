@@ -191,23 +191,24 @@ p2_targets_list <- list(
     p2_prms_attribute_df, 
     p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
       # Update `from_segs` col by splitting the individual segs in a list (can then loop through the list) 
-      mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F))
+      mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F)) %>% 
+      rowwise() %>%
+      # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
+      mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = ., col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
+      # unest to have new rows for each upstream catchment
+      unnest(all_from_segs, keep_empty = TRUE) %>%
+      # change col type to be able to compute
+      dplyr::mutate(all_from_segs = as.integer(all_from_segs))
   ),
   
+  # Produce p2_FORESCE_LC_per_catchment_reclass_tot via recursively calculating proportions of LC class across all upstream segments for a given segment
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_tot,
-    {lapply(p2_FORESCE_LC_per_catchment_reclass_cat, function(x) 
+    {lapply(p2_FORESCE_LC_per_catchment_reclass_cat, function(x)
       p2_prms_attribute_df %>% 
-        rowwise() %>%
-        # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
-        mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = p2_prms_attribute_df, col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
-        # unest to have new rows for each upstream catchment
-        unnest(all_from_segs, keep_empty = TRUE) %>%
-        # change col type to be able to compute
-        dplyr::mutate(all_from_segs = as.integer(all_from_segs)) %>%
         # join prop calculations - selected inner join because at the moment, p2_prms_attribute_df has more PRMS_segids than p2_FORESCE_LC_per_catchment_reclass_cat due to outdated catchmetns file
         inner_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
-        # group by PRMS id 
+        # group by PRMS id
         group_by(PRMS_segid, Year) %>% 
         summarise(
           # calc total area
@@ -235,7 +236,7 @@ p2_targets_list <- list(
   # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
-    # Reduce can iterate through elements in a list 1 after another. 
+    # Reduce can iterate through elements in a list 1 after another 
     Reduce(function(...) merge(..., by = 'hru_segment'),
            p2_rdsalt_per_catchment) %>% 
       # Calculate total salt accumulation across all years 
