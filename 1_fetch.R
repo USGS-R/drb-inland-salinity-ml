@@ -161,7 +161,7 @@ p1_targets_list <- list(
   ),
 
   # Read in all nlcd data from 2001-2019 
-  # note: NLCD data must already be downloaded locally and manually placed in NLCD_LC_path ('1_fetch/in/NLCD_final/')
+  # Note: NLCD data must already be downloaded locally and manually placed in NLCD_LC_path ('1_fetch/in/NLCD_final/')
   tar_target(
     p1_NLCD_LC_data,
     {if(length(list.files(NLCD_LC_path)) == 0){
