@@ -179,14 +179,15 @@ p2_targets_list <- list(
                                                 hru_area_colname = hru_area,
                                                 new_area_colname = total_PRMS_area) %>% ## n = 416
                      ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
-                     left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% select(PRMS_segid,  everything()) %>% ## n = 418
+                     left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% 
+                     select(PRMS_segid,  everything()) %>% ## n = 418
                      ## Adding Year column
                      mutate(Year = .y)}
                  )
     }
   ),
   
-  ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target
+  ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target via recursively calculating proportions of LC class across all upstream segments for a given segment
   tar_target(
     p2_prms_attribute_df, 
     p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
@@ -201,7 +202,7 @@ p2_targets_list <- list(
       dplyr::mutate(all_from_segs = as.integer(all_from_segs))
   ),
   
-  # Produce p2_FORESCE_LC_per_catchment_reclass_tot via recursively calculating proportions of LC class across all upstream segments for a given segment
+  # Produce p2_FORESCE_LC_per_catchment_reclass_tot 
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_tot,
     {lapply(p2_FORESCE_LC_per_catchment_reclass_cat, function(x)
@@ -211,7 +212,7 @@ p2_targets_list <- list(
         # group by PRMS id
         group_by(PRMS_segid, Year) %>% 
         summarise(
-          # calc total area
+          # calc. total area
           total_upstream_PRMS_area = sum(total_PRMS_area),
           # get proportions for the new total area
           across(starts_with('prop'), ~(sum((.x*total_PRMS_area)/total_upstream_PRMS_area))),
