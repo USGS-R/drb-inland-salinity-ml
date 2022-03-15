@@ -164,15 +164,9 @@ p1_targets_list <- list(
   # Note: NLCD data must already be downloaded locally and manually placed in NLCD_LC_path ('1_fetch/in/NLCD_final/')
   tar_target(
     p1_NLCD_LC_data,
-    {if(length(list.files(NLCD_LC_path)) == 0){
-        stop(paste0('No NLCD LC data in ', NLCD_LC_path,'. Please move the NLCD .txt files to this location.'))
-        }
-      else{
-           read_subset_LC_data(LC_data_folder_path = NLCD_LC_path, 
-                               Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
-                               Comid_col = 'COMID', NLCD_type = NULL)
-        }
-      }
+    read_subset_LC_data(LC_data_folder_path = NLCD_LC_path,
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID),
+                        Comid_col = 'COMID', NLCD_type = NULL)
   ),
     
   # Download other NLCD 2011 datasets 

@@ -101,9 +101,10 @@ p2_targets_list <- list(
   # returns df with proportion LC in PRMS catchment in our AOI
   tar_target(
     p2_PRMS_NLCD_lc_proportions_cat,
-             proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area,
+    proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area,
                                    catchment_att = 'CAT') %>%
-               select(-contains('NODATA'))),
+      select(-contains('NODATA'))
+  ),
   
   tar_target(
     p2_PRMS_NLCD_lc_proportions_tot,
@@ -111,7 +112,8 @@ p2_targets_list <- list(
                             # filtering to only the comid_downs of each PRMS - nrow = ~459
                             filter(comid %in% p2_drb_comids_down$comid),
                           catchment_att = 'TOT') %>%
-      select(-contains('NODATA'))),  
+      select(-contains('NODATA'))
+  ),  
   
   tar_target(
     p2_PRMS_NLCD_lc_proportions_acc,
@@ -119,7 +121,8 @@ p2_targets_list <- list(
                             # filtering to only the comid_downs of each PRMS - nrow = ~459
                             filter(comid %in% p2_drb_comids_down$comid),
                           catchment_att = 'ACC') %>%
-      select(-contains('NODATA'))), 
+      select(-contains('NODATA'))
+  ), 
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For NLCD, we use '1_fetch/in/Legend_NLCD_Land_Cover.csv' as vlookup file for the FORESCE targets
@@ -154,8 +157,7 @@ p2_targets_list <- list(
                                                   raster = x, categorical_raster = TRUE,
                                                   raster_summary_fun = NULL,
                                                   new_cols_prefix = 'lcClass',
-                                                  fill = 0)
-            )
+                                                  fill = 0))
     }
   ),
   
@@ -190,7 +192,7 @@ p2_targets_list <- list(
     p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
       # Update `from_segs` col by splitting the individual segs in a list (can then loop through the list) 
       mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F))
-    ),
+  ),
   
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_tot,
@@ -319,7 +321,6 @@ p2_targets_list <- list(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
   )
-  
 )
 
 

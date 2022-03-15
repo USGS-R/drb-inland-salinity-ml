@@ -120,6 +120,11 @@ read_subset_LC_data <- function(LC_data_folder_path,
   
   # Loop through sub-folders, combine datasets, and subset through Join
   for(LC_data in LC_data_folder_path){
+    
+    # Check that downloaded data exists in folder 
+    if(length(list.files(LC_data)) == 0){
+      stop(paste0('No NLCD LC data in ', NLCD_LC_path,'. Please move the NLCD .txt files to this location.'))
+    }
   
     LC_data_path <- unlist(LC_data)
     
