@@ -122,7 +122,7 @@ read_subset_LC_data <- function(LC_data_folder_path,
   for(LC_data in LC_data_folder_path){
     # Check that downloaded data exists in folder 
     if(length(list.files(LC_data)) == 0){
-      stop(paste0('No NLCD LC data in ', LC_data,'. Please move the NLCD .txt files to this location.'))
+      stop(paste0('No NLCD LC data for file ', LC_data,'. Please move the NLCD .txt file to this location.'))
     }
     
     LC_data_path <- unlist(LC_data)
