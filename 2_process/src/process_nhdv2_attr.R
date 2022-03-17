@@ -269,3 +269,12 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
 }
 
 
+
+refine_from_neighbors <- function(){
+  #' 
+  #' @description Function to fill in a reach's attribute value with a value from its neighboring reaches (from_segs and to_seg)
+  #'
+  #' @param 
+  #'
+  #' @value Returns
+}
