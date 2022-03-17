@@ -331,12 +331,85 @@ p2_targets_list <- list(
       #Detect variables that are all equal across the modeling domain and remove them
       #check for the length of unique values
       #removes "BEDPERM_4" and "HGAC"
-      unique_col_vals <- apply(p2_nhdv2_attr, 2, FUN = len_unique)
-      p2_nhdv2_attr <- p2_nhdv2_attr[, which(unique_col_vals > 1)]
+      unique_col_vals <- apply(p2_nhdv2_attr, 2, FUN = function(x) length(unique(x)))
+      p2_nhdv2_attr <- p2_nhdv2_attr[, which(unique_col_vals > 1)] %>%
+        #Remove columns that do not have enough spatial variation
+        #RUN7100 seems like it is by HUC02 instead of reach. 
+        select(!contains(c("PHYSIO_AREA", "RUN7100")))
       
-      #Remove columns that do not have enough spatial variation
-      select(p2_nhdv2_attr, !contains(c("PHYSIO_AREA")))
-    }
+      #RECHG
+      #Change recharge for NA segment to the average of its neighbors (from_segs and to_seg)
+      #index to change
+      ind_reach <- p2_nhdv2_attr$PRMS_segid[which(is.na(p2_nhdv2_attr$CAT_RECHG_area_wtd))]
+      #find the from and to segments for this reach
+      seg_match <- filter(p1_prms_reach_attr, subseg_id == ind_reach) %>% 
+        select(from_segs, to_seg) %>% 
+        mutate(from_segs = str_split(from_segs, pattern = ';', simplify = F)) %>%
+        mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+        select(-from_segs, -to_seg) %>%
+        unlist() %>%
+        #add _1 to match PRMS seg ID
+        paste0(., '_1')
+      #get the average of the attributes for the matched reaches
+      p2_nhdv2_attr$CAT_RECHG_area_wtd[p2_nhdv2_attr$PRMS_segid == ind_reach] <- 
+        filter(p2_nhdv2_attr, PRMS_segid %in% seg_match) %>% 
+        select(CAT_RECHG_area_wtd) %>% 
+        colMeans() %>% 
+        as.numeric()
+      
+      #EWT - water table
+      ind_reach <- p2_nhdv2_attr$PRMS_segid[which(p2_nhdv2_attr$CAT_EWT_area_wtd < -100)]
+      #find the from and to segments for this reach
+      seg_match <- filter(p1_prms_reach_attr, subseg_id == ind_reach) %>% 
+        select(from_segs, to_seg) %>% 
+        mutate(from_segs = str_split(from_segs, pattern = ';', simplify = F)) %>%
+        mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+        select(-from_segs, -to_seg) %>%
+        unlist() %>%
+        #add _1 to match PRMS seg ID
+        paste0(., '_1')
+      #get the average of the attributes for the matched reaches
+      p2_nhdv2_attr$CAT_EWT_area_wtd[p2_nhdv2_attr$PRMS_segid == ind_reach] <- 
+        filter(p2_nhdv2_attr, PRMS_segid %in% seg_match) %>% 
+        select(CAT_EWT_area_wtd) %>% 
+        colMeans() %>% 
+        as.numeric()
+      
+      #STRM_DENS
+      #Compute stream density from the NHD catchment reach length and area
+      #only for the 5 NA PRMS segments. These have 1 or 2 NHD catchments.
+      # other PRMS segments with some NA stream densities cover areas <3% of total.
+      #Gather the PRMS areas for these reaches
+      ind_reach <- p2_nhdv2_attr$PRMS_segid[which(is.na(p2_nhdv2_attr$CAT_STRM_DENS_area_wtd))]
+      ind_areas <- filter(p2_nhdv2_attr_catchment$p2_nhdv2_attr_catchment_43538fc6$data, PRMS_segid %in% ind_reach) %>% 
+        select(-starts_with('CAT'))
+      #Gather the sum of NHD reach lengths in m
+      ind_areas$length_m <- 0
+      for (i in 1:nrow(ind_areas)){
+        #all NHD reaches for this PRMS segment
+        nhd_reaches <- filter(p2_prms_nhdv2_xwalk, PRMS_segid %in% 
+                                                     ind_areas$PRMS_segid[i]) %>%
+          select(comid_seg) %>%
+          str_split(., pattern = ';', simplify = T)
+        
+        ind_areas$length_m[i] <- filter(p1_nhdv2reaches_sf, COMID %in% nhd_reaches) %>% 
+          select(LENGTHKM) %>% st_drop_geometry() %>%
+          sum()
+      }
+      #Compute the reach stream density length (km)/area (sq.km)
+      #There must be a typo in the table's units because using m length gives
+      #results that are 3 orders of magnitude larger than other values 
+      ind_areas <- mutate(ind_areas, str_dens = length_m/AREASQKM_PRMS) %>%
+        select(-length_m, -AREASQKM_PRMS)
+      #Join stream density to the dataset
+      p2_nhdv2_attr$CAT_STRM_DENS_area_wtd[p2_nhdv2_attr$PRMS_segid %in% ind_reach] <- ind_areas$str_dens
+      
+      #Compute TOT variables from PRMS CAT variables
+      # CWD, TAV7100, TMIN7100, STRM_DENS
+      
+      
+      #change the target used for visualization to this target with updated values
+     }
   )
 )
 
