@@ -175,21 +175,30 @@ p1_targets_list <- list(
     read_csv(p1_sntemp_inputs_outputs_csv,show_col_types = FALSE)
   ),
 
-  # Download NLCD datasets 
+  # Read in all nlcd data from 2001-2019 
+  # Note: NLCD data must already be downloaded locally and manually placed in NLCD_LC_path ('1_fetch/in/NLCD_final/')
   tar_target(
-    p1_NLCD_data_zipped, 
-    download_NHD_data(sb_id = sb_ids_NLCD,
+    p1_NLCD_LC_data,
+    read_subset_LC_data(LC_data_folder_path = NLCD_LC_path,
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID),
+                        Comid_col = 'COMID', NLCD_type = NULL)
+  ),
+    
+  # Download other NLCD 2011 datasets 
+  tar_target(
+    p1_NLCD2011_data_zipped, 
+    download_NHD_data(sb_id = sb_ids_NLCD2011,
                       out_path = '1_fetch/out',
-                      downloaded_data_folder_name = NLCD_folders,
-                      output_data_parent_folder = 'NLCD_LC_Data'),
+                      downloaded_data_folder_name = NLCD2011_folders,
+                      output_data_parent_folder = 'NLCD_LC_2011_Data'),
     format = 'file'
   ),
   
   # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
   tar_target(
-    p1_NLCD_data_unzipped,
-    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+    p1_NLCD2011_data_unzipped,
+    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
                    create_unzip_subfolder = T),
     format = 'file'
   ),
@@ -197,8 +206,8 @@ p1_targets_list <- list(
   # Read in NLCD datasets and subset by comid in DRB
   ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
   tar_target(
-    p1_NLCD_data,
-    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
+    p1_NLCD2011_data,
+    read_subset_LC_data(LC_data_folder_path = p1_NLCD2011_data_unzipped, 
                         Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                         Comid_col = 'COMID')
   ),
