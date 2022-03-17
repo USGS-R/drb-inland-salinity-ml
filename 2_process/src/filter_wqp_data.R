@@ -32,16 +32,18 @@ filter_wqp_salinity_data <- function(data,major_ion_names,wqp_vars_select,omit_w
 }
 
 
-subset_wqp_SC_data <- function(filtered_data){
+subset_wqp_SC_data <- function(filtered_data,omit_dups = TRUE){
   #' 
   #' @description Function to subset the filtered WQP salinity dataset for specific conductance  
   #'
   #' @param filtered_data a data frame containing the filtered DRB multisource surface-water-quality dataset.
   #' Filtered_data is the output from filter_wqp_salinity_data().
+  #' @param omit_dups logical indicating whether to omit duplicated observations for a unique site/date-time/
+  #' lat-lon location/collecting organization; defaults to TRUE
   #'
   #' @value A data frame containing discrete specific conductance samples from the Delaware River Basin 
   #' @examples 
-  #' subset_wqp_SC_data(filtered_data = filtered_wqp_data)
+  #' subset_wqp_SC_data(filtered_data = filtered_wqp_data, omit_dups = TRUE)
 
   # Filter out specific conductance param values "min" and "max"
   SC_params <- c("Specific conductance, field",
@@ -50,12 +52,72 @@ subset_wqp_SC_data <- function(filtered_data){
                   "Specific conductance, lab")
 
   SC_data_subset <- filtered_data %>%
-    # Omit samples originally entered as "conductivity" since we can't be sure these reflect temperature-corrected conductance
-    filter(param %in% SC_params,CharacteristicName!="Conductivity") 
-
-  return(SC_data_subset)
+    # Omit samples originally entered as "conductivity" since we can't be sure these reflect 
+    # temperature-corrected conductance
+    filter(param %in% SC_params,CharacteristicName!="Conductivity") %>%
+    # Fill in date-time stamp so that if sampling time is missing, assume some value (12:00:00) 
+    # that we can use to look for duplicated date-times
+    mutate(ActivityStartDateTime = na_if(ActivityStartDateTime, "NA")) %>%
+    mutate(ActivityStartDateTime_filled = if_else(is.na(ActivityStartDateTime),
+                                           paste(ActivityStartDate,"12:00:00",sep=" "),
+                                           ActivityStartDateTime))
+  
+  # When duplicate observations exist for a unique combination of [site name & date-time &
+  # geographic location & collecting organization], select one observation based on 
+  # the `param` attribute
+  SC_data_subset_omit_dups <- SC_data_subset %>%
+    group_by(MonitoringLocationIdentifier,
+             ActivityStartDateTime_filled, 
+             OrganizationIdentifier, 
+             LongitudeMeasure, LatitudeMeasure) %>% 
+    # Preferentially retain samples with param equals "Specific conductance, lab" first 
+    # and "Specific conductance, field, mean" last
+    arrange(match(param, c("Specific conductance, lab",
+                           "Specific conductance",
+                           "Specific conductance, field",
+                           "Specific conductance, field, mean"))) %>%
+    slice(1) %>%
+    ungroup()
+  
+  if(omit_dups == "TRUE"){
+    return(SC_data_subset_omit_dups)
+  } else {
+    return(SC_data_subset)
+  }
   
 }
+
+
+
+subset_wqp_SC_dups <- function(filtered_data){
+  #' 
+  #' @description Function to subset duplicate observations within the filtered 
+  #' WQP salinity dataset for specific conductance  
+  #'
+  #' @param filtered_data a data frame containing the filtered DRB multisource 
+  #' surface-water-quality dataset.filtered_data is the output from filter_wqp_salinity_data().
+  #'
+  #' @value A data frame containing discrete specific conductance samples from the Delaware River Basin 
+  #' @examples 
+  #' subset_wqp_SC_dups(filtered_data = filtered_wqp_data)
+  
+  SC_data_subset <- subset_wqp_SC_data(filtered_data, omit_dups = FALSE)
+  
+  # Isolate the duplicated observations
+  SC_data_subset_dups <- SC_data_subset %>%
+    group_by(MonitoringLocationIdentifier,
+             ActivityStartDateTime_filled, 
+             OrganizationIdentifier, 
+             LongitudeMeasure, LatitudeMeasure) %>% 
+    mutate(dup = n()>1) %>%
+    filter(dup == "TRUE") %>%
+    select(-dup) %>%
+    ungroup()
+  
+  return(SC_data_subset_dups)
+  
+}
+
 
 
 subset_wqp_nontidal <- function(wqp_data,site_list_w_segs,mainstem_segs){
