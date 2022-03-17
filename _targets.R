@@ -4,8 +4,8 @@ options(tidyverse.quiet = TRUE)
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
-                            'purrr', 'sbtools', 'terra',
-                            'patchwork')) 
+                            "purrr", "sbtools", "terra",
+                            "patchwork", "glue")) 
 
 source("1_fetch.R")
 source("2_process.R")
@@ -56,8 +56,13 @@ mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1
                             "2753_1","2755_1","2772_1","388_1","389_1","385_1","386_1","383_1","382_1","377_1","378_1",
                             "376_1","351_1","344_1","346_1","333_1")
 
-# Define the url for the NHGFv1 to NHDv2 crosswalk
-GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/main/2_process/out/GFv1_NHDv2_xwalk.csv"
+# Define the url for the NHGFv1 to NHDv2 crosswalk 
+# see https://github.com/USGS-R/drb-network-prep/commit/c45f469098dfb245a2d686b807a58afa00b9d0b2
+GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/c45f469098dfb245a2d686b807a58afa00b9d0b2/2_process/out/GFv1_NHDv2_xwalk.csv"
+
+# Define the url for the edited HRU polygons
+# see https://github.com/USGS-R/drb-network-prep/commit/940073e8d77c911b6fb9dc4e3657aeab1162a158
+GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/940073e8d77c911b6fb9dc4e3657aeab1162a158/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
@@ -71,27 +76,32 @@ dummy_date <- "2021-12-31"
 # Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'
 
+## NLCD 
+# path to all NLCD LC data 2001-2019 
+# Note: this data should be manually downloaded from the project Data folder in sharepoint (`NLCD_final/NLCD_final/`)
+NLCD_LC_path <- file.path('1_fetch/in/NLCDs_2001_2019')
+dir.create(NLCD_LC_path, showWarnings = F) 
+# last two digit suffix of years of NLCD data
+NLCD_year_suffix <- c('01','04','06','08','11','13','16','19')
+
 # Define land cover datasets to extract 
-sb_ids_NLCD <- c(
+sb_ids_NLCD2011 <- c(
   # ImperviousnessPct_2011: 'https://www.sciencebase.gov/catalog/item/57057a9be4b0d4e2b7571fbb',
   '57057a9be4b0d4e2b7571fbb',
   # Imperviousness100mBufferRipZone:'https://www.sciencebase.gov/catalog/item/570577fee4b0d4e2b7571d7b',
   '570577fee4b0d4e2b7571d7b',
   # TreeCanopy_100mBuffered_RipZone: 'https://www.sciencebase.gov/catalog/item/570572e2e4b0d4e2b75718bc'
   '570572e2e4b0d4e2b75718bc',
-  # NLCD_LandCover_2011: 'https://www.sciencebase.gov/catalog/item/5761bad4e4b04f417c2d30c5',
-  '5761bad4e4b04f417c2d30c5',
   # Estimated percent of catchment in 50 meter riparian zone that contains the land-use and land-cover: 'https://www.sciencebase.gov/catalog/item/57855ddee4b0e02680bf37bf'
   '57855ddee4b0e02680bf37bf'
   )
 
 # Define Land Cover dataset download folders:
 
-NLCD_folders <- c(
+NLCD2011_folders <- c(
    'ImperviousnessPct_2011',
    'Imperviousness100m_RipZone',
    'TreeCanopy_100mBuffered_RipZone',
-   'NLCD_LandCover_2011',
    'NLCD_LandCover_50m_RipZone'
 )
 
