@@ -62,6 +62,7 @@ subset_wqp_SC_data <- function(filtered_data,omit_dups = TRUE){
                                            paste(ActivityStartDate,"12:00:00",sep=" "),
                                            ActivityStartDateTime))
   
+if(omit_dups == "TRUE"){
   # When duplicate observations exist for a unique combination of [site name & date-time &
   # geographic location & collecting organization], select one observation based on 
   # the `param` attribute
@@ -79,7 +80,6 @@ subset_wqp_SC_data <- function(filtered_data,omit_dups = TRUE){
     slice(1) %>%
     ungroup()
   
-  if(omit_dups == "TRUE"){
     return(SC_data_subset_omit_dups)
   } else {
     return(SC_data_subset)
