@@ -52,11 +52,12 @@ get_site_flowlines <- function(reach_sf, sites, sites_crs, max_matches = 1, sear
   #rejoin to original reaches df
   sites_w_reach_ids <- sites %>%
     left_join(flowline_indices, by = "id") %>%
-    select(-id)
-
-  # add `segidnat` column
-  sites_w_reach_ids <- sites_w_reach_ids %>%
-      left_join(select(reach_sf, c(subsegid, segidnat)))
+    select(-id) %>%
+    # add `segidnat` column
+    left_join(.,reach_sf %>%
+                st_drop_geometry() %>%
+                select(subsegid,segidnat),
+              by = "subsegid")
 
   return(sites_w_reach_ids)
 }
