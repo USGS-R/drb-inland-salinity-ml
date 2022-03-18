@@ -21,11 +21,11 @@ dir.create("3_visualize/out/nhdv2_attr_png/",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
-                     "MonitoringLocationTypeName","OrganizationIdentifier","ActivityStartDate","ActivityStartTime.Time",
-                     "ActivityEndDate","CharacteristicName","param_group","param","USGSPCode","ActivityMediaName",
-                     "ResultSampleFractionText","HydrologicCondition","HydrologicEvent","resultVal2","resultUnits2",
-                     "ResultDetectionConditionText","ResultTemperatureBasisText","PrecisionValue","ResultStatusIdentifier",
-                     "final")
+                     "MonitoringLocationTypeName","OrganizationIdentifier","ActivityStartDate","ActivityStartDateTime",
+                     "ActivityStartTime.Time","ActivityStartTime.TimeZoneCode","CharacteristicName","param_group","param",
+                     "USGSPCode","ActivityMediaName","ResultSampleFractionText","HydrologicCondition","HydrologicEvent",
+                     "resultVal2","resultUnits2","ResultDetectionConditionText","ResultTemperatureBasisText",
+                     "PrecisionValue","ResultStatusIdentifier","final")
 
 # Define water quality major ions of interest
 major_ion_names = c("Chloride","Sodium")
