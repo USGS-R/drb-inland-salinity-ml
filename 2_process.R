@@ -24,14 +24,14 @@ p2_targets_list <- list(
   tar_target(
     p2_wqp_SC_data,
     subset_wqp_SC_data(p2_filtered_wqp_data, omit_dups = TRUE),
-	format = format_rds
+    format = format_rds
   ),
   
   # Subset duplicated discrete SC observations from the harmonized WQP dataset
   tar_target(
     p2_wqp_SC_dups,
     subset_wqp_SC_dups(p2_filtered_wqp_data),
-	format = format_rds
+    format = format_rds
   ),
   
   # Aggregate instantaneous SC data to hourly averages
@@ -71,7 +71,7 @@ p2_targets_list <- list(
      p2_sites_w_segs,
      get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, 
                         search_radius = bird_dist_cutoff_m, retain_sites = retain_nwis_sites),
-	format = format_rds
+     format = format_rds
   ),
   
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
@@ -121,7 +121,7 @@ p2_targets_list <- list(
                                                 select(COMID, AREASQKM,TOTDASQKM, LENGTHKM),
                   NLCD_LC_df = p1_NLCD_LC_data,
                   aoi_comids_df = p2_drb_comids_all_tribs),
-	format = format_rds
+    format = format_rds
   ),
   
   ## Estimate LC proportion in PRMS catchment - CAT, TOT, and ACC
@@ -131,7 +131,7 @@ p2_targets_list <- list(
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area,
                                    catchment_att = 'CAT') %>%
       select(-contains('NODATA')),
-	format = format_rds
+    format = format_rds
   ),
   
   tar_target(
@@ -141,7 +141,7 @@ p2_targets_list <- list(
                             filter(comid %in% p2_drb_comids_down$comid),
                           catchment_att = 'TOT') %>%
       select(-contains('NODATA')),
-	format = format_rds
+    format = format_rds
   ),  
   
   tar_target(
@@ -151,7 +151,7 @@ p2_targets_list <- list(
                             filter(comid %in% p2_drb_comids_down$comid),
                           catchment_att = 'ACC') %>%
       select(-contains('NODATA')),
-	format = format_rds
+    format = format_rds
   ), 
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
@@ -162,7 +162,7 @@ p2_targets_list <- list(
     reclassify_LC_for_NLCD(NLCD_lc_proportions_df = p2_PRMS_NLCD_lc_proportions_cat,
                           years_suffix = NLCD_year_suffix,
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'),
-	format = format_rds
+    format = format_rds
   ),
   
   # For Tot
@@ -171,7 +171,7 @@ p2_targets_list <- list(
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_tot,
                            NLCD_year_suffix,
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'),
-	format = format_rds
+    format = format_rds
   ),
 
   # For Acc
@@ -180,7 +180,7 @@ p2_targets_list <- list(
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_acc,
                            NLCD_year_suffix,
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'),
-	format = format_rds
+    format = format_rds
   ),
   
   # Extract historical LC data raster values catchments polygon FORE-SCE 
@@ -224,7 +224,7 @@ p2_targets_list <- list(
                      mutate(Year = .y)}
                  )
     },
-	format = format_rds
+    format = format_rds
   ),
   
   ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target via recursively calculating proportions of LC class across all upstream segments for a given segment
