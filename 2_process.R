@@ -57,9 +57,12 @@ p2_targets_list <- list(
                      hucs=drb_huc8s,crs_out="NAD83")
   ),
 
+  # Match PRMS stream segments to observation site ids and return subset of sites within 
+  # the distance specified by search_radius (in meters)
   tar_target(
      p2_sites_w_segs,
-     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, search_radius = 0.1)
+     get_site_flowlines(p1_reaches_sf, p2_site_list, sites_crs = 4269, max_matches = 1, 
+                        search_radius = bird_dist_cutoff_m, retain_sites = retain_nwis_sites)
   ),
   
   # Pair PRMS segments with intersecting NHDPlusV2 reaches and contributing NHDPlusV2 catchments
