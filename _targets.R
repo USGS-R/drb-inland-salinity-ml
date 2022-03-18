@@ -12,6 +12,7 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                ) 
 
 ## Define the target save file formats
+#Can change to aws_file or aws_rds to save to S3
 format_file <- 'file'
 format_rds <- 'rds'
 
