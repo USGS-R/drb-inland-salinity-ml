@@ -6,6 +6,7 @@ _targets
 
 #Other local files
 archive/*
+1_fetch/in/NLCDs_2001_2019/*
 
 #R files
 # History files
