@@ -51,6 +51,12 @@ site_tp_select <- c("ST","ST-CA","SP")
 # sites 01412350, 01484272, and 01482695 coded as site type "ST" but appear to be tidally-influenced
 omit_nwis_sites <- c("01412350","01484272","01482695") 
 
+# Define search radius to match sites to PRMS segments (in meters)
+bird_dist_cutoff_m <- 500
+
+# Retain NWIS sites even if nearest PRMS segment is outside of radius set by bird_dist_cutoff_m
+retain_nwis_sites <- c("01474703","01477050")
+
 # Define PRMS mainstem segments thought to be tidally-influenced (used for filtering sites used in daily/sub-daily models)
 mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1","2763_1","2759_1","2757_1","2752_1",
                             "2753_1","2755_1","2772_1","388_1","389_1","385_1","386_1","383_1","382_1","377_1","378_1",
