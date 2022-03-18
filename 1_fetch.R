@@ -8,6 +8,7 @@ source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
 source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
+source("1_fetch/src/download_file.R")
 
 p1_targets_list <- list(
   
@@ -126,7 +127,7 @@ p1_targets_list <- list(
   # Read PRMS catchment shapefile into sf object and filter to DRB
   tar_target(
     p1_catchments_sf,
-    {st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
+    sf::st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
         filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
         suppressWarnings()
       },
@@ -136,8 +137,24 @@ p1_targets_list <- list(
   ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
   tar_target(
     p1_catchments_sf_valid, 
-    st_buffer(p1_catchments_sf,0),
+    sf::st_buffer(p1_catchments_sf,0),
     format = format_rds
+  ),
+  
+  # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
+  tar_target(
+    p1_catchments_edited_gpkg,
+    download_file(GFv1_HRUs_edited_url,
+                  fileout = "1_fetch/out/GFv1_catchments_edited.gpkg", 
+                  mode = "wb", quiet = TRUE),
+    format = format_file
+  ),
+  
+  # Read in edited HRU polygons
+  tar_target(
+    p1_catchments_edited_sf,
+    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE),
+	format = format_rds
   ),
   
   # Download DRB network attributes
@@ -181,21 +198,31 @@ p1_targets_list <- list(
     format = format_rds
   ),
 
-  # Download NLCD datasets 
+  # Read in all nlcd data from 2001-2019 
+  # Note: NLCD data must already be downloaded locally and manually placed in NLCD_LC_path ('1_fetch/in/NLCD_final/')
   tar_target(
-    p1_NLCD_data_zipped, 
-    download_NHD_data(sb_id = sb_ids_NLCD,
+    p1_NLCD_LC_data,
+    read_subset_LC_data(LC_data_folder_path = NLCD_LC_path,
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID),
+                        Comid_col = 'COMID', NLCD_type = NULL),
+	format = format_rds
+  ),
+    
+  # Download other NLCD 2011 datasets 
+  tar_target(
+    p1_NLCD2011_data_zipped, 
+    download_NHD_data(sb_id = sb_ids_NLCD2011,
                       out_path = '1_fetch/out',
-                      downloaded_data_folder_name = NLCD_folders,
-                      output_data_parent_folder = 'NLCD_LC_Data'),
+                      downloaded_data_folder_name = NLCD2011_folders,
+                      output_data_parent_folder = 'NLCD_LC_2011_Data'),
     format = format_file
   ),
   
   # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
   tar_target(
-    p1_NLCD_data_unzipped,
-    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+    p1_NLCD2011_data_unzipped,
+    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
                    create_unzip_subfolder = T),
     format = format_file
   ),
@@ -204,11 +231,9 @@ p1_targets_list <- list(
   ## Note that this returns a vector of dfs if more than one NLCD data 
   ## is in the p1_NLCD_data_unzipped
   tar_target(
-    p1_NLCD_data,
-    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
-                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% 
-                          st_drop_geometry() %>% 
-                          select(COMID), 
+    p1_NLCD2011_data,
+    read_subset_LC_data(LC_data_folder_path = p1_NLCD2011_data_unzipped, 
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                         Comid_col = 'COMID'),
     format = format_rds
   ),
