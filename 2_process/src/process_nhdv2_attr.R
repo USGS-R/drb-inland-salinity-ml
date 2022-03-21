@@ -387,7 +387,7 @@ refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk,
     #need special handling for PRMS segments with _2
     ind_replace <- which(nhdv2_attr_refined$hru_segment == subseg)
     nhdv2_attr_refined$TOT_CWD_frmCAT[ind_replace] <- compute_tot(CWD_segs,areas_segs)
-    nhdv2_attr_refined$TOT_TAV7100_frmCAT[ind_replace] <- compute_tot(TAV_segs,areas_segs)
+    nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT[ind_replace] <- compute_tot(TAV_segs,areas_segs)
     nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- compute_tot(TMN_segs,areas_segs)
     nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- compute_tot(STR_DENS_segs,areas_segs)
   }
