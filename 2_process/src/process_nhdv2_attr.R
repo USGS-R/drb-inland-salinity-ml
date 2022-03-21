@@ -435,7 +435,7 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
                                attr = case_when(PRMS_segid == ind_reach ~ fill_val,
                                                               TRUE ~ get(attr_i))
                                ) %>%
-    select(attr)
+    pull(attr)
   return(nhdv2_attr_refined)
 }
 
