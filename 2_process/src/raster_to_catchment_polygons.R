@@ -40,8 +40,8 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   #' @param raster_summary_fun for continuous raster, function to summarize the data by geometry. kept NULL if categorical_raster = TRUE
   #' @param new_raster_prefix prefix added to colnames to label raster classes/values
   #' @value A dataframe with the same columns as the polygon_sf spatial dataframe (except geometry col) with additional columns of the Land Cover classes
-  #' @example land cover raster ex: raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid, raster = p1_FORESCE_backcasted_LC, categorical_raster = TRUE, new_cols_prefix = 'lc_)
-  #' @example cont. raster ex: raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid, raster = p1_rod_salt, categorical_raster = FALSE, raster_summary_fun = sum, new_cols_prefix = 'cont_raster')
+  #' @example land cover raster ex: raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf, raster = p1_FORESCE_backcasted_LC, categorical_raster = TRUE, new_cols_prefix = 'lc_)
+  #' @example cont. raster ex: raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf, raster = p1_rod_salt, categorical_raster = FALSE, raster_summary_fun = sum, new_cols_prefix = 'cont_raster')
   
   # read in 
   raster <- rast(raster)
