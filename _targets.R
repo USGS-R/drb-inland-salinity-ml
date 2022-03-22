@@ -5,7 +5,7 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
                             "purrr", "sbtools", "terra",
-                            "patchwork", "glue",'nhdplusTools')) 
+                            "patchwork", "glue",'nhdplusTools', "readxl")) 
 
 source("1_fetch.R")
 source("2_process.R")
@@ -19,6 +19,7 @@ dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/nhdv2_attr_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/nhdv2_attr_png/refined",showWarnings = FALSE)
+dir.create("3_visualize/out/nhdv2_attr_png/synoptic",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -118,6 +119,9 @@ NADP_sb_id <- '57e2ac2fe4b0908250045981'
 
 ## FORESCE list of FORESCE years
 FORESCE_years <- c('1940', '1950', '1960', '1970', '1980', '1990', '2000')
+
+## Path to synoptic sampling sites
+syn_file <- 'C:/Users/jsmith/OneDrive - DOI/Shared Documents - GS-WMA-IWP-PUMP/40.2 Data-driven salinity/Data/DRB-Inland/DRB_2021_synoptic_sites_by_transect_20210819.xlsx'
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
