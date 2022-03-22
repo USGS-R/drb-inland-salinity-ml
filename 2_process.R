@@ -331,6 +331,14 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+  ),
+  
+  # Match PRMS stream segments to synoptic site ids and return subset of sites within 
+  # the distance specified by search_radius (in meters)
+  tar_target(
+    p2_syn_sites_w_segs,
+    get_site_flowlines(p1_reaches_sf, p1_syn_sites, sites_crs = 4269, max_matches = 1, 
+                       search_radius = bird_dist_cutoff_m, retain_sites = NULL)
   )
 )
 
