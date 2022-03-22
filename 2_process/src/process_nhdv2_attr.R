@@ -297,7 +297,7 @@ refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk,
     #Remove other columns
     #PHYSIO_AREA says which proportion of catchments are covered by physiographic regions
     #RUN7100 seems like it is by HUC02 instead of reach.
-    select(!contains(c("PHYSIO_AREA", "RUN7100"))) %>%
+    select(!contains(drop_columns)) %>%
     #Modify the CAT Basin Areas that are 0 with PRMS areas
     #These areas are otherwise nearly identical (max difference of 0.1 sq.km)
     mutate(CAT_BASIN_AREA_sum = case_when(CAT_BASIN_AREA_sum == 0 ~ AREASQKM_PRMS,
