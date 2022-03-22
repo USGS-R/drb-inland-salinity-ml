@@ -74,7 +74,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   message('extracting from categorical raster')
   ## Extract rasters pixels in each polygon
   start_time <- Sys.time()
-  raster_per_polygon <- terra::extract(raster_crop, vector, list = T) %>% 
+  raster_per_polygon <- terra::extract(raster_crop, vector, list = TRUE) %>% 
     #lapply(table) # to get frequency of each categorical value
     lapply(FUN = function(x) {table(x)/sum(table(x))})
   end_time <- Sys.time()

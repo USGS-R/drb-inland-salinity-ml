@@ -162,7 +162,7 @@ p2_targets_list <- list(
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   tar_target(
     p2_FORESCE_LC_per_catchment, 
-    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf,
                                                   raster = x, categorical_raster = TRUE,
                                                   raster_summary_fun = NULL,
                                                   new_cols_prefix = 'lcClass',
@@ -183,13 +183,10 @@ p2_targets_list <- list(
                                               sep = ',',
                                               pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
-                     aggregate_proportions_hrus(group_by_segment_colname = hru_segment,
+                     aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,hru_segment),
                                                 proportion_col_prefix = 'prop_lcClass',
-                                                hru_area_colname = hru_area,
-                                                new_area_colname = total_PRMS_area) %>% ## n = 416
-                     ## Join with PRMS segment table + clean cols. NOTE: there are two PRMS_segid that match same hru_segment at the moment (nrow change) - to resolve. 
-                     left_join(y=p2_PRMS_hru_segment, by = 'hru_segment') %>% 
-                     select(PRMS_segid,  everything()) %>% ## n = 418
+                                                hru_area_colname = hru_area_m2,
+                                                new_area_colname = total_PRMS_area) %>%
                      ## Adding Year column
                      mutate(Year = .y)}
                  )
@@ -200,16 +197,15 @@ p2_targets_list <- list(
   tar_target(
     p2_prms_attribute_df, 
     p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
+      rename(.,PRMS_segid_main = subseg_id) %>% 
       # Update `from_segs` col by splitting the individual segs in a list (can then loop through the list) 
       mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F)) %>% 
       rowwise() %>%
       # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
       mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = ., col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
       # unest to have new rows for each upstream catchment
-      unnest(all_from_segs, keep_empty = TRUE) %>%
-      # change col type to be able to compute
-      dplyr::mutate(all_from_segs = as.integer(all_from_segs))
-  ),
+      unnest(all_from_segs, keep_empty = TRUE)
+    ),
   
   # Produce p2_FORESCE_LC_per_catchment_reclass_tot 
   tar_target(
@@ -219,7 +215,7 @@ p2_targets_list <- list(
         # join prop calculations - selected inner join because at the moment, p2_prms_attribute_df has more PRMS_segids than p2_FORESCE_LC_per_catchment_reclass_cat due to outdated catchmetns file
         inner_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
         # group by PRMS id
-        group_by(PRMS_segid, Year) %>% 
+        group_by(PRMS_segid_main, Year) %>% 
         summarise(
           # calc. total area
           total_upstream_PRMS_area = sum(total_PRMS_area),
@@ -233,12 +229,12 @@ p2_targets_list <- list(
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
     p2_rdsalt_per_catchment,
-    {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_sf_valid,
+    {lapply(p1_rdsalt, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf,
                                                                 raster = x,
                                                                 categorical_raster = FALSE,
                                                                 raster_summary_fun = sum,
                                                                 new_cols_prefix = 'rd_slt', na.rm = T) %>%
-              group_by(hru_segment) %>%
+              group_by(PRMS_segid) %>%
               summarise(across(starts_with('rd_sltX'), sum)))
     }
   ),
@@ -247,10 +243,10 @@ p2_targets_list <- list(
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
     # Reduce can iterate through elements in a list 1 after another 
-    Reduce(function(...) merge(..., by = 'hru_segment'),
+    Reduce(function(...) merge(..., by = 'PRMS_segid'),
            p2_rdsalt_per_catchment) %>% 
       # Calculate total salt accumulation across all years 
-      mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = T)) %>% 
+      mutate(rd_salt_all_years = rowSums(across(starts_with('rd_sltX')), na.rm = TRUE)) %>% 
       # Calculate prop of catchment rd salt acc across entire basin
       mutate(rd_salt_all_years_prop_drb = round((rd_salt_all_years/sum(rd_salt_all_years)),8)) %>% 
       # Remove annual rd_saltXYr cols

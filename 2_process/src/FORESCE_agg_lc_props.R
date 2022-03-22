@@ -12,7 +12,7 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname, proportion_
     # Create temp cols of area of lc class per hru - NOTE: simply mutate current cols and no longer have proportion values
     mutate(across(starts_with(proportion_col_prefix),  ~(.x * {{hru_area_colname}})))%>% 
     # group by hru segments - droping from 761 row to 416 - to get a single "PRMS" catchment per PRMS segment
-    group_by({{group_by_segment_colname}}) %>%
+    group_by_at(group_by_segment_colname) %>%
     summarise(
       # calc total area of aggregated catchments
       total_area = sum({{hru_area_colname}}),
