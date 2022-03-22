@@ -308,6 +308,18 @@ p1_targets_list <- list(
      file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
       },
     format = "file"
+  ),
+  
+  # Load synoptic sampling sites
+  tar_target(
+    p1_syn_sites,
+    readxl::read_xlsx(syn_file, sheet = 'Clean_NtoS')
+  ),
+  # Create spatial dataframe
+  tar_target(
+    p1_syn_sites_sf,
+    st_as_sf(test, coords = c('dec_lat_va', 'dec_long_va')) %>%
+      st_set_crs(value = '4269')
   )
 )
   
