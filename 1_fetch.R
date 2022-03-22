@@ -320,16 +320,12 @@ p1_targets_list <- list(
     format = "file"
   ),
   
-  # Load synoptic sampling sites
+  # Load synoptic sampling sites.
+  # Rename columns to match needs of site to reach function
   tar_target(
     p1_syn_sites,
-    readxl::read_xlsx(syn_file, sheet = 'Clean_NtoS')
-  ),
-  # Create spatial dataframe
-  tar_target(
-    p1_syn_sites_sf,
-    st_as_sf(test, coords = c('dec_lat_va', 'dec_long_va')) %>%
-      st_set_crs(value = '4269')
+    readxl::read_xlsx(syn_file, sheet = 'Clean_NtoS') %>%
+      rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
   )
 )
   
