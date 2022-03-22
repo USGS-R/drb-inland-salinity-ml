@@ -425,7 +425,14 @@ p2_targets_list <- list(
                     #covered by physiographic regions
                     #RUN7100 seems like it is by HUC02 instead of reach.
                     #RFACT is perfectly correlated with RF7100
-                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))
+                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT")),
+  
+  # Match PRMS stream segments to synoptic site ids and return subset of sites within 
+  # the distance specified by search_radius (in meters)
+  tar_target(
+    p2_syn_sites_w_segs,
+    get_site_flowlines(p1_reaches_sf, p1_syn_sites, sites_crs = 4269, max_matches = 1, 
+                       search_radius = bird_dist_cutoff_m, retain_sites = NULL)
   )
 )
 
