@@ -183,6 +183,7 @@ p2_targets_list <- list(
                                               sep = ',',
                                               pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
+                     ## group by with both hru and prms because we need hru_segment to run the recursive function for upstream catchments
                      aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,hru_segment),
                                                 proportion_col_prefix = 'prop_lcClass',
                                                 hru_area_colname = hru_area_m2,
@@ -197,6 +198,7 @@ p2_targets_list <- list(
   tar_target(
     p2_prms_attribute_df, 
     p1_prms_reach_attr %>% select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
+      # renaming so that we can distinguish from p2_FORESCE_LC_per_catchment_reclass_cat$PRMS_segid col
       rename(.,PRMS_segid_main = subseg_id) %>% 
       # Update `from_segs` col by splitting the individual segs in a list (can then loop through the list) 
       mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F)) %>% 
