@@ -230,6 +230,29 @@ p2_targets_list <- list(
       )}
   ),
   
+  # Combine NLCD and FORESCE
+  ## Cat
+  tar_target(
+    all_lulc_data_cat,
+    {rbind(rbind(
+      clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_cat,
+                                cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2'),
+      clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_cat,
+                                cols_to_remove = 'hru_segment', area_col = total_PRMS_area, area_unit = 'm2')))
+      }
+  ),
+  
+  ## Tot
+  tar_target(
+    all_lulc_data_tot,
+    {rbind(rbind(
+      clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_tot,
+                                cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2'),
+      clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_tot,
+                                cols_to_remove = 'hru_segment', area_col = total_PRMS_area, area_unit = 'm2')))
+    }
+  ),
+  
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
     p2_rdsalt_per_catchment,
