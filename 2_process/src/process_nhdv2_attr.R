@@ -336,7 +336,8 @@ refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk,
     
     ind_areas$length_m[i] <- filter(nhdv2_reaches,
                                     COMID %in% nhd_reaches) %>%
-      select(LENGTHKM) %>% st_drop_geometry() %>%
+      select(LENGTHKM) %>% 
+      st_drop_geometry() %>%
       sum()
   }
   #Compute the reach stream density length (km)/area (sq.km)
