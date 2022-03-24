@@ -291,7 +291,7 @@ refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk,
   #' @value Returns a refined nhdv2_attr based on the columns to drop
   
   #Detect variables that are all equal across the modeling domain and remove them
-  #removes "BEDPERM_4" and "HGAC"
+  #removes "BEDPERM_4" and "HGAC" for both CAT and TOT scales
   unique_col_vals <- apply(nhdv2_attr, 2, FUN = function(x) length(unique(x)))
   nhdv2_attr_refined <- nhdv2_attr[, which(unique_col_vals > 1)] %>%
     #Remove other columns
