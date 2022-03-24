@@ -149,7 +149,7 @@ create_site_list_nontidal <- function(wqp_data,nwis_sites,nwis_daily_data,nwis_i
   site_list_filtered <- create_site_list(wqp_data,nwis_sites,nwis_daily_data,nwis_inst_data,hucs,crs_out)
   
   # Add segment information from site_list_w_segs
-  site_list_filtered_w_segs <- left_join(site_list_filtered,site_list_w_segs[,c("site_id","subsegid","offset","segidnat")],by="site_id")
+  site_list_filtered_w_segs <- left_join(site_list_filtered,site_list_w_segs[,c("site_id","subsegid","bird_dist_to_subseg_m","segidnat")],by="site_id")
   
   # Save site list
   write_csv(site_list_filtered_w_segs, file = fileout)
