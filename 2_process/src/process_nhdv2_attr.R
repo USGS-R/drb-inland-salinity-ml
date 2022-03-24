@@ -445,7 +445,7 @@ compute_tot <- function(cat_var, areas_segs){
   #' @description Function to compute TOT from CAT variables
   #'
   #' @param cat_var vector of CAT variables for current and upstream segments
-  #' @param areas_segs area of each segment in the same order as cat_vec
+  #' @param areas_segs area of each segment in the same order as cat_var
   #'
   #' @value Returns the area-weighted sum (TOT) variable
   
