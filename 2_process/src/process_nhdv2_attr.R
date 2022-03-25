@@ -390,6 +390,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
     nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- weighted.mean(TMN_segs,areas_segs)
     nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- weighted.mean(STR_DENS_segs,areas_segs)
   }
+  #Remove original TOT columns
+  nhdv2_attr_refined <- select(nhdv2_attr_refined, -c(TOT_CWD, TOT_TAV7100_ANN, TOT_TMIN7100, TOT_STRM_DENS))
   
   return(nhdv2_attr_refined)
 }
