@@ -336,7 +336,7 @@ p2_targets_list <- list(
   #Refine the attributes that are used for modeling
   tar_target(
     p2_nhdv2_attr_refined,
-    refine_features(p2_nhdv2_attr, p1_prms_reach_attr, p2_prms_nhdv2_xwalk, 
+    refine_features(p2_nhdv2_attr, p2_prms_nhdv2_xwalk, 
                     p1_nhdv2reaches_sf, p2_prms_attribute_df,
                     drop_columns = c("PHYSIO_AREA", "RUN7100"))
   )

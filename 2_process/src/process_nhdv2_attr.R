@@ -269,7 +269,7 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
 }
 
 
-refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk, 
+refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk, 
                             nhdv2_reaches, prms_attribute_df, drop_columns){
   #' 
   #' @description Function to reduce and refine the static attributes for use in models.
@@ -281,7 +281,6 @@ refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk,
   #' It computes TOT from CAT variables for 4 attributes.
   #'
   #' @param nhdv2_attr the tbl of static attributes (columns) for each PRMS reach (rows)
-  #' @param prms_reach_attr the PRMS reach attribute tbl 
   #' @param prms_nhdv2_xwalk the crosswalk tbl from NHD reaches to PRMS reaches
   #' @param nhdv2_reaches the NHD reaches as an sf object
   #' @param prms_attribute_df PRMS attribute table with all_from_segs discovered 
@@ -310,13 +309,13 @@ refine_features <- function(nhdv2_attr, prms_reach_attr, prms_nhdv2_xwalk,
   #index to change
   nhdv2_attr_refined$CAT_RECHG_area_wtd <- refine_from_neighbors(nhdv2_attr_refined,
                                                                  attr_i = 'CAT_RECHG_area_wtd', 
-                                                                 prms_reach_attr)
+                                                                 prms_attribute_df)
   
   #EWT - water table
   #Change EWT for segment with deep value to the average of its neighbors (from_segs and to_seg)
   nhdv2_attr_refined$CAT_EWT_area_wtd <- refine_from_neighbors(nhdv2_attr_refined,
                                                                attr_i = 'CAT_EWT_area_wtd',
-                                                               prms_reach_attr)
+                                                               prms_attribute_df)
   
   #STRM_DENS
   #Compute stream density from the NHD catchment reach length and area
@@ -403,7 +402,9 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
   #'
   #' @param nhdv2_attr the full (or partially refined) attribute tbl
   #' @param attr_i the attribute name as character string
-  #' @param prms_reach_attr the PRMS reach attribute tbl
+  #' @param prms_reach_attr the PRMS reach attribute tbl with rows for each 
+  #' from_segs as discovered from the recursive function 
+  #' (output of p2_prms_attribute_df target)
   #'
   #' @value Returns nhdv2_attr with filled in values for the attr_i column.
   
@@ -419,7 +420,7 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
   #find the from and to segments for this reach
   seg_match <- filter(prms_reach_attr, subseg_id == ind_reach) %>%
     select(from_segs, to_seg) %>%
-    mutate(from_segs = str_split(from_segs, pattern = ';', simplify = F)) %>%
+    unique() %>%
     mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
     select(-from_segs, -to_seg) %>%
     unlist() %>%
