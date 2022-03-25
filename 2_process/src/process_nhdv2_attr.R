@@ -352,7 +352,9 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   )
   
   #Compute TOT variables from PRMS CAT variables
-  # CWD, TAV7100, TMIN7100, STRM_DENS
+  # These 3 variables have some segments with 0s that are clearly incorrect:
+  # CWD, TAV7100, TMIN7100 
+  # and TOT for STRM_DENS should be recomputed due to the edits to CAT variables
   #Add hru segment identifier to match with the recursive function output ID
   nhdv2_attr_refined$hru_segment <- apply(str_split(nhdv2_attr_refined$PRMS_segid, 
                                                     pattern = '_', simplify = T), 
