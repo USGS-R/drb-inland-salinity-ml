@@ -7,6 +7,7 @@ _targets
 #Other local files
 archive/*
 1_fetch/in/NLCDs_2001_2019/*
+1_fetch/in/DRB_2021_synoptic_sites_by_transect_20210819.xlsx
 
 #R files
 # History files

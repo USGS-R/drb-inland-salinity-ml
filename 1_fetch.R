@@ -314,8 +314,15 @@ p1_targets_list <- list(
   # Rename columns to match needs of site to reach function
   tar_target(
     p1_syn_sites,
-    readxl::read_xlsx(syn_file, sheet = 'Clean_NtoS') %>%
-      rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
+    {
+      if(!('DRB_2021_synoptic_sites_by_transect_20210819.xlsx' %in% 
+           list.files('1_fetch/in/'))){
+        stop('Please add DRB_2021_synoptic_sites_by_transect_20210819.xlsx to 1_fetch/in')
+      }
+      readxl::read_xlsx('1_fetch/in/DRB_2021_synoptic_sites_by_transect_20210819.xlsx', 
+                        sheet = 'Clean_NtoS') %>%
+        rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
+    }
   )
 )
   
