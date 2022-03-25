@@ -290,7 +290,7 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   #' @value Returns a refined nhdv2_attr based on the columns to drop
   
   #Detect variables that are all equal across the modeling domain and remove them
-  #removes "BEDPERM_4" and "HGAC"
+  #removes "BEDPERM_4" and "HGAC" for both CAT and TOT scales
   unique_col_vals <- apply(nhdv2_attr, 2, FUN = function(x) length(unique(x)))
   nhdv2_attr_refined <- nhdv2_attr[, which(unique_col_vals > 1)] %>%
     #Remove other columns
@@ -335,7 +335,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
     
     ind_areas$length_m[i] <- filter(nhdv2_reaches,
                                     COMID %in% nhd_reaches) %>%
-      select(LENGTHKM) %>% st_drop_geometry() %>%
+      select(LENGTHKM) %>% 
+      st_drop_geometry() %>%
       sum()
   }
   #Compute the reach stream density length (km)/area (sq.km)
@@ -445,7 +446,7 @@ compute_tot <- function(cat_var, areas_segs){
   #' @description Function to compute TOT from CAT variables
   #'
   #' @param cat_var vector of CAT variables for current and upstream segments
-  #' @param areas_segs area of each segment in the same order as cat_vec
+  #' @param areas_segs area of each segment in the same order as cat_var
   #'
   #' @value Returns the area-weighted sum (TOT) variable
   
