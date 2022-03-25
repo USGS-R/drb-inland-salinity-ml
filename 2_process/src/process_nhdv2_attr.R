@@ -324,8 +324,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   #Gather the PRMS areas for these reaches
   ind_areas <- filter(nhdv2_attr_refined, is.na(CAT_STRM_DENS_area_wtd)) %>%
     select(PRMS_segid, CAT_BASIN_AREA_sum)
-  #Gather the sum of NHD reach lengths in m
-  ind_areas$length_m <- 0
+  #Gather the sum of NHD reach lengths in km
+  ind_areas$length_km <- 0
   for (i in 1:nrow(ind_areas)){
     #all NHD reaches for this PRMS segment
     nhd_reaches <- filter(prms_nhdv2_xwalk,
@@ -333,17 +333,17 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
       select(comid_cat) %>%
       str_split(., pattern = ';', simplify = T)
     
-    ind_areas$length_m[i] <- filter(nhdv2_reaches,
+    ind_areas$length_km[i] <- filter(nhdv2_reaches,
                                     COMID %in% nhd_reaches) %>%
       select(LENGTHKM) %>% 
       st_drop_geometry() %>%
       sum()
   }
   #Compute the reach stream density length (km)/area (sq.km)
-  #There must be a typo in the table's units because using m length gives
+  #There must be a typo in the ScienceBase table's units because using m length gives
   #results that are 3 orders of magnitude larger than other values
-  ind_areas <- mutate(ind_areas, str_dens = length_m/CAT_BASIN_AREA_sum) %>%
-    select(-length_m, -CAT_BASIN_AREA_sum)
+  ind_areas <- mutate(ind_areas, str_dens = length_km/CAT_BASIN_AREA_sum) %>%
+    select(-length_km, -CAT_BASIN_AREA_sum)
   #assign to attribute table
   nhdv2_attr_refined <- mutate(nhdv2_attr_refined,
                           CAT_STRM_DENS_area_wtd = case_when(PRMS_segid %in% ind_areas$PRMS_segid ~
