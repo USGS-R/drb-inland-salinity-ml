@@ -361,10 +361,9 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
                                           MARGIN = 1, FUN = first) %>%
     as.numeric()
   
-  nhdv2_attr_refined$TOT_CWD_frmCAT <- 0
-  nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT <- 0
-  nhdv2_attr_refined$TOT_TMIN7100_frmCAT <- 0
-  nhdv2_attr_refined$TOT_STRM_DENS_frmCAT <- 0
+  TOT_frmCAT_cols <- c('TOT_CWD_frmCAT', 'TOT_TAV7100_ANN_frmCAT', 
+                       'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT')
+  nhdv2_attr_refined[TOT_frmCAT_cols] <- NA
   #loop over all segments
   for(i in 1:length(unique(nhdv2_attr_refined$hru_segment))){
     #current segment
@@ -388,10 +387,10 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
     #Compute TOT values
     #need special handling for PRMS segments with _2
     ind_replace <- which(nhdv2_attr_refined$hru_segment == subseg)
-    nhdv2_attr_refined$TOT_CWD_frmCAT[ind_replace] <- compute_tot(CWD_segs,areas_segs)
-    nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT[ind_replace] <- compute_tot(TAV_segs,areas_segs)
-    nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- compute_tot(TMN_segs,areas_segs)
-    nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- compute_tot(STR_DENS_segs,areas_segs)
+    nhdv2_attr_refined$TOT_CWD_frmCAT[ind_replace] <- weighted.mean(CWD_segs,areas_segs)
+    nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT[ind_replace] <- weighted.mean(TAV_segs,areas_segs)
+    nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- weighted.mean(TMN_segs,areas_segs)
+    nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- weighted.mean(STR_DENS_segs,areas_segs)
   }
   
   return(nhdv2_attr_refined)
@@ -441,16 +440,4 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
                                ) %>%
     pull(attr)
   return(nhdv2_attr_refined)
-}
-
-compute_tot <- function(cat_var, areas_segs){
-  #' 
-  #' @description Function to compute TOT from CAT variables
-  #'
-  #' @param cat_var vector of CAT variables for current and upstream segments
-  #' @param areas_segs area of each segment in the same order as cat_var
-  #'
-  #' @value Returns the area-weighted sum (TOT) variable
-  
-  sum(cat_var * areas_segs)/sum(areas_segs)
 }
