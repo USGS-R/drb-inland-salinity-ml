@@ -32,7 +32,7 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area, area_col, length_col = 'LEN
 #' @description This function takes the consolidated df from AOI_LC_w_area() and calculated the proportion share of each LC class at the PRMS segid scale
 #' @param NLCD_LC_df_w_area df output of AOI_LC_w_area that has LC data per COMID & PRMS id and area in (km2)
 #' @param area_col str col with catchment ('AREASQKM') or total upstream catchment area ('TOTDASQKM')
-#' @param length_col str name of col with length of catchment area ('LENGTHKM). Default 'LENGTHKM'
+#' @param length_col str name of col with length of catchment area ('LENGTHKM'). Default 'LENGTHKM'
 #' @param @param catchment_att Specifies the catchment attribute to subset to. Must be either 'CAT', "ACC", 'TOT'. Default = "CAT"
 #' @example proportion_lc_by_prms(NLCD_LC_df_w_area = p2_NLCD_LC_w_catchment_area, area_col = 'AREASQKM')
 
