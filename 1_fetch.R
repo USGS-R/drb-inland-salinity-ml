@@ -9,6 +9,7 @@ source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
 source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
+source("1_fetch/src/munge_reach_attr_tbl.R")
 
 p1_targets_list <- list(
   
@@ -150,10 +151,10 @@ p1_targets_list <- list(
     format="file"
   ),
   
-  # Read DRB reach attributes
+  # Read DRB reach attributes with all _1 segments for _2 reaches
   tar_target(
     p1_prms_reach_attr,
-    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+    munge_reach_attr_table(p1_prms_reach_attr_csvs)
   ),
   
   # Read DRB network adjacency matrix

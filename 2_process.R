@@ -205,10 +205,8 @@ p2_targets_list <- list(
       rowwise() %>%
       # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
       mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = ., col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
-      # unest to have new rows for each upstream catchment
-      unnest(all_from_segs, keep_empty = TRUE) %>%
-      # change col type to be able to compute
-      dplyr::mutate(all_from_segs = as.integer(all_from_segs))
+      # un-nest to have new rows for each upstream catchment
+      unnest(all_from_segs, keep_empty = TRUE)
   ),
   
   # Produce p2_FORESCE_LC_per_catchment_reclass_tot 
