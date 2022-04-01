@@ -116,7 +116,11 @@ p1_targets_list <- list(
   # Read in edited HRU polygons
   tar_target(
     p1_catchments_edited_sf,
-    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE)
+    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE) %>%
+      mutate(hru_area_km2 = hru_area_m2/10^6,
+             hru_segment_join = case_when(PRMS_segid == '2124_1' ~ '2124',
+                                          TRUE ~ hru_segment)) %>%
+      select(-hru_area_m2)
   ),
   
   # Download DRB network attributes
