@@ -51,16 +51,3 @@ munge_reach_attr_table <- function(prms_reach_attr_csvs){
   
   return(attr_tbl_w_splitsegs)
 }
-# 
-# # Find all segments upstream of a given PRMS segment
-# attr_tbl_out <- attr_tbl_w_splitsegs %>%
-#   select(subseg_id,subseg_seg,from_segs,to_seg) %>% 
-#   # Update `from_segs` col by splitting the individual segs in a list (can then loop through the list) 
-#   mutate(from_segs = stringr::str_split(string = from_segs, pattern = ';', simplify = F)) %>% 
-#   rowwise() %>%
-#   # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
-#   mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = ., col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
-#   # unest to have new rows for each upstream catchment
-#   unnest(all_from_segs, keep_empty = TRUE) %>%
-#   # change col type to be able to compute
-#   dplyr::mutate(all_from_segs = as.integer(all_from_segs))
