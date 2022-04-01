@@ -104,28 +104,6 @@ p1_targets_list <- list(
     get_nhdv2_flowlines(drb_huc8s)
   ),  
   
-  # Download PRMS catchments for region 02
-  ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
-  tar_target(
-    p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', sb_name = gf_data_select),
-    format = "file"
-  ),
-  
-  # Read PRMS catchment shapefile into sf object and filter to DRB
-  tar_target(
-    p1_catchments_sf,
-    sf::st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
-        filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
-        suppressWarnings() 
-  ),
-  
-  ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
-  tar_target(
-    p1_catchments_sf_valid, 
-    sf::st_buffer(p1_catchments_sf,0)
-  ),
-  
   # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
   tar_target(
     p1_catchments_edited_gpkg,
