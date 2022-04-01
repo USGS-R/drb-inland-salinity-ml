@@ -118,17 +118,15 @@ p1_targets_list <- list(
     p1_catchments_edited_sf,
     sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE) %>%
       mutate(PRMS_segid_split_col = PRMS_segid) %>%
-      separate(col = PRMS_segid_split_col, sep = '_', into =c('prms_hru_segment', "PRMS_segment_suffix")) %>%
+      separate(col = PRMS_segid_split_col, sep = '_', into =c('prms_subseg_seg', "PRMS_segment_suffix")) %>%
       mutate(hru_area_km2 = hru_area_m2/10^6,
-             hru_segment_join = case_when(PRMS_segid == '2124_1' ~ '2124',
-                                          TRUE ~ hru_segment),
-             prms_hru_segment = case_when(PRMS_segid == '3_1' ~ '3_1',
+             prms_subseg_seg = case_when(PRMS_segid == '3_1' ~ '3_1',
                                           PRMS_segid == '3_2' ~ '3_2',
                                           PRMS_segid == '8_1' ~ '8_1',
                                           PRMS_segid == '8_2' ~ '8_2',
                                           PRMS_segid == '51_1' ~ '51_1',
                                           PRMS_segid == '51_2' ~ '51_2',
-                                          TRUE ~ prms_hru_segment)) %>%
+                                          TRUE ~ prms_subseg_seg)) %>%
       select(-hru_area_m2, -PRMS_segment_suffix)
   ),
   
