@@ -1,24 +1,28 @@
 ---
-title: "Explore_Area_Diff_LandUse"
+title: "Explore Area Diff in Catchments used for LandUse Proportion Computtions"
 author: "Margaux"
 date: "3/31/2022"
 output: html_document
 ---
 
-```{r}
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## R Markdown
 
-```{r}
+```{r, message = FALSE, results='hide'}
+
 library(dplyr)
 library(tidyverse)
 library(nhdplusTools)
 library(mapview)
+library(sf)
 
 ```
 
-```{r}
+```{r,message = FALSE, results='hide'}
 
 # Comparing PRMS NLCD proportions dataset wih FORESCE
 targets::tar_make(p2_PRMS_NLCD_lc_proportions_reclass_cat)
@@ -26,9 +30,14 @@ targets::tar_make(p2_FORESCE_LC_per_catchment_reclass_cat)
 targets::tar_load(p2_PRMS_NLCD_lc_proportions_reclass_cat)
 targets::tar_load(p2_FORESCE_LC_per_catchment_reclass_cat)
 
+targets::tar_make(p1_catchments_edited_sf)
+targets::tar_load(p1_catchments_edited_sf)
+targets::tar_make(p1_reaches_sf)
+targets::tar_load(p1_reaches_sf)
+
 ```
 
-###----
+### Compare NLCD and FORESCE area in lu proportion table 
 
 ```{r}
 
@@ -38,7 +47,7 @@ targets::tar_load(p2_FORESCE_LC_per_catchment_reclass_cat)
 l1 <- p2_FORESCE_LC_per_catchment_reclass_cat[[7]] %>%
   #  select(PRMS_segid, Year, everything(), -hru_segment) %>% 
   mutate(total_PRMS_area_km2 = total_PRMS_area/10^6) %>%
-  select(PRMS_segid, total_PRMS_area_km2)
+  select(PRMS_segid, hru_segment, total_PRMS_area_km2)
 ## 2001
 l2 <- p2_PRMS_NLCD_lc_proportions_reclass_cat[[1]] %>%
   # select(PRMS_segid, Year, everything(), -AREASQKM_PRMS) %>% 
@@ -72,7 +81,7 @@ dim(df)
 scatterplot1 <- ggplot(df, aes(y = PRMS_area_km2_FOR, x = PRMS_area_km2_NLCD))+
   geom_point(aes(color = ab_diff_categorized))+theme_bw()+
   ylab('PRMS Cat Area - geopackage')+
-  xlab('PRMS Cat Area - nhd catchment aggregation')+
+  xlab('PRMS Cat Area - nhd-comid catchment aggregation')+
   labs(caption = 'Scatter plot of PRMS area in the NLCD dataset versus FORESCE.\n Point colored by their difference categories')+
   theme(plot.caption = element_text(hjust = 0.5))
 scatterplot1  
@@ -90,31 +99,14 @@ bar_plot_diff_bins
 
 ```
 
-###----
-
-```{r}
-# Check whether incorrect comids have comids of area 0
-targets::tar_make(p2_NLCD_LC_w_catchment_area)
-targets::tar_load(p2_NLCD_LC_w_catchment_area)
-
-## subset the source dataset for NLCD w/ area 
-PRMS_areasqkm_0 <- p2_NLCD_LC_w_catchment_area %>%
-  filter(AREASQKM == 0) %>% select(PRMS_segid, comid, AREASQKM)
-PRMS_areasqkm_0
-# 
-PRMS_areasqkm_0 %>% 
-       mutate(incorrect = case_when(PRMS_segid %in%
-                                      comids_over_50_km2$PRMS_segid ~ "TRUE",
-                                    TRUE ~ 'FALSE')) %>% 
-  filter(incorrect == TRUE)
-     
-```
-
-###----
+### Mapping errorenous PRMS segments
 ```{r}
 ## Extract rows that are problematic
 over_50_km2 <- df %>% filter(ab_diff_categorized == '>50 km2') %>% select(PRMS_segid)
 over_10_km2 <- df %>% filter(ab_diff_categorized == '>10 km2') %>% select(PRMS_segid)
+over_5_km2 <- df %>% filter(ab_diff_categorized == '>5 km2') %>% select(PRMS_segid)
+over_1_km2 <- df %>% filter(ab_diff_categorized == '>1 km2') %>% select(PRMS_segid)
+under_1_km2 <- df %>% filter(ab_diff_categorized == '< 1 km2') %>% select(PRMS_segid)
 
 ## Pulling target that maps all comids within each PRMS
 targets::tar_make(p2_drb_comids_all_tribs)
@@ -123,69 +115,238 @@ targets::tar_load(p2_drb_comids_all_tribs)
 ## subsetting to the comids that have differing areas
 comids_over_50_km2 <- p2_drb_comids_all_tribs %>%
   filter(PRMS_segid %in% over_50_km2$PRMS_segid)
+
+comids_over_10_km2 <- p2_drb_comids_all_tribs %>%
+  filter(PRMS_segid %in% over_10_km2$PRMS_segid)
+
+## subsetting to the comids that have differing areas
+comids_over_5_km2 <- p2_drb_comids_all_tribs %>%
+  filter(PRMS_segid %in% over_5_km2$PRMS_segid)
+
+comids_over_1_km2 <- p2_drb_comids_all_tribs %>%
+  filter(PRMS_segid %in% over_1_km2$PRMS_segid)
+
+comids_under_1_km2 <- p2_drb_comids_all_tribs %>%
+  filter(PRMS_segid %in% under_1_km2$PRMS_segid)
+
+
+head(comids_over_50_km2)
+
+```
+
+
+```{r, message = FALSE, results='hide'}
+# Check whether incorrect comids originally had comids of area 0
+targets::tar_make(p2_NLCD_LC_w_catchment_area)
+targets::tar_load(p2_NLCD_LC_w_catchment_area)
+
+```
+
+```{r}
+
+## Subset the source dataset for NLCD w/ area 
+PRMS_areasqkm_0 <- p2_NLCD_LC_w_catchment_area %>%
+  filter(AREASQKM == 0) %>% select(PRMS_segid, comid, AREASQKM)
+PRMS_areasqkm_0
+
+# Print list of PRMS that originally had areasqkm of 0 and that got an total_area val of lengthkm^2 
+PRMS_areasqkm_0 %>% 
+       mutate(incorrect = case_when(PRMS_segid %in%
+                                      comids_over_50_km2$PRMS_segid ~ "TRUE",
+                                    TRUE ~ 'FALSE')) %>% 
+  filter(incorrect == TRUE)
+     
+```
+
+```{r}
+
+map_difference<- function(df){
+  
+  catchment_gpkg <- p1_catchments_edited_sf %>% filter(PRMS_segid %in% unique(df$PRMS_segid))
+  reach <- p1_reaches_sf %>% filter(subsegid %in% unique(df$PRMS_segid))
+  
+  mapview(df, col.regions = 'red', alpha.regions = 0.7)+
+    mapview(catchment_gpkg, alpha.regions = 0.5)+
+    mapview(reach, color = 'black')
+
+}
+
+```
+
+## Catchments with over 50km2 diff
+```{r}
+
+## Grab comids with over 50 km2 difference using nhdplustools
+all_comids <- get_nhdplus(comid = comids_over_50_km2$comid, realization = 'catchment') %>% 
+  mutate(featureid = as.character(featureid))
+
+## join with our comids_over_50km2 to have prms col
+comids_over_50_km2 <- comids_over_50_km2 %>%
+  left_join(all_comids, by= c('comid' = 'featureid'),
+            keep = TRUE) %>% 
+  ## make sf object
+  sf::st_as_sf()
+
+# sample_n(comids_over_50_km2,5)
+
+map_difference(comids_over_50_km2)
+
+```
+
+## Catchments with over 10km2 diff
+```{r}
+
+## Grab comids with over 10 km2 difference using nhdplustools
+all_comids <- get_nhdplus(comid = comids_over_10_km2$comid, realization = 'catchment') %>% 
+  mutate(featureid = as.character(featureid))
+
+## join with our comids_over_50km2 to have prms col
+comids_over_10_km2 <- comids_over_10_km2 %>%
+  left_join(all_comids, by= c('comid' = 'featureid'),
+            keep = TRUE) %>% st_as_sf()
+
+sample_n(comids_over_10_km2, 10)
+
+map_difference(comids_over_10_km2)
+
+```
+### >5 km2 - 10 km2
+
+```{r}
+# 
+# ## Grab comids with over 5 km2 difference using nhdplustools
+# all_comids <- get_nhdplus(comid = comids_over_5_km2$comid, realization = 'catchment') %>% 
+#   mutate(featureid = as.character(featureid))
+# 
+# ## join with our comids_over_50km2 to have prms col
+# comids_over_5_km2 <- comids_over_5_km2 %>%
+#   left_join(all_comids, by= c('comid' = 'featureid'),
+#             keep = TRUE) %>% st_as_sf()
+# 
+# sample_n(comids_over_5_km2,10)
+# 
+# map_difference(comids_over_5_km2)
+
+```
+
+### > 1km2 - <5 km2
+```{r}
+# 
+# ## Grab comids with over 1 km2 difference using nhdplustools
+# all_comids <- get_nhdplus(comid = comids_over_1_km2$comid, realization = 'catchment') %>% 
+#   mutate(featureid = as.character(featureid))
+# 
+# ## join with our comids_over_1km2 to have prms col
+# comids_over_1_km2 <- comids_over_1_km2 %>%
+#   left_join(all_comids, by= c('comid' = 'featureid'),
+#             keep = TRUE) %>% st_as_sf()
+# 
+# sample_n(comids_over_1_km2,10)
+# 
+# map_difference(comids_over_1_km2)
+
+
+```
+
+### <1 km2 diff
+```{r}
+# 
+# ## Grab comids with over 1 km2 and less than km 2 - difference using nhdplustools
+# all_comids <- get_nhdplus(comid = comids_under_1_km2$comid[1:10], realization = 'catchment') %>% 
+#   mutate(featureid = as.character(featureid))
+# 
+# ## join with our comids_over_1km2 to have prms col
+# comids_under_1_km2 <- comids_under_1_km2 %>%
+#   left_join(all_comids, by= c('comid' = 'featureid'),
+#             keep = TRUE) %>% sf::st_as_sf()
+# 
+# 
+# map_difference(comids_under_1_km2)
+# 
+
+```
+
+
+### Examining specific catchments area with diff > 50 kms
+```{r}
+
+## Assess specific PRMS_segid - 12_1
+prms_seg <- '12_1'
+print(df[,1:3][df$PRMS_segid == prms_seg,])
+
+subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == prms_seg)
+catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
+reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
+                                  
+mapview(subsetted_comids_over_50km2,
+        col.regions = 'red', alpha.regions = 0.5) +
+  mapview(catchment)+ mapview(reach, color = 'black')
+
+```
+
+```{r}
+## 157_1
+prms_seg <- '157_1'
+print(df[,1:3][df$PRMS_segid == prms_seg,])
+
+subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == prms_seg)
+catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
+reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
+
+mapview(subsetted_comids_over_50km2,
+        col.regions = 'red', alpha.regions = 0.5) +
+  mapview(catchment)+ mapview(reach, color = 'black')
+
 comids_over_50_km2
 
 ```
 
 ```{r}
-## Grob comids 
-all_comids <- get_nhdplus(comid = comids_over_50_km2$comid, realization = 'catchment') %>% 
-  mutate(featureid = as.character(featureid))
-head(all_comids)
+## 216_1
+prms_seg <- '216_1'
+print(df[,1:3][df$PRMS_segid == prms_seg,])
 
-comids_over_50_km2 <- comids_over_50_km2 %>%
-  left_join(all_comids, by= c('comid' = 'featureid'),
-            keep = TRUE)
+subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == prms_seg)
+catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
+reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
+
+mapview(subsetted_comids_over_50km2,
+        col.regions = 'red', alpha.regions = 0.5) +
+  mapview(catchment)+ mapview(reach, color = 'black')
 
 ```
 
 ```{r}
-## Assess specific PRMS_segid - 12_1
-subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == '12_1')
+## 878_1
+prms_seg <- '878_1'
+print(df[,1:3][df$PRMS_segid == prms_seg,])
+
+subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == prms_seg)
 catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
 reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
-                                  
-mapview(subsetted_comids_over_50km2$geometry,
+
+mapview(subsetted_comids_over_50km2,
+        col.regions = 'red', alpha.regions = 0.5) +
+  mapview(catchment)+ mapview(reach, color = 'black')
+```
+
+```{r}
+
+## 386_1
+prms_seg <- '386_1'
+print(df[,1:3][df$PRMS_segid == prms_seg,])
+
+subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == prms_seg)
+catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
+reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
+
+mapview(subsetted_comids_over_50km2,
         col.regions = 'red', alpha.regions = 0.5) +
   mapview(catchment)+ mapview(reach, color = 'black')
 
 ```
 
-## 157_1
-subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == '157_1')
-catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
-reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
-
-mapview(subsetted_comids_over_50km2$geometry,
-        col.regions = 'red', alpha.regions = 0.5) +
-  mapview(catchment)+ mapview(reach, color = 'black')
-
-## 216_1
-subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == '216_1')
-catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
-reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
-
-mapview(subsetted_comids_over_50km2$geometry,
-        col.regions = 'red', alpha.regions = 0.5) +
-  mapview(catchment)+ mapview(reach, color = 'black')
-
-## 878_1
-subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == '878_1')
-catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
-reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
-
-mapview(subsetted_comids_over_50km2$geometry,
-        col.regions = 'red', alpha.regions = 0.5) +
-  mapview(catchment)+ mapview(reach, color = 'black')
-
-## 386_1
-subsetted_comids_over_50km2 <- comids_over_50_km2 %>% filter(PRMS_segid == '386_1')
-catchment <- p1_catchments_edited_sf %>% filter(PRMS_segid == unique(subsetted_comids_over_50km2$PRMS_segid))
-reach <- p1_reaches_sf %>% filter(subsegid == unique(subsetted_comids_over_50km2$PRMS_segid))
-
-mapview(subsetted_comids_over_50km2$geometry,
-        col.regions = 'red', alpha.regions = 0.5) +
-  mapview(catchment)+ mapview(reach, color = 'black')
+```{r}
 
 comids_386_1 <- p2_drb_comids_all_tribs %>% filter(PRMS_segid =='386_1')
 comids_387_1 <- p2_drb_comids_all_tribs %>% filter(PRMS_segid =='387_1')
@@ -196,19 +357,22 @@ PRMS_catchments_386_387 <- p1_catchments_edited_sf[p1_catchments_edited_sf$PRMS_
 mapview(get_nhdplus(comid = comids_386_1$comid, realization = 'catchment'))+
   mapview(get_nhdplus(comid = comids_387_1$comid, realization = 'catchment'), col.regions = 'red')+
   mapview(PRMS_catchments_386_387, col.regions = 'green')
-
-## Assess specific PRMS_segid
-PRMS_12_1 <- comids_over_50_km2 %>% filter(PRMS_segid == '12_1')
-
-mapview(PRMS_12_1$geometry, col.regions = 'red', alpha.regions = 0.5) +
-  mapview(p1_catchments_edited_sf %>% filter(PRMS_segid == unique(PRMS_12_1$PRMS_segid)))
-
-PRMS_areasqkm_0 <- unique(p2_NLCD_LC_w_catchment_area %>% filter(TOTDASQKM == 0) %>% select(PRMS_segid))
-
-View(PRMS_areasqkm_0 %>% mutate(incorrect = case_when(
-  PRMS_segid %in% comids_over_50_km2$PRMS_segid ~ "TRUE", TRUE ~ 'FALSE')))
+```
 
 
+### Explore the geopackage
+
+```{r}
+
+## catchment for prms >50 km2 diff overlay on all catchments 
+mapview(p1_catchments_edited_sf %>% filter(PRMS_segid %in% over_50_km2$PRMS_segid), color = 'blue', col.regions = 'transparent', lwd = 2)+
+  mapview(p1_catchments_edited_sf, col.regions = 'red', alpha.regions = 0.3)
+
+```
+
+### Checking area diff between the upstream targets - p1_catchments_edited_sf vs p2_NLCD_LC_w_catchment_area
+
+```{r}
 
 # Check areas of upstream targets used to generate the land use targets above. 
 
@@ -235,5 +399,31 @@ ggplot(df_2, aes(x = ab_diff_categorized))+
   geom_bar()+
   scale_y_continuous(n.breaks = 15)+theme_bw()+
   labs(caption ='\n Ab difference between area (km2) of catchment polygons in p1_catchments_edited_sf and xwalk area from land use prop dataset\n (2000) and NLCD land use dataset (2001) grouped into 4 categories')
+
+```
+
+
+the same 
+
+--TBD--
+
+### Looking at old shp file to see what PRMS segs previously had no catchments
+```{r}
+
+# Download PRMS catchments for region 02
+  ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
+source("1_fetch/src/get_gf.R")
+# Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
+gf_data_select <- 'GeospatialFabricFeatures_02.zip'
+p1_catchments_shp <- get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', sb_name = gf_data_select)
+  
+# Read PRMS catchment shapefile into sf object and filter to DRB
+p1_catchments_sf<- sf::st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>% 
+  filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
+  suppressWarnings()
+  
+## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
+p1_catchments_sf_valid <- sf::st_buffer(p1_catchments_sf,0)
+  
 
 ```
