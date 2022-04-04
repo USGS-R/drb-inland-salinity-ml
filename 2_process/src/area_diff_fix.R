@@ -6,9 +6,6 @@ library(mapview)
 
 catchment_area_check <- function(PRMS_shapefile, nhd_cachment_areas, area_difference_threshold){
   
-  
-}
-
 ## Get area difference
 
 ## Identify PRMS_segid with area difference:
@@ -37,36 +34,55 @@ area_diff <- nlcd_area %>% filter(area_abs_diff > area_difference_threshold)
 
 final_list <- unique(area_diff$PRMS_segid)
 
+
+}
+
+## target
+extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs){
+  
+  ## Get comid ids for the erroneous PRMS_segid
+  comids_PRMS_catchments_to_fix <- PRMS_comid_df %>% filter(PRMS_segid %in% final_list)
+  
+  ## this call can take a while 
+  shp_comids_PRMS_catchments_to_fix <- get_nhdplus(comid = comids_PRMS_catchments_to_fix$comid, realization = 'catchment') %>% 
+    mutate(featureid = as.character(featureid)) %>%
+    sf::st_make_valid()
+  
+  nhd_catchments <- comids_PRMS_catchments_to_fix %>%
+    left_join(shp_comids_PRMS_catchments_to_fix, by = c('comid' = 'featureid')) %>% st_as_sf()
+  
+  ## Creating dissolved shp for PRMS_segid for different area
+  nhd_catchments_dissolved <- nhd_catchments %>% 
+    # ## 287_1 has no comid. removing this otherwise cannot transform to appropriate sf object
+    filter(PRMS_segid != '287_1') %>% 
+    dplyr::group_by(PRMS_segid) %>% 
+    dplyr::summarise(across(geometry, ~ sf::st_union(.)), .groups = "keep") %>% ungroup()
+  
+  return(nhd_catchments_dissolved)
+
+  }
 ## -- 
+
+
+# target
 
 ## Remove PRMS from gpkg
 p1_catchments_edited_sf_filtered <- p1_catchments_edited_sf %>% filter(!PRMS_segid %in% final_list) ## this will be used to calculate proportions 
 ## length: 380
 
-## Get comid ids for the erroneous PRMS_segid
-comids_PRMS_catchments_to_fix <- p2_drb_comids_all_tribs %>% filter(PRMS_segid %in% final_list)
 
-## this call can take a while 
-shp_comids_PRMS_catchments_to_fix <- get_nhdplus(comid = comids_PRMS_catchments_to_fix$comid, realization = 'catchment') %>% 
-  mutate(featureid = as.character(featureid)) %>%
-  sf::st_make_valid()
+
+
 
 ## join with PRMS_segid
-nhd_catchments <- comids_PRMS_catchments_to_fix %>%
-  left_join(shp_comids_PRMS_catchments_to_fix, by = c('comid' = 'featureid')) %>% st_as_sf()
 
-## Creating dissolved shp for PRMS_segid for different area
-nhd_catchments_dissolved <- nhd_catchments %>% 
-  # ## 287_1 has no comid. removing this otherwise cannot transform to appropriate sf object
-  filter(PRMS_segid != '287_1') %>% 
-  dplyr::group_by(PRMS_segid) %>% 
-  dplyr::summarise(across(geometry, ~ sf::st_union(.)), .groups = "keep") %>% ungroup()
+
 ## --> this will be used to run through the raster_extraction function for land cover 
 
 
 ## Testing functions
-
 ## using P
+
 fixed_polygons <- raster_to_catchment_polygons(polygon_sf = nhd_catchments_dissolved,
                              raster = p1_FORESCE_backcasted_LC[1], categorical_raster = TRUE,
                              raster_summary_fun = NULL,
