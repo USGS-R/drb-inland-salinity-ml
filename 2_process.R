@@ -1,5 +1,5 @@
-source("2_process/src/filter_wqp_data.R")
 source("2_process/src/munge_inst_timeseries.R")
+source("2_process/src/filter_wqp_data.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/raster_to_catchment_polygons.R")
@@ -95,6 +95,8 @@ p2_targets_list <- list(
       rename(comid = comid_down)
   ),
   
+  #----
+  # NLCD Land Cover Proportions 
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(
@@ -159,29 +161,32 @@ p2_targets_list <- list(
                            reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
   ),
   
-  # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
-  ## NOTE: THIS WILL BE A SUBSET NOW
   
-  ## NHD fixed catchments
+  # Fix Area difference between catchments edited sf and nhd comid aggregation
+
+  ## Find list of 
   tar_target(
-    p2_FORSCE_PRMS_segid_special_handling_list,
+    p2_PRMS_segid_special_handling_list,
     catchment_area_check(PRMS_shapefile = p1_catchments_edited_sf,
                          nhd_catchment_areas = p2_NLCD_LC_w_catchment_area,
-                         area_difference_threshold = 5)
+                         area_difference_threshold_km2 = 5)
   ),
   
   ## new PRMS catchment shapefile from comids: 
   tar_target(
     p2_nhd_catchments_dissolved_sf,
-    extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = p2_FORSCE_PRMS_segid_special_handling_list,
+    extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
                                            PRMS_comid_df = p2_drb_comids_all_tribs)
     ),
     
     tar_target(
       p2_filtered_catchments_edited_sf,
-      p1_catchments_edited_sf %>% filter(!PRMS_segid %in% p2_FORSCE_PRMS_segid_special_handling_list)
+      p1_catchments_edited_sf %>% filter(!PRMS_segid %in% p2_PRMS_segid_special_handling_list)
     ),
-    
+
+  # ----
+  # FORESCE:Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+      
   ## This is a subset now. 
   tar_target(
     p2_FORESCE_LC_per_catchment, 
@@ -230,7 +235,6 @@ p2_targets_list <- list(
                  )
     }
   ),
-  
   
   tar_target(
     p2_FORESCE_LC_per_catchment_fixed_reclass_cat,

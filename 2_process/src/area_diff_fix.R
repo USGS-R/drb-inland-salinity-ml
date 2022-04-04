@@ -1,8 +1,4 @@
-catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_difference_threshold){
-  
-  ## Get area difference
-  ## Identify PRMS_segid with area difference:
-  area_difference_threshold <- 5
+catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_difference_threshold_km2){
   
   ## group by shapefile from hru to prms scale and convert from m2 to km2
   gpkg_df <- PRMS_shapefile  %>% st_drop_geometry() %>% group_by(PRMS_segid) %>% 
@@ -20,7 +16,7 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
   
   
   # Grab the PRMS_segids that have incorrect area
-  area_diff <- nlcd_area %>% filter(area_abs_diff > area_difference_threshold)
+  area_diff <- nlcd_area %>% filter(area_abs_diff > area_difference_threshold_km2)
   
   ## This final list of PRMS_segid that need new polygons for the raster calculation
   
@@ -31,7 +27,7 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
 }
 
 ## target
-extract_nhd_catchments_from_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs){
+extract_nhd_catchments_from_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs, measure_area = TRUE){
   
   ## Get comid ids for the erroneous PRMS_segid
   comids_PRMS_catchments_to_fix <- PRMS_comid_df %>% filter(PRMS_segid %in% selected_PRMS_list)
@@ -53,7 +49,9 @@ extract_nhd_catchments_from_PRMS_segid <- function(selected_PRMS_list, PRMS_comi
     # ## 287_1 has no comid. removing this otherwise cannot transform to appropriate sf object
     filter(PRMS_segid != '287_1') %>% 
     dplyr::group_by(PRMS_segid) %>% 
-    dplyr::summarise(across(geometry, ~ sf::st_union(.)), .groups = "keep") %>% ungroup()
+    ## sum the areasqkm. Some comid catchments are NA - those are remove in this aggregation 
+    dplyr::summarise(areasqkm = sum(areasqkm, na.rm = TRUE),
+      across(geometry, ~ sf::st_union(.)), .groups = "keep") %>% ungroup()
   
   return(nhd_catchments_dissolved)
 
@@ -67,8 +65,8 @@ extract_nhd_catchments_from_PRMS_segid <- function(selected_PRMS_list, PRMS_comi
 #                                     nhd_catchment_areas = p2_NLCD_LC_w_catchment_area,
 #                                     area_difference_threshold = 5)
 # 
-# dissolved_shp <- extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = final_list, 
-#                                                         PRMS_comid_df = p2_drb_comids_all_tribs)
+dissolved_shp <- extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = final_list,
+                                                        PRMS_comid_df = p2_drb_comids_all_tribs)
 # 
 # # target
 # 
