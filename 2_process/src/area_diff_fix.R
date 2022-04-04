@@ -1,9 +1,17 @@
 catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_difference_threshold_km2){
   
+  #' @description Function to check the area difference between nhd comid aggregation catchments and PRMS_catchments from inputed gpkg file
+  #' @param PRMS_shapefile catchment shapefile PRMS_catchments_edited_sf
+  #' @param nhd_catchment_areas dataset that includes PRMS_segid, comids and areasqkm cols (for our pipeline, use p2_NLCD_LC_w_catchment_area)
+  #' @param area_difference_threshold_km2 int. threshold km2 area difference. If beyond this value, PRMS_segid require nhd  (e.g. 5, 10, 50 )
+  #' @value A list of PRMS_segid that need special handling regarding their respective attributed catchment polygon(s) 
+  #' @example catchment_area_check(PRMS_shapefile = p1_catchments_edited_sf, nhd_catchment_areas = p2_NLCD_LC_w_catchment_area, area_difference_threshold_km2 = 5)
+  
   ## group by shapefile from hru to prms scale and convert from m2 to km2
   gpkg_df <- PRMS_shapefile  %>% st_drop_geometry() %>% group_by(PRMS_segid) %>% 
     summarise(prms_gpkg_area_km2 = sum(hru_area_m2)/10^6)
   
+  ##join gpkg catchments and nhd catchments, and calculate difference
   nlcd_area <- nhd_catchment_areas %>%
     select(PRMS_segid, comid, AREASQKM, TOTDASQKM, LENGTHKM) %>% 
     rename(., nhd_cat_area_sqkm = AREASQKM, nhd_tot_area_sqkm = TOTDASQKM, nhd_len_km = LENGTHKM) %>% 
@@ -14,31 +22,34 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
     left_join(gpkg_df, by = 'PRMS_segid') %>% 
     mutate(area_abs_diff = abs(prms_gpkg_area_km2 - nhd_cat_area_sqkm))
   
-  
   # Grab the PRMS_segids that have incorrect area
   area_diff <- nlcd_area %>% filter(area_abs_diff > area_difference_threshold_km2)
   
   ## This final list of PRMS_segid that need new polygons for the raster calculation
-  
   final_list <- unique(area_diff$PRMS_segid)
   
   return(final_list)
 
 }
 
-## target
-dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs, measure_area = TRUE){
+dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs){
   
-  ## Get comid ids for the erroneous PRMS_segid
+  #' @description Function dissolve nhd catchments polygons to PRMS-scale for PRMS_segid requiring corrected catchment. Follows catchment_area_check() function 
+  #' @param selected_PRMS_list vector of PRMS_segid (char) that need special handling and new PRMS catchment attribution. Output of catchment_area_check
+  #' @param PRMS_comid_df dataframe that maps comids of each PRMS_segid (for our pipeline, this is target p2_drb_comids_all_tribs)
+  #' @value a multipolygon shapefile  
+  #' @example dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = catchment_area_check_output, PRMS_comid_df = p2_drb_comids_all_tribs)
+ 
+  ## Get comid ids for the selected PRMS_segid needing new polygon attribution
   comids_PRMS_catchments_to_fix <- PRMS_comid_df %>% filter(PRMS_segid %in% selected_PRMS_list)
   comids_PRMS_catchments_to_fix
   
-  ## Get catchments from nhdplustools - this call can take a while 
+  ## Get comid catchments from nhdplustools - this call can takes a little while 
   shp_comids_PRMS_catchments_to_fix <- get_nhdplus(comid = comids_PRMS_catchments_to_fix$comid, realization = 'catchment') %>% 
     mutate(featureid = as.character(featureid)) %>%
     sf::st_make_valid() 
   
-  # join/filter to PRMS_segid from initial list
+  # join/filter comids polygons to PRMS_segid from initial list. Make into sf_object
   nhd_catchments <- comids_PRMS_catchments_to_fix %>% 
     left_join(shp_comids_PRMS_catchments_to_fix, by = c('comid' = 'featureid')) %>% 
     ## turn to sf obj to then be able to dissolve 
@@ -56,47 +67,3 @@ dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid
   return(nhd_catchments_dissolved)
 
 }
-
-# 
-# ## -- 
-# 
-# 
-# final_list <- catchment_area_check(PRMS_shapefile = p1_catchments_edited_sf,
-#                                     nhd_catchment_areas = p2_NLCD_LC_w_catchment_area,
-#                                     area_difference_threshold = 5)
-# # 
-# dissolved_shp <- dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = final_list,
-#                                                         PRMS_comid_df = p2_drb_comids_all_tribs)
-# # 
-# # target
-# 
-# ## Remove PRMS from gpkg
-# p1_catchments_edited_sf_filtered <- p1_catchments_edited_sf %>% filter(!PRMS_segid %in% final_list) ## this will be used to calculate proportions 
-# ## length: 380
-# 
-# ## join with PRMS_segid
-# 
-# ## --> this will be used to run through the raster_extraction function for land cover 
-# 
-# ## Testing functions
-# ## using P
-# 
-# fixed_polygons <- raster_to_catchment_polygons(polygon_sf = dissolved_shp,
-#                              raster = p1_FORESCE_backcasted_LC[1], categorical_raster = TRUE,
-#                              raster_summary_fun = NULL,
-#                              new_cols_prefix = 'lcClass',
-#                              fill = 0)
-# 
-# gpk_shp <- raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf_filtered,
-#                                         raster = p1_FORESCE_backcasted_LC[1], categorical_raster = TRUE,
-#                                         raster_summary_fun = NULL,
-#                                         new_cols_prefix = 'lcClass',
-#                                         fill = 0)
-# 
-# 
-# reclassify_land_cover(land_cover_df = fixed_polygons,
-#                       reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
-#                       reclassify_table_lc_col = 'FORESCE_value',
-#                       reclassify_table_reclass_col = 'Reclassify_match',
-#                       sep = ',',
-#                       pivot_longer_contains = 'lcClass')
