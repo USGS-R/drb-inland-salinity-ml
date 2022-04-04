@@ -213,37 +213,37 @@ map_difference(comids_over_10_km2)
 ### >5 km2 - 10 km2
 
 ```{r}
-# 
-# ## Grab comids with over 5 km2 difference using nhdplustools
-# all_comids <- get_nhdplus(comid = comids_over_5_km2$comid, realization = 'catchment') %>% 
-#   mutate(featureid = as.character(featureid))
-# 
-# ## join with our comids_over_50km2 to have prms col
-# comids_over_5_km2 <- comids_over_5_km2 %>%
-#   left_join(all_comids, by= c('comid' = 'featureid'),
-#             keep = TRUE) %>% st_as_sf()
-# 
-# sample_n(comids_over_5_km2,10)
-# 
-# map_difference(comids_over_5_km2)
+
+## Grab comids with over 5 km2 difference using nhdplustools
+all_comids <- get_nhdplus(comid = comids_over_5_km2$comid, realization = 'catchment') %>%
+  mutate(featureid = as.character(featureid))
+
+## join with our comids_over_50km2 to have prms col
+comids_over_5_km2 <- comids_over_5_km2 %>%
+  left_join(all_comids, by= c('comid' = 'featureid'),
+            keep = TRUE) 
+
+sample_n(comids_over_5_km2,10)
+
+map_difference(comids_over_5_km2)
 
 ```
 
 ### > 1km2 - <5 km2
 ```{r}
-# 
-# ## Grab comids with over 1 km2 difference using nhdplustools
-# all_comids <- get_nhdplus(comid = comids_over_1_km2$comid, realization = 'catchment') %>% 
-#   mutate(featureid = as.character(featureid))
-# 
-# ## join with our comids_over_1km2 to have prms col
-# comids_over_1_km2 <- comids_over_1_km2 %>%
-#   left_join(all_comids, by= c('comid' = 'featureid'),
-#             keep = TRUE) %>% st_as_sf()
-# 
-# sample_n(comids_over_1_km2,10)
-# 
-# map_difference(comids_over_1_km2)
+
+## Grab comids with over 1 km2 difference using nhdplustools
+all_comids <- get_nhdplus(comid = comids_over_1_km2$comid, realization = 'catchment') %>%
+  mutate(featureid = as.character(featureid))
+
+## join with our comids_over_1km2 to have prms col
+comids_over_1_km2 <- comids_over_1_km2 %>%
+  left_join(all_comids, by= c('comid' = 'featureid'),
+            keep = TRUE) %>% st_as_sf()
+
+sample_n(comids_over_1_km2,10)
+
+map_difference(comids_over_1_km2)
 
 
 ```

@@ -160,6 +160,7 @@ p2_targets_list <- list(
   ),
   
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+  ## NOTE: THIS WILL BE A SUBSET NOW
   tar_target(
     p2_FORESCE_LC_per_catchment, 
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf,
@@ -193,6 +194,8 @@ p2_targets_list <- list(
                  )
     }
   ),
+  
+  ## NHD fixed catchments
   
   ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target via recursively calculating proportions of LC class across all upstream segments for a given segment
   tar_target(
