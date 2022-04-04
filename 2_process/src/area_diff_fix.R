@@ -27,7 +27,7 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
 }
 
 ## target
-extract_nhd_catchments_from_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs, measure_area = TRUE){
+dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs, measure_area = TRUE){
   
   ## Get comid ids for the erroneous PRMS_segid
   comids_PRMS_catchments_to_fix <- PRMS_comid_df %>% filter(PRMS_segid %in% selected_PRMS_list)
@@ -64,10 +64,10 @@ extract_nhd_catchments_from_PRMS_segid <- function(selected_PRMS_list, PRMS_comi
 # final_list <- catchment_area_check(PRMS_shapefile = p1_catchments_edited_sf,
 #                                     nhd_catchment_areas = p2_NLCD_LC_w_catchment_area,
 #                                     area_difference_threshold = 5)
-# 
-dissolved_shp <- extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = final_list,
-                                                        PRMS_comid_df = p2_drb_comids_all_tribs)
-# 
+# # 
+# dissolved_shp <- dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = final_list,
+#                                                         PRMS_comid_df = p2_drb_comids_all_tribs)
+# # 
 # # target
 # 
 # ## Remove PRMS from gpkg

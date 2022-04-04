@@ -175,7 +175,7 @@ p2_targets_list <- list(
   ## new PRMS catchment shapefile from comids: 
   tar_target(
     p2_nhd_catchments_dissolved_sf,
-    extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
+    dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
                                            PRMS_comid_df = p2_drb_comids_all_tribs)
     ),
     
@@ -229,7 +229,7 @@ p2_targets_list <- list(
                      aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,hru_segment),
                                                 proportion_col_prefix = 'prop_lcClass',
                                                 hru_area_colname = hru_area_m2,
-                                                new_area_colname = total_PRMS_area) %>%
+                                                new_area_colname = total_PRMS_area_km2) %>%
                      ## Adding Year column
                      mutate(Year = .y)}
                  )
@@ -245,8 +245,14 @@ p2_targets_list <- list(
                                               reclassify_table_reclass_col = 'Reclassify_match',
                                               sep = ',',
                                               pivot_longer_contains = 'lcClass') %>%
+                     rename(total_PRMS_area_km2 = areasqkm) %>% 
+                     ## adding hru_segment col
+                     left_join(p2_PRMS_hru_segment, by = 'PRMS_segid') %>% 
+                     
+                     ## rearranging cols
+                     select(PRMS_segid, hru_segment, everything(), -ID) %>% 
                      ## Adding Year column
-                     mutate(Year = .y)}
+                     mutate(Year = .y, hru_segment = as.character(hru_segment))}
     )
     }
   ),
@@ -254,7 +260,10 @@ p2_targets_list <- list(
   ## merge correct and fixed p2_FORESCE_LC_per_catchments_reclass_cat
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_cat,
-    p2_FORESCE_LC_per_catchment_fixed_reclass_cat
+    {map2(.x = p2_FORESCE_LC_per_catchment_reclass_correct_cat,
+          .y = p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
+          .f = rbind(.x, .y))}
+    p2_FORESCE_LC_per_catchment_reclass_correct_cat
   ),
   
   ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target via recursively calculating proportions of LC class across all upstream segments for a given segment
