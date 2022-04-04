@@ -15,11 +15,11 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname, proportion_
     group_by_at(group_by_segment_colname) %>%
     summarise(
       # calc total area of aggregated catchments
-      total_area = sum({{hru_area_colname}}),
+      total_area_km2 = sum({{hru_area_colname}}/10^6),
       # calc new proportion with new catchment area
-      across(starts_with(proportion_col_prefix), ~(sum(.x)/total_area))) %>% 
+      across(starts_with(proportion_col_prefix), ~(sum(.x)/total_area_km2))) %>% 
     #rename col to name as input
-    rename({{new_area_colname}} := total_area)
+    rename({{new_area_colname}} := total_area_km2)
   
   return(df)
 }
