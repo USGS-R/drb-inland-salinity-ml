@@ -9,7 +9,7 @@ source('2_process/src/reclassify_land_cover.R')
 source('2_process/src/FORESCE_agg_lc_props.R')
 source("2_process/src/process_nhdv2_attr.R")
 source("2_process/src/recursive_fun.R")
-
+source('2_process/src/area_diff_fix.R')
 
 p2_targets_list <- list(
   
@@ -161,21 +161,57 @@ p2_targets_list <- list(
   
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
   ## NOTE: THIS WILL BE A SUBSET NOW
+  
+  ## NHD fixed catchments
+  tar_target(
+    p2_FORSCE_PRMS_segid_special_handling_list,
+    catchment_area_check(PRMS_shapefile = p1_catchments_edited_sf,
+                         nhd_catchment_areas = p2_NLCD_LC_w_catchment_area,
+                         area_difference_threshold = 5)
+  ),
+  
+  ## new PRMS catchment shapefile from comids: 
+  tar_target(
+    p2_nhd_catchments_dissolved_sf,
+    extract_nhd_catchments_from_PRMS_segid(selected_PRMS_list = p2_FORSCE_PRMS_segid_special_handling_list,
+                                           PRMS_comid_df = p2_drb_comids_all_tribs)
+    ),
+    
+    tar_target(
+      p2_filtered_catchments_edited_sf,
+      p1_catchments_edited_sf %>% filter(!PRMS_segid %in% p2_FORSCE_PRMS_segid_special_handling_list)
+    ),
+    
+  ## This is a subset now. 
   tar_target(
     p2_FORESCE_LC_per_catchment, 
-    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf,
-                                                  raster = x, categorical_raster = TRUE,
-                                                  raster_summary_fun = NULL,
-                                                  new_cols_prefix = 'lcClass',
-                                                  fill = 0))
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(
+      polygon_sf = p2_filtered_catchments_edited_sf,
+      raster = x, categorical_raster = TRUE,
+      raster_summary_fun = NULL,
+      new_cols_prefix = 'lcClass',
+      fill = 0))
     }
   ),
+  
+  tar_target(
+    p2_FORESCE_LC_per_catchment_fixed,
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(
+      polygon_sf = p2_nhd_catchments_dissolved_sf,
+      raster = x, categorical_raster = TRUE,
+      raster_summary_fun = NULL,
+      new_cols_prefix = 'lcClass',
+      fill = 0))
+    }
+  ), 
+  
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
   # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
+
   tar_target(
-    p2_FORESCE_LC_per_catchment_reclass_cat,
+    p2_FORESCE_LC_per_catchment_reclass_correct_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
                  .y = FORESCE_years, 
                  .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
@@ -195,7 +231,27 @@ p2_targets_list <- list(
     }
   ),
   
-  ## NHD fixed catchments
+  
+  tar_target(
+    p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
+    {purrr::map2(.x = p2_FORESCE_LC_per_catchment_fixed,
+                 .y = FORESCE_years, 
+                 .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                                              reclassify_table_lc_col = 'FORESCE_value',
+                                              reclassify_table_reclass_col = 'Reclassify_match',
+                                              sep = ',',
+                                              pivot_longer_contains = 'lcClass') %>%
+                     ## Adding Year column
+                     mutate(Year = .y)}
+    )
+    }
+  ),
+  
+  ## merge correct and fixed p2_FORESCE_LC_per_catchments_reclass_cat
+  tar_target(
+    p2_FORESCE_LC_per_catchment_reclass_cat,
+    p2_FORESCE_LC_per_catchment_fixed_reclass_cat
+  ),
   
   ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target via recursively calculating proportions of LC class across all upstream segments for a given segment
   tar_target(
