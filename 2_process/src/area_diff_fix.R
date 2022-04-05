@@ -56,14 +56,14 @@ dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid
     ## turn to sf obj to then be able to dissolve 
     sf::st_as_sf() %>%
     #assign area to reach 287_1 using reach length
-    mutate(areasqkm = case_when(PRMS_segid == '287_1' ~ (filter(p1_reaches_sf, 
+    mutate(areasqkm = case_when(PRMS_segid == '287_1' ~ (filter(prms_reaches_sf, 
                                                                 subsegid == '287_1') %>% 
                                                            pull(subseglen))^2/10^6,
                                 TRUE ~ areasqkm))
   
   #assign geometry to reach 287_1 using a small buffer of 15 m to closely match approx. area
   nhd_catchments$geometry[nhd_catchments$PRMS_segid == '287_1'] <- 
-    st_geometry(st_buffer(filter(p1_reaches_sf, subsegid == '287_1'), dist = 15))
+    st_geometry(st_buffer(filter(prms_reaches_sf, subsegid == '287_1'), dist = 15))
   
   ## Creating dissolved shp for PRMS_segid for different area
   nhd_catchments_dissolved <- nhd_catchments %>%
