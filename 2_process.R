@@ -176,7 +176,8 @@ p2_targets_list <- list(
   tar_target(
     p2_nhd_catchments_dissolved_sf,
     dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
-                                           PRMS_comid_df = p2_drb_comids_all_tribs)
+                                          PRMS_comid_df = p2_drb_comids_all_tribs,
+                                          prms_reaches_sf = p1_reaches_sf)
     ),
   
   ## Filtered PRMS catchments gpkg for the PRMS segid not require dnew nhd-based catchment   
