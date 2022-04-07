@@ -17,7 +17,7 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname, proportion_
       # calc total area of aggregated catchments
       total_area = sum({{hru_area_colname}}),
       # calc new proportion with new catchment area
-      across(starts_with(proportion_col_prefix), ~(sum(.x)/total_area))) %>% 
+      across(starts_with(proportion_col_prefix), ~(sum(.x)/total_area)), .groups = 'drop_last') %>% 
     #rename col to name as input
     rename({{new_area_colname}} := total_area)
   
