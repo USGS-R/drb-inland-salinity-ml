@@ -42,8 +42,8 @@ dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid
   #' @example dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = catchment_area_check_output, PRMS_comid_df = p2_drb_comids_all_tribs)
  
   ## Get comid ids for the selected PRMS_segid needing new polygon attribution
-  comids_PRMS_catchments_to_fix <- PRMS_comid_df %>% filter(PRMS_segid %in% selected_PRMS_list)
-  comids_PRMS_catchments_to_fix
+  comids_PRMS_catchments_to_fix <- PRMS_comid_df %>% 
+      filter(PRMS_segid %in% selected_PRMS_list)
   
   ## Get comid catchments from nhdplustools - this call can takes a little while 
   shp_comids_PRMS_catchments_to_fix <- get_nhdplus(comid = comids_PRMS_catchments_to_fix$comid, realization = 'catchment') %>% 
