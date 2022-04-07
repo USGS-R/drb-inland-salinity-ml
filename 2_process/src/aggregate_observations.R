@@ -92,10 +92,10 @@ aggregate_observations <- function(wqp_data, nwis_data, sites_w_segs,
     left_join(.,sites_w_segs,
               by=c("site_no" = "site_id")) 
   
-  # Aggregate observations 
+  # Group observations based on aggregation method 
   if(aggr_method == "reach"){
     
-    obs_data_aggr <- obs_data_w_segs %>%
+    grouped_obs <- obs_data_w_segs %>%
       group_by(subsegid, Date) %>%
       # If prefer_nwis_sites = TRUE, check whether data for that segment comes from
       # multiple sources (i.e., WQP and NWIS). If multiple sources, filter out any
@@ -103,42 +103,32 @@ aggregate_observations <- function(wqp_data, nwis_data, sites_w_segs,
       {if(prefer_nwis_sites == "TRUE"){
         filter(.,if(n_distinct(dat_src) > 1) dat_src == "NWIS" else TRUE)
       } else {.}
-      } %>%
-      summarize(mean_value = round(mean(Value, na.rm = TRUE), 1),
-                min_value = min(c(mean_value,Value_Min), na.rm = TRUE),
-                max_value = max(c(mean_value,Value_Max), na.rm = TRUE),
-                sd_value = round(sd(Value, na.rm = TRUE), 2),
-                n_value = length(!is.na(Value)),
-                site_ids = paste0(unique(site_no), collapse = ","),
-                .groups = "keep") %>%
-      # suppress any warnings related to taking min/max summaries
-      # when no non-NA data exist for a reach-date; in these cases, 
-      # Inf will be returned for min_value, max_value
-      suppressWarnings() %>%
-      mutate(cv_value = (sd_value/mean_value)) %>%
-      ungroup()
+      }
     
   } else {
     
     # For aggr_method = "site", group by lat/lon since in the WQP database, there
     # may exist different site names that share the same geographic coordinates
-    obs_data_aggr <- obs_data_w_segs %>%
-      group_by(lat,lon,Date) %>%
-      summarize(mean_value = round(mean(Value, na.rm = TRUE), 1),
-                min_value = min(c(mean_value,Value_Min), na.rm = TRUE),
-                max_value = max(c(mean_value,Value_Max), na.rm = TRUE),
-                sd_value = round(sd(Value, na.rm = TRUE), 2),
-                n_value = length(!is.na(Value)),
-                site_ids = paste0(unique(site_no), collapse = ","),
-                .groups = "keep") %>%
-      # suppress any warnings related to taking min/max summaries
-      # when no non-NA data exist for a reach-date; in these cases, 
-      # Inf will be returned for min_value, max_value
-      suppressWarnings() %>%
-      mutate(cv_value = (sd_value/mean_value)) %>%
-      ungroup()
+    grouped_obs <- obs_data_w_segs %>%
+      group_by(lat,lon,Date)
     
   }
+  
+  # Aggregate observations based on groups defined above
+  obs_data_aggr <- grouped_obs %>%
+    summarize(mean_value = round(mean(Value, na.rm = TRUE), 1),
+              min_value = min(c(mean_value,Value_Min), na.rm = TRUE),
+              max_value = max(c(mean_value,Value_Max), na.rm = TRUE),
+              sd_value = round(sd(Value, na.rm = TRUE), 2),
+              n_value = length(!is.na(Value)),
+              site_ids = paste0(unique(site_no), collapse = ","),
+              .groups = "keep") %>%
+    # suppress any warnings related to taking min/max summaries
+    # when no non-NA data exist for a reach-date; in these cases, 
+    # Inf will be returned for min_value, max_value
+    suppressWarnings() %>%
+    mutate(cv_value = (sd_value/mean_value)) %>%
+    ungroup()
   
   # Format aggregated data and replace any values of Inf with NA
   vars_to_keep <- c("subsegid","lat","lon","Date","mean_value","min_value",
