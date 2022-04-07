@@ -7,6 +7,9 @@ _targets
 #Other local files
 archive/*
 1_fetch/in/NLCDs_2001_2019/*
+rstudio*
+.config
+.local*
 
 #R files
 # History files

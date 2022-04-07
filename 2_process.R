@@ -9,7 +9,9 @@ source('2_process/src/reclassify_land_cover.R')
 source('2_process/src/FORESCE_agg_lc_props.R')
 source("2_process/src/process_nhdv2_attr.R")
 source("2_process/src/recursive_fun.R")
+source("2_process/src/aggregate_observations.R")
 source('2_process/src/area_diff_fix.R')
+
 
 p2_targets_list <- list(
   
@@ -343,6 +345,13 @@ p2_targets_list <- list(
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
                               hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
     format = "file"
+  ),
+  
+  # Return SC observations aggregated to the PRMS segment
+  tar_target(
+    p2_SC_observations,
+    aggregate_observations(p2_wqp_SC_filtered, p2_daily_combined, p2_sites_w_segs, 
+                           aggr_method = "reach", prefer_nwis_sites = FALSE)
   ),
   
   # Return natural baseflow estimates for each PRMS segment
