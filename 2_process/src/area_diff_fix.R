@@ -13,11 +13,10 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
   
   ##join gpkg catchments and nhd catchments, and calculate difference
   nlcd_area <- nhd_catchment_areas %>%
-    select(PRMS_segid, comid, AREASQKM, TOTDASQKM, LENGTHKM) %>% 
-    rename(., nhd_cat_area_sqkm = AREASQKM, nhd_tot_area_sqkm = TOTDASQKM, nhd_len_km = LENGTHKM) %>% 
+    select(PRMS_segid, comid, AREASQKM, LENGTHKM) %>% 
+    rename(., nhd_cat_area_sqkm = AREASQKM, nhd_len_km = LENGTHKM) %>% 
     group_by(PRMS_segid) %>% 
     summarize(nhd_cat_area_sqkm = sum(nhd_cat_area_sqkm),
-              nhd_tot_area_sqkm = sum(nhd_tot_area_sqkm),
               nhd_len_km = sum(nhd_len_km)) %>% 
     left_join(gpkg_df, by = 'PRMS_segid') %>% 
     mutate(area_abs_diff = abs(prms_gpkg_area_km2 - nhd_cat_area_sqkm))
