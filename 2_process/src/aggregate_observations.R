@@ -70,7 +70,10 @@ aggregate_observations <- function(wqp_data, nwis_data, sites_w_segs,
   #' options include "reach" and "site" (defaults to "reach"). If "reach", then values 
   #' returned represent 1 value/segment/day, if "site", then values will be returned for
   #' each lat/lon location (maintaining multiple sites along a segment) amounting to 
-  #' 1 value/site/day
+  #' 1 value/site/day. Aggregating by "site" can be useful if a user wishes to keep 
+  #' unaggregated, raw data matched to segments. With the "site" option, sites are aggregated 
+  #' by geographic location because occasionally there are multiple site names that have 
+  #' the same lat/lon location.
   #' @param prefer_nwis_sites logical, only applies when aggr_method = "reach"; indicates
   #' whether segment summaries should defer to NWIS observations when available. Defaults 
   #' to FALSE. If TRUE, any observations coming from a non-NWIS site will be omitted.
