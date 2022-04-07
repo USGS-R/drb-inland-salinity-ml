@@ -34,7 +34,7 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
 
 dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid_df = p2_drb_comids_all_tribs, prms_reaches_sf){
   
-  #' @description Function dissolve nhd catchments polygons to PRMS-scale for PRMS_segid requiring corrected catchment. Follows catchment_area_check() function 
+  #' @description Function to dissolve nhd catchments polygons to PRMS-scale for PRMS_segids requiring correction. Follows catchment_area_check() function 
   #' @param selected_PRMS_list vector of PRMS_segid (char) that need special handling and new PRMS catchment attribution. Output of catchment_area_check
   #' @param PRMS_comid_df dataframe that maps comids of each PRMS_segid (for our pipeline, this is target p2_drb_comids_all_tribs)
   #' @param prms_reaches_sf PRMS reaches in p1_reaches_sf with columns subsegid and subseglen
