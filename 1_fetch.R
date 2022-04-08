@@ -218,6 +218,26 @@ p1_targets_list <- list(
     format = 'file'
   ),
   
+  #Targets for the land cover reclassification .csv files
+  tar_target(
+    p1_NLCD_reclass_table_csv, 
+    '1_fetch/in/Legend_NLCD_Land_Cover.csv',
+    format = 'file'
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table_csv, 
+    '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+    format = 'file'
+  ),
+  tar_target(
+    p1_NLCD_reclass_table, 
+    read_csv(p1_NLCD_reclass_table_csv, show_col_types = FALSE)
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table, 
+    read_csv(p1_FORESCE_reclass_table_csv, show_col_types = FALSE)
+  ),
+  
   # Downlaod Road Salt accumulation data for the drb
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted

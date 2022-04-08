@@ -1,20 +1,19 @@
 reclassify_land_cover <- function(land_cover_df,
-                                  reclassify_table_csv_path, sep = ',',
+                                  reclassify_table,
                                   reclassify_table_lc_col,
                                   reclassify_table_reclass_col,
                                   pivot_longer_contains){
   
   #' @description Reclassify land cover df with cols as individual lc classes to pre-defined land cover class
   #' @param land_cover_df dataframe with lc classes as cols 
-  #' @param reclassify_table_csv_path path the reclassifilication table that is read in the function
-  #' @param reclassify_table_lc_col col that contains original classes of the land_cover_dfdataframe
-  #' @param reclassify_table_reclass_col col in reclassify csv that cobtains the new land cover classes 
-  #' @param sep separator in reclassify_table
+  #' @param reclassify_table the reclassification table that is used in the function
+  #' @param reclassify_table_lc_col col that contains original classes of the land_cover_df dataframe
+  #' @param reclassify_table_reclass_col col in reclassify csv that contains the new land cover classes 
   #' @param pivot_longer_contains common colname str found in land_cover_df land cover cols (e.g. 'lcClass' or 'NLCDClass')
   #' @value output is a updated version of the land_cover_df with new cols representing the new classes 
   
   # Load reclassification csv only taking class values, not description cols
-  reclassify_table <- read.csv(reclassify_table_csv_path, sep = sep) %>% 
+  reclassify_table <- reclassify_table %>% 
     select({{reclassify_table_lc_col}}, {{reclassify_table_reclass_col}})
 
   ## Pivoted + join 
@@ -43,12 +42,13 @@ reclassify_land_cover <- function(land_cover_df,
 
 reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                                    years_suffix,
-                                   reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv'){
+                                   reclassify_table,
+                                   remove_NA_cols = TRUE){
 
   #' @description placing the process of reclassifying the NLCD (2000 +) land cover df into this tailored function. Works with NLCD catchment attribute ACC, CAT, and TOT)
   #' @param NLCD_lc_proportions_df list of NLCD dataframes with lc classes as cols - output of proportion_lc_by_prms()
   #' @param years_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix
-  #' @param reclassify_table_csv_path path to reclassification lookup table for NLCD. Default path from pipeline
+  #' @param reclassify_table reclassification lookup table for NLCD
   #' @value output is a list of land cover dfs split by year and updated with new cols representing the new classes
   
    df <- purrr::map(
@@ -59,13 +59,12 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
     purrr::map2(.x = .,
               .y = years_suffix,
               .f = ~{reclassify_land_cover(land_cover_df = .x,
-                                           reclassify_table_csv_path = reclassify_table_csv_path,
+                                           reclassify_table = reclassify_table,
                                            reclassify_table_lc_col = 'NLCD_value',
                                            reclassify_table_reclass_col = 'Reclassify_match',
-                                           sep = ',',
                                            pivot_longer_contains = glue('NLCD',.y)) %>% 
                   # some lc classes in NLCD were given NA ultimately - example: Alaska only shrub - we remove from table
-                  select(-contains('NA')) %>%
+                  {if(remove_NA_cols == TRUE) select(., -contains('NA')) else . } %>% 
                   # adding year column
                   mutate(Year = paste0('20',.y)) %>% 
                   # Renaming col names - removing the col to be consistent across dataframes
@@ -76,4 +75,36 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
   return(df)
   
 }
+
+## -- Specific aggregation steps for the already reclassified FORESCE dataset 
+## Function that was previously in FORESCE_agg_lc_props.R
+
+aggregate_proportions_hrus <- function(df, group_by_segment_colname, proportion_col_prefix, hru_area_colname, new_area_colname, remove_NA_cols = TRUE){
+  
+  #'@description aggregation function to get land cover class proportions for PRMS_catchment_area 
+  #'@param df data frame to aggregate
+  #'@param group_by_segment_colname colname for segments that will be used for the group by
+  #'@param proportion_col_prefix prefix col for lc class proportion value columns
+  #'@param hru_area_colname colname for hru area
+  #'@param new_area_colname str. New colname for aggregated area
+  #'@example aggregate_proportions_hrus(group_by_segment_colname = hru_segment, proportion_col_prefix = 'prop_lcClass', hru_area_colname = hru_area, new_area_colname = total_PRMS_area)
+  
+  df <- df %>% 
+    # some lc classes in NLCD were given NA class
+    {if(remove_NA_cols == TRUE) select(., -contains('NA')) else . } %>%
+    # Create temp cols of area of lc class per hru - NOTE: simply mutate current cols and no longer have proportion values
+    mutate(across(starts_with(proportion_col_prefix),  ~(.x * {{hru_area_colname}})))%>% 
+    # group by hru segments - droping from 761 row to 416 - to get a single "PRMS" catchment per PRMS segment
+    group_by_at(group_by_segment_colname) %>%
+    summarise(
+      # calc total area of aggregated catchments
+      total_area = sum({{hru_area_colname}}),
+      # calc new proportion with new catchment area
+      across(starts_with(proportion_col_prefix), ~(sum(.x)/total_area)), .groups = 'drop_last') %>% 
+    #rename col to name as input
+    rename({{new_area_colname}} := total_area)
+  
+  return(df)
+}
+
 
