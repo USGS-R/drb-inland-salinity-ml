@@ -9,7 +9,7 @@ rbind.fill.list <- function(x, fill = NULL) {
   colnames <- sapply(x, names)
   # get all unique colnames as a unique list 
   unique_colnames <- unique(unlist(colnames))
-  # Extract length of all table lsit elements in input list x and apply to empty list with correct length
+  # Extract length of all table list elements in input list x and apply to empty list with correct length
   len <- sapply(x, length)
   output_list <- vector("list", length(len))
   # Create output list of lists where all  values are position in correct col
@@ -51,7 +51,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   if(any(!st_is_valid(vector_sf))){
     vector_sf <- st_make_valid(vector_sf)
     message('shp geometries fixed')
-    } 
+  } 
   
   ## match crs
   if(!st_crs(raster) == st_crs(vector_sf)){
@@ -69,16 +69,16 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   ## crop raster to catchment_sf 
   raster_crop <- terra::crop(raster, vector)
   
-  ## Extract and summarize descrete raster values in polygons shapefile 
+  ## Extract and summarize discrete raster values in polygons shapefile 
   if(categorical_raster == TRUE){
   message('extracting from categorical raster')
   ## Extract rasters pixels in each polygon
-  start_time <- Sys.time()
+  #start_time <- Sys.time()
   raster_per_polygon <- terra::extract(raster_crop, vector, list = TRUE) %>% 
     #lapply(table) # to get frequency of each categorical value
     lapply(FUN = function(x) {table(x)/sum(table(x))})
-  end_time <- Sys.time()
-  message('raster extract processing time:', end_time - start_time)
+  #end_time <- Sys.time()
+  #message('raster extract processing time:', end_time - start_time)
   
   ## handling unequal length of classes - filling missing values with given fill argument
   final_raster_table <- rbind.fill.list(raster_per_polygon, fill = fill) %>%
@@ -87,7 +87,7 @@ raster_to_catchment_polygons <- function(polygon_sf, raster,
   
   }
   
-  ## Extract and summarize non-descrete raster values in polygons shapefile  
+  ## Extract and summarize non-discrete raster values in polygons shapefile  
   else{
     message('extracting continuous raster')
     raster_per_polygon <- terra::extract(raster_crop, vector, fun = raster_summary_fun, ...)
