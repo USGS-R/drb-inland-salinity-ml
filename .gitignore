@@ -8,6 +8,7 @@ _targets
 archive/*
 1_fetch/in/NLCDs_2001_2019/*
 1_fetch/in/DRB_2021_synoptic_sites_by_transect_20210819.xlsx
+1_fetch/in/DRBActiveGages_2021Apr.csv
 rstudio*
 .config
 .local*
