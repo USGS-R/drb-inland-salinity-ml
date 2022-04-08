@@ -76,10 +76,18 @@ p3_targets_list <- list(
                     file_path = "3_visualize/out/nhdv2_attr_png"),
     format = "file"
   ),
+  # refined
+  tar_target(
+    p3_nhdv2_attr_refined_png,
+    plot_nhdv2_attr(attr_data = p2_nhdv2_attr_refined %>% select(-hru_segment),
+                    network_geometry = p1_reaches_sf,
+                    file_path = "3_visualize/out/nhdv2_attr_png/refined"),
+    format = "file"
+  ),
   # with synoptic sampling sites
   tar_target(
     p3_nhdv2_attr_syn_sites_png,
-    plot_nhdv2_attr(attr_data = p2_nhdv2_attr,
+    plot_nhdv2_attr(attr_data = p2_nhdv2_attr_refined %>% select(-hru_segment),
                     network_geometry = p1_reaches_sf,
                     file_path = "3_visualize/out/nhdv2_attr_png/synoptic",
                     plot_sites = TRUE, 
@@ -92,6 +100,13 @@ p3_targets_list <- list(
   tar_target(
     p3_nhdv2_attr_summary_csv,
     summarize_nhdv2_attr(p2_nhdv2_attr,"3_visualize/out/nhdv2_attr_summary.csv"),
+    format = "file"
+  ),
+  # refined
+  tar_target(
+    p3_nhdv2_attr_summary_refined_csv,
+    summarize_nhdv2_attr(p2_nhdv2_attr_refined %>% select(-hru_segment),
+                         "3_visualize/out/nhdv2_attr_summary_refined.csv"),
     format = "file"
   ),
   
