@@ -27,7 +27,7 @@ AOI_LC_w_area <- function(NLCD_LC_df, area_att, aoi_comids_df){
 ###----
 
 # Estimate prop of LC coverage at PRMS catchment scale
-proportion_lc_by_prms <- function(NLCD_LC_df_w_area, area_col, length_col = 'LENGTHKM', catchment_att = 'CAT'){
+proportion_lc_by_prms <- function(NLCD_LC_df_w_area, area_col, length_col = 'LENGTHKM', catchment_att = 'CAT', , remove_NODATA_cols = TRUE){
 
 #' @description This function takes the consolidated df from AOI_LC_w_area() and calculated the proportion share of each LC class at the PRMS segid scale
 #' @param NLCD_LC_df_w_area df output of AOI_LC_w_area that has LC data per COMID & PRMS id and area in (km2)
@@ -54,7 +54,8 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area, area_col, length_col = 'LEN
       # round the new cols 
       across(starts_with(c('PROP','PRMS')), round, 4), 
     .groups="drop") %>% 
-    select(-starts_with(paste0('PRMS_AREA_',catchment_att)))
+    select(-starts_with(paste0('PRMS_AREA_',catchment_att))) %>% 
+    {if(remove_NODATA_cols == TRUE) select(., -contains('NODATA')) else . }
 
   return(area_df)
 

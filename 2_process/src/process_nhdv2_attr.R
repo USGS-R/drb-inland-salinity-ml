@@ -269,3 +269,190 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
 }
 
 
+refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk, 
+                            nhdv2_reaches, prms_attribute_df, drop_columns){
+  #' 
+  #' @description Function to reduce and refine the static attributes for use in models.
+  #' It drops features that have the same value for all reaches.
+  #' It drops columns specified in drop_columns
+  #' It fills in 0 area PRMS areas with NHD areas.
+  #' It fills in NA values from immediately neighboring reaches
+  #' It computes stream density from the NHD catchments in the PRMS HRU
+  #' It computes TOT from CAT variables for 4 attributes.
+  #'
+  #' @param nhdv2_attr the tbl of static attributes (columns) for each PRMS reach (rows)
+  #' @param prms_nhdv2_xwalk the crosswalk tbl from NHD reaches to PRMS reaches
+  #' @param nhdv2_reaches the NHD reaches as an sf object
+  #' @param prms_attribute_df PRMS attribute table with all_from_segs discovered 
+  #' from recursive function (output of p2_prms_attribute_df target)
+  #' @param drop_columns character vector of column names to remove from nhdv2_attr
+  #' 
+  #' @value Returns a refined nhdv2_attr based on the columns to drop
+  
+  #Detect variables that are all equal across the modeling domain and remove them
+  #removes "BEDPERM_4" and "HGAC" for both CAT and TOT scales
+  unique_col_vals <- apply(nhdv2_attr, 2, FUN = function(x) length(unique(x)))
+  nhdv2_attr_refined <- nhdv2_attr[, which(unique_col_vals > 1)] %>%
+    #Remove other columns
+    select(!contains(drop_columns)) %>%
+    #Modify the CAT Basin Areas that are 0 with PRMS areas
+    #These areas are otherwise nearly identical (max difference of 0.1 sq.km)
+    mutate(CAT_BASIN_AREA_sum = case_when(CAT_BASIN_AREA_sum == 0 ~ AREASQKM_PRMS,
+                                          TRUE ~ CAT_BASIN_AREA_sum)) %>%
+    #drop PRMS area column
+    select(-AREASQKM_PRMS)
+  
+  #RECHG
+  #Change recharge for NA segment to the average of its neighbors (from_segs and to_seg)
+  #index to change
+  nhdv2_attr_refined$CAT_RECHG_area_wtd <- refine_from_neighbors(nhdv2_attr_refined,
+                                                                 attr_i = 'CAT_RECHG_area_wtd', 
+                                                                 prms_attribute_df)
+  
+  #EWT - water table
+  #Change EWT for segment with deep value to the average of its neighbors (from_segs and to_seg)
+  nhdv2_attr_refined$CAT_EWT_area_wtd <- refine_from_neighbors(nhdv2_attr_refined,
+                                                               attr_i = 'CAT_EWT_area_wtd',
+                                                               prms_attribute_df)
+  
+  #STRM_DENS
+  #Compute stream density from the NHD catchment reach length and area
+  #only for the 5 NA PRMS segments. These have 1 or 2 NHD catchments.
+  # other PRMS segments with some NA stream densities cover areas <3% of total area.
+  #Gather the PRMS areas for these reaches
+  ind_areas <- filter(nhdv2_attr_refined, is.na(CAT_STRM_DENS_area_wtd)) %>%
+    select(PRMS_segid, CAT_BASIN_AREA_sum)
+  #Gather the sum of NHD reach lengths in km
+  ind_areas$length_km <- 0
+  for (i in 1:nrow(ind_areas)){
+    #all NHD reaches for this PRMS segment
+    nhd_reaches <- filter(prms_nhdv2_xwalk,
+                          PRMS_segid %in% ind_areas$PRMS_segid[i]) %>%
+      select(comid_cat) %>%
+      str_split(., pattern = ';', simplify = T)
+    
+    ind_areas$length_km[i] <- filter(nhdv2_reaches,
+                                    COMID %in% nhd_reaches) %>%
+      select(LENGTHKM) %>% 
+      st_drop_geometry() %>%
+      sum()
+  }
+  #Compute the reach stream density length (km)/area (sq.km)
+  #There must be a typo in the ScienceBase table's units because using m length gives
+  #results that are 3 orders of magnitude larger than other values
+  ind_areas <- mutate(ind_areas, str_dens = length_km/CAT_BASIN_AREA_sum) %>%
+    select(-length_km, -CAT_BASIN_AREA_sum)
+  #assign to attribute table
+  nhdv2_attr_refined <- mutate(nhdv2_attr_refined,
+                          CAT_STRM_DENS_area_wtd = case_when(PRMS_segid %in% ind_areas$PRMS_segid ~
+                                                               ind_areas$str_dens[match(PRMS_segid, ind_areas$PRMS_segid)],
+                                                             TRUE ~ CAT_STRM_DENS_area_wtd)
+  )
+  
+  #Compute TOT variables from PRMS CAT variables
+  # These 3 variables have some segments with 0s that are clearly incorrect:
+  # CWD, TAV7100, TMIN7100 
+  # and TOT for STRM_DENS should be recomputed due to the edits to CAT variables
+  #Add hru segment identifier to match with the recursive function output ID
+  nhdv2_attr_refined$hru_segment <- apply(str_split(nhdv2_attr_refined$PRMS_segid, 
+                                                    pattern = '_', simplify = T), 
+                                          MARGIN = 1, FUN = first)
+  #edit identifier for split segments
+  nhdv2_attr_refined <- mutate(.data = nhdv2_attr_refined, 
+         hru_segment = case_when(PRMS_segid == '3_1' ~ '3_1',
+                                 PRMS_segid == '3_2' ~ '3_2',
+                                 PRMS_segid == '8_1' ~ '8_1',
+                                 PRMS_segid == '8_2' ~ '8_2',
+                                 PRMS_segid == '51_1' ~ '51_1',
+                                 PRMS_segid == '51_2' ~ '51_2',
+                                 TRUE ~ hru_segment))
+  
+  TOT_frmCAT_cols <- c('TOT_CWD_frmCAT', 'TOT_TAV7100_ANN_frmCAT', 
+                       'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT')
+  nhdv2_attr_refined[TOT_frmCAT_cols] <- NA
+  #loop over all segments
+  for(i in 1:length(unique(nhdv2_attr_refined$hru_segment))){
+    #current segment
+    subseg <- unique(nhdv2_attr_refined$hru_segment)[i]
+    #all upstream segments, including current segment
+    ind_segs <- filter(prms_attribute_df, subseg_seg == subseg) %>% 
+      pull(all_from_segs)
+    #area for each PRMS segment
+    areas_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_BASIN_AREA_sum)
+    #CAT variables for each segment
+    CWD_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_CWD_area_wtd)
+    TAV_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_TAV7100_ANN_area_wtd)
+    TMN_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_TMIN7100_area_wtd)
+    STR_DENS_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_STRM_DENS_area_wtd)
+    
+    #Compute TOT values
+    #need special handling for PRMS segments with _2
+    ind_replace <- which(nhdv2_attr_refined$hru_segment == subseg)
+    nhdv2_attr_refined$TOT_CWD_frmCAT[ind_replace] <- weighted.mean(CWD_segs,areas_segs)
+    nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT[ind_replace] <- weighted.mean(TAV_segs,areas_segs)
+    nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- weighted.mean(TMN_segs,areas_segs)
+    nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- weighted.mean(STR_DENS_segs,areas_segs)
+  }
+  #Remove original TOT columns
+  nhdv2_attr_refined <- select(nhdv2_attr_refined, -c(TOT_CWD, TOT_TAV7100_ANN, TOT_TMIN7100, TOT_STRM_DENS))
+  
+  return(nhdv2_attr_refined)
+}
+
+refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
+                                  ){
+  #' 
+  #' @description Function to fill in a reach's attribute value with a value 
+  #' from its neighboring reaches (from_segs and to_seg)
+  #'
+  #' @param nhdv2_attr the full (or partially refined) attribute tbl
+  #' @param attr_i the attribute name as character string
+  #' @param prms_reach_attr the PRMS reach attribute tbl with rows for each 
+  #' from_segs as discovered from the recursive function 
+  #' (output of p2_prms_attribute_df target)
+  #'
+  #' @value Returns nhdv2_attr with filled in values for the attr_i column.
+  
+  if(attr_i == 'CAT_EWT_area_wtd'){
+    #Search for < -100
+    ind_reach <- filter(nhdv2_attr, get(attr_i) < -100) %>%
+      pull(PRMS_segid)
+  }else{
+    #search for NAs
+    ind_reach <- filter(nhdv2_attr, is.na(get(attr_i))) %>%
+      pull(PRMS_segid)
+  }
+  #find the from and to segments for this reach
+  seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach) %>%
+    select(from_segs, to_seg) %>%
+    unique() %>%
+    mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+    select(-from_segs, -to_seg) %>%
+    unlist()
+  
+  #add _1 and _2 to match PRMS seg ID
+  seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                         seg_match == '3_2' ~ '3_2',
+                         seg_match == '8_1' ~ '8_1',
+                         seg_match == '8_2' ~ '8_2',
+                         seg_match == '51_1' ~ '51_1',
+                         seg_match == '51_2' ~ '51_2',
+                         TRUE ~ paste0(seg_match, '_1'))
+  #get the average of the attributes for the matched reaches
+  fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
+    select(all_of(attr_i)) %>%
+    colMeans() %>%
+    as.numeric()
+  #assign to attribute table
+  nhdv2_attr_refined <- mutate(nhdv2_attr,
+                               attr = case_when(PRMS_segid == ind_reach ~ fill_val,
+                                                              TRUE ~ get(attr_i))
+                               ) %>%
+    pull(attr)
+  return(nhdv2_attr_refined)
+}

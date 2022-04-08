@@ -1,14 +1,15 @@
-source("2_process/src/filter_wqp_data.R")
 source("2_process/src/munge_inst_timeseries.R")
+source("2_process/src/filter_wqp_data.R")
 source("2_process/src/create_site_list.R")
 source("2_process/src/match_sites_reaches.R")
 source("2_process/src/raster_to_catchment_polygons.R")
 source("2_process/src/combine_NLCD_PRMS.R")
 source("2_process/src/munge_natural_baseflow.R")
 source('2_process/src/reclassify_land_cover.R')
-source('2_process/src/FORESCE_agg_lc_props.R')
 source("2_process/src/process_nhdv2_attr.R")
 source("2_process/src/recursive_fun.R")
+source("2_process/src/aggregate_observations.R")
+source('2_process/src/area_diff_fix.R')
 
 
 p2_targets_list <- list(
@@ -71,13 +72,6 @@ p2_targets_list <- list(
     read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
-  # Simple target pairing PRMS_segids with hru_segment:
-  tar_target(p2_PRMS_hru_segment,
-             p2_prms_nhdv2_xwalk %>% mutate(PRMS_segid_split_col = PRMS_segid) %>%
-               separate(col = PRMS_segid_split_col, sep = '_', into =c('hru_segment', "PRMS_segment_suffix")) %>%
-               select(PRMS_segid, hru_segment) %>% mutate(hru_segment = as.integer(hru_segment))
-  ),
-  
   # Melt PRMS-NHDv2 xwalk table to return all COMIDs that drain to each PRMS segment
   tar_target(
     p2_drb_comids_all_tribs, 
@@ -95,6 +89,8 @@ p2_targets_list <- list(
       rename(comid = comid_down)
   ),
   
+  #----
+  # NLCD Land Cover Proportions 
   ## Filter LC data to the AOI : DRB and join with COMIDs area info and PRMS ids
   # returns a df with unique comids for aoi + area of comid and NLCD LC percentage attributes
   tar_target(
@@ -113,8 +109,8 @@ p2_targets_list <- list(
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area,
                           area_col = 'AREASQKM',
                           length_col = 'LENGTHKM',
-                                   catchment_att = 'CAT') %>%
-      select(-contains('NODATA'))
+                          catchment_att = 'CAT',
+                          remove_NODATA_cols = TRUE)
   ),
   
   tar_target(
@@ -124,8 +120,9 @@ p2_targets_list <- list(
                             filter(comid %in% p2_drb_comids_down$comid),
                           area_col = 'TOTDASQKM',
                           length_col = 'LENGTHKM',
-                          catchment_att = 'TOT') %>%
-      select(-contains('NODATA'))
+                          catchment_att = 'TOT',
+                          remove_NODATA_cols = TRUE)
+
   ),  
   
   tar_target(
@@ -135,8 +132,8 @@ p2_targets_list <- list(
                             filter(comid %in% p2_drb_comids_down$comid),
                           area_col = 'TOTDASQKM',
                           length_col = 'LENGTHKM',
-                          catchment_att = 'ACC') %>%
-      select(-contains('NODATA'))
+                          catchment_att = 'ACC', 
+                          remove_NODATA_cols = TRUE)
   ), 
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
@@ -146,7 +143,7 @@ p2_targets_list <- list(
     p2_PRMS_NLCD_lc_proportions_reclass_cat,
     reclassify_LC_for_NLCD(NLCD_lc_proportions_df = p2_PRMS_NLCD_lc_proportions_cat,
                           years_suffix = NLCD_year_suffix,
-                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+                           reclassify_table = p1_NLCD_reclass_table)
   ),
   
   # For Tot
@@ -154,7 +151,7 @@ p2_targets_list <- list(
     p2_PRMS_NLCD_lc_proportions_reclass_tot,
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_tot,
                            NLCD_year_suffix,
-                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+                           reclassify_table = p1_NLCD_reclass_table)
   ),
 
   # For Acc
@@ -162,42 +159,114 @@ p2_targets_list <- list(
     p2_PRMS_NLCD_lc_proportions_reclass_acc,
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_acc,
                            NLCD_year_suffix,
-                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+                           reclassify_table = p1_NLCD_reclass_table)
   ),
   
-  # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
+  #----
+  # PRMS gpkg Area Fix: Fix PRMS polygon area difference between catchments edited sf and nhd comid aggregation
+
+  ## Find list of PRMS_segid requiring new catchment polygon - using 5 km as the threshold
+  tar_target(
+    p2_PRMS_segid_special_handling_list,
+    catchment_area_check(PRMS_shapefile = p1_catchments_edited_sf,
+                         nhd_catchment_areas = p2_NLCD_LC_w_catchment_area,
+                         area_difference_threshold_km2 = 5)
+  ),
+  
+  ## New PRMS catchment shapefile from comids - used for the PRMS_segid requiring fixed catchments for lc raster extraction : 
+  tar_target(
+    p2_nhd_catchments_dissolved_sf,
+    dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
+                                          PRMS_comid_df = p2_drb_comids_all_tribs,
+                                          prms_reaches_sf = p1_reaches_sf)
+    ),
+  
+  ## Filtered PRMS catchments gpkg for the PRMS segid not require dnew nhd-based catchment   
+  tar_target(
+    p2_filtered_catchments_edited_sf,
+    p1_catchments_edited_sf %>% filter(!PRMS_segid %in% p2_PRMS_segid_special_handling_list)
+    ),
+
+  # ----
+  # FORESCE:Extract historical LC data raster values within catchments polygon + prop calc - general function raster_to_catchment_polygons
+  ## This is a subset now. nrow =  702 (vs. 867 before)
   tar_target(
     p2_FORESCE_LC_per_catchment, 
-    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(polygon_sf = p1_catchments_edited_sf,
-                                                  raster = x, categorical_raster = TRUE,
-                                                  raster_summary_fun = NULL,
-                                                  new_cols_prefix = 'lcClass',
-                                                  fill = 0))
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(
+      polygon_sf = p2_filtered_catchments_edited_sf,
+      raster = x, categorical_raster = TRUE,
+      raster_summary_fun = NULL,
+      new_cols_prefix = 'lcClass',
+      fill = 0))
     }
   ),
+  
+  ## Proportion calculation for PRMS_segid that use fixed nhd-based catchment polygons
+  tar_target(
+    p2_FORESCE_LC_per_catchment_fixed,
+    {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(
+      ## using dissolved catchment polygons here
+      polygon_sf = p2_nhd_catchments_dissolved_sf,
+      raster = x, categorical_raster = TRUE,
+      raster_summary_fun = NULL,
+      new_cols_prefix = 'lcClass',
+      fill = 0))
+    }
+  ), 
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
   # For FORESCE '1_fetch/in/Legend_FORESCE_Land_Cover.csv' as vlookup file for the FORESCE targets
   # reclassify FORESCE followed by aggregate to hru_segment scale across all lc classes so that it's ready for x walk - output remains list of dfs for the 5 decade years covered by FORESCE
+
+  ## reclassifying on original subsetted FORESCE LC proportions datasets
   tar_target(
-    p2_FORESCE_LC_per_catchment_reclass_cat,
+    p2_FORESCE_LC_per_catchment_reclass_correct_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
                  .y = FORESCE_years, 
-                 .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                 .f = ~{reclassify_land_cover(land_cover_df = .x,
+                                              reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              sep = ',',
                                               pivot_longer_contains = 'lcClass') %>% 
+                     
                        # See documentation in function
-                     ## group by with both hru and prms because we need hru_segment to run the recursive function for upstream catchments
-                     aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,hru_segment),
+                     ## group by with both hru and prms because we need prms_subseg_seg to run the recursive function for upstream catchments
+                     aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,prms_subseg_seg),
                                                 proportion_col_prefix = 'prop_lcClass',
-                                                hru_area_colname = hru_area_m2,
+                                                hru_area_colname = hru_area_km2,
                                                 new_area_colname = total_PRMS_area) %>%
                      ## Adding Year column
                      mutate(Year = .y)}
                  )
     }
+  ),
+  
+  ## Reclassifying on fixed FORESCE LC proportions datasets  + cleaning/munging for rbind 
+  tar_target(
+    p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
+    {purrr::map2(.x = p2_FORESCE_LC_per_catchment_fixed,
+                 .y = FORESCE_years, 
+                 .f = ~{reclassify_land_cover(land_cover_df = .x,
+                                              reclassify_table = p1_FORESCE_reclass_table,
+                                              reclassify_table_lc_col = 'FORESCE_value',
+                                              reclassify_table_reclass_col = 'Reclassify_match',
+                                              pivot_longer_contains = 'lcClass') %>%
+                     # ## renaming area col so that it can be rbind-ed with p2_FORESCE_LC_per_catchment_correct_reclass_cat
+                     # rename(total_PRMS_area = areasqkm) %>% 
+                     ## rearranging cols
+                     select(PRMS_segid, everything(), -ID) %>% 
+                     ## Adding Year column
+                     mutate(Year = .y)}
+    )
+    }
+  ),
+  
+  ## merge correct and fixed p2_FORESCE_LC_per_catchments_reclass_cat
+  tar_target(
+    p2_FORESCE_LC_per_catchment_reclass_cat,
+    {map2(.x = p2_FORESCE_LC_per_catchment_reclass_correct_cat,
+          .y = p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
+          .f = ~rbind(.x, .y))}
   ),
   
   ## Produce subset of p1_prms_reach_attr for p2_FORESCE_LC_per_catchment_reclass_tot target via recursively calculating proportions of LC class across all upstream segments for a given segment
@@ -211,17 +280,17 @@ p2_targets_list <- list(
       rowwise() %>%
       # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
       mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = ., col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
-      # unest to have new rows for each upstream catchment
+      # un-nest to have new rows for each upstream catchment
       unnest(all_from_segs, keep_empty = TRUE)
-    ),
+  ),
   
   # Produce p2_FORESCE_LC_per_catchment_reclass_tot 
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_tot,
     {lapply(p2_FORESCE_LC_per_catchment_reclass_cat, function(x)
       p2_prms_attribute_df %>% 
-        # join prop calculations - selected inner join because at the moment, p2_prms_attribute_df has more PRMS_segids than p2_FORESCE_LC_per_catchment_reclass_cat due to outdated catchmetns file
-        inner_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
+        # join prop calculations
+        right_join(x, by = c('all_from_segs' = 'prms_subseg_seg')) %>%
         # group by PRMS id
         group_by(PRMS_segid_main, Year) %>% 
         summarise(
@@ -274,6 +343,13 @@ p2_targets_list <- list(
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
                               hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
     format = "file"
+  ),
+  
+  # Return SC observations aggregated to the PRMS segment
+  tar_target(
+    p2_SC_observations,
+    aggregate_observations(p2_wqp_SC_filtered, p2_daily_combined, p2_sites_w_segs, 
+                           aggr_method = "reach", prefer_nwis_sites = FALSE)
   ),
   
   # Return natural baseflow estimates for each PRMS segment
@@ -336,6 +412,20 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+  ),
+
+  #Refine the attributes that are used for modeling
+  tar_target(
+    p2_nhdv2_attr_refined,
+    refine_features(nhdv2_attr = p2_nhdv2_attr,
+                    prms_nhdv2_xwalk = p2_prms_nhdv2_xwalk,
+                    nhdv2_reaches = p1_nhdv2reaches_sf,
+                    prms_attribute_df = p2_prms_attribute_df,
+                    #PHYSIO_AREA says which proportion of catchments are 
+                    #covered by physiographic regions
+                    #RUN7100 seems like it is by HUC02 instead of reach.
+                    #RFACT is perfectly correlated with RF7100
+                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))
   )
 )
 
