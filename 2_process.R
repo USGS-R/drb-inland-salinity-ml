@@ -10,6 +10,7 @@ source("2_process/src/process_nhdv2_attr.R")
 source("2_process/src/recursive_fun.R")
 source("2_process/src/aggregate_observations.R")
 source('2_process/src/area_diff_fix.R')
+source('2_process/src/clean_lulc_data_for_merge.R')
 
 
 p2_targets_list <- list(
@@ -299,7 +300,7 @@ p2_targets_list <- list(
   # Combine NLCD and FORESCE
   ## Cat
   tar_target(
-    all_lulc_data_cat,
+    p2_all_lulc_data_cat,
     {rbind(
       clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_cat,
                                 cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2'),
@@ -310,7 +311,7 @@ p2_targets_list <- list(
   
   ## Tot
   tar_target(
-    all_lulc_data_tot,
+    p2_all_lulc_data_tot,
     {rbind(
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_tot,
                                 cols_to_remove = NULL, area_col = total_upstream_PRMS_area, area_unit = 'km2'),
