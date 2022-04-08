@@ -141,7 +141,7 @@ p2_targets_list <- list(
     p2_PRMS_NLCD_lc_proportions_reclass_cat,
     reclassify_LC_for_NLCD(NLCD_lc_proportions_df = p2_PRMS_NLCD_lc_proportions_cat,
                           years_suffix = NLCD_year_suffix,
-                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+                           reclassify_table = p1_NLCD_reclass_table)
   ),
   
   # For Tot
@@ -149,7 +149,7 @@ p2_targets_list <- list(
     p2_PRMS_NLCD_lc_proportions_reclass_tot,
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_tot,
                            NLCD_year_suffix,
-                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+                           reclassify_table = p1_NLCD_reclass_table)
   ),
 
   # For Acc
@@ -157,7 +157,7 @@ p2_targets_list <- list(
     p2_PRMS_NLCD_lc_proportions_reclass_acc,
     reclassify_LC_for_NLCD(p2_PRMS_NLCD_lc_proportions_acc,
                            NLCD_year_suffix,
-                           reclassify_table_csv_path = '1_fetch/in/Legend_NLCD_Land_Cover.csv')
+                           reclassify_table = p1_NLCD_reclass_table)
   ),
   
   # Extract historical LC data raster values catchments polygon FORE-SCE  in the DRB - general function raster_to_catchment_polygons
@@ -178,10 +178,10 @@ p2_targets_list <- list(
     p2_FORESCE_LC_per_catchment_reclass_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
                  .y = FORESCE_years, 
-                 .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                 .f = ~{reclassify_land_cover(land_cover_df = .x,
+                                              reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              sep = ',',
                                               pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
                      ## group by with both hru and prms because we need hru_segment to run the recursive function for upstream catchments
