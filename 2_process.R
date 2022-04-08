@@ -357,6 +357,30 @@ p2_targets_list <- list(
     p2_flow_sites_w_segs,
     get_site_flowlines(p1_reaches_sf, p1_flow_sites, sites_crs = 4269, max_matches = 1, 
                        search_radius = 100, retain_sites = NULL)
+  ),
+  
+  #Get candidate sampling segments with road density >= 6 or NPDES >= 5
+  tar_target(
+    p2_candidate_syn_sites,
+    {PRMS_segs <- c(filter(p2_nhdv2_attr_refined, TOT_TOTAL_ROAD_DENS >= 6) %>% 
+                             pull(PRMS_segid),
+                           filter(p2_nhdv2_attr_refined, CAT_NPDES_MAJ_sum >= 5) %>% 
+                             pull(PRMS_segid)) %>% 
+                           unique()
+    #Candidate sites
+    syn_sites <- filter(p2_flow_sites_w_segs, subsegid %in% PRMS_segs) %>%
+      #make sure they're not already sampled
+      filter(!(subsegid %in% p2_syn_sites_w_segs$subsegid)) %>%
+      #add attributes
+      left_join(p2_nhdv2_attr_refined %>% 
+                  select(PRMS_segid, TOT_TOTAL_ROAD_DENS, CAT_NPDES_MAJ_sum), 
+                by = c("subsegid" = "PRMS_segid"))
+    
+    write_csv(syn_sites, file = '2022_DRBCandidateSynopticSites.csv')
+    '2022_DRBCandidateSynopticSites.csv'
+    },
+    format = "file"
+    
   )
 )
 
