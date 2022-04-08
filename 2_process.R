@@ -249,7 +249,7 @@ p2_targets_list <- list(
                      left_join(p2_PRMS_hru_segment, by = 'PRMS_segid') %>% 
                      ## rearranging cols
                      select(PRMS_segid, hru_segment, everything(), -ID) %>% 
-                     ## Adding Year column, and coverting hru_segment col to character so that it can be merged appropriately
+                     ## Adding Year column, and converting hru_segment col to character so that it can be merged appropriately
                      mutate(Year = .y, hru_segment = as.character(hru_segment))}
     )
     }
