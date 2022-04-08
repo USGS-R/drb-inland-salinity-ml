@@ -9,6 +9,7 @@ source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
 source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
+source("1_fetch/src/munge_reach_attr_tbl.R")
 
 p1_targets_list <- list(
   
@@ -103,28 +104,6 @@ p1_targets_list <- list(
     get_nhdv2_flowlines(drb_huc8s)
   ),  
   
-  # Download PRMS catchments for region 02
-  ## Downloaded from ScienceBase: https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
-  tar_target(
-    p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', sb_name = gf_data_select),
-    format = "file"
-  ),
-  
-  # Read PRMS catchment shapefile into sf object and filter to DRB
-  tar_target(
-    p1_catchments_sf,
-    sf::st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
-        filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
-        suppressWarnings() 
-  ),
-  
-  ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
-  tar_target(
-    p1_catchments_sf_valid, 
-    sf::st_buffer(p1_catchments_sf,0)
-  ),
-  
   # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
   tar_target(
     p1_catchments_edited_gpkg,
@@ -137,7 +116,18 @@ p1_targets_list <- list(
   # Read in edited HRU polygons
   tar_target(
     p1_catchments_edited_sf,
-    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE)
+    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE) %>%
+      mutate(PRMS_segid_split_col = PRMS_segid) %>%
+      separate(col = PRMS_segid_split_col, sep = '_', into =c('prms_subseg_seg', "PRMS_segment_suffix")) %>%
+      mutate(hru_area_km2 = hru_area_m2/10^6,
+             prms_subseg_seg = case_when(PRMS_segid == '3_1' ~ '3_1',
+                                          PRMS_segid == '3_2' ~ '3_2',
+                                          PRMS_segid == '8_1' ~ '8_1',
+                                          PRMS_segid == '8_2' ~ '8_2',
+                                          PRMS_segid == '51_1' ~ '51_1',
+                                          PRMS_segid == '51_2' ~ '51_2',
+                                          TRUE ~ prms_subseg_seg)) %>%
+      select(-hru_area_m2, -PRMS_segment_suffix)
   ),
   
   # Download DRB network attributes
@@ -150,10 +140,10 @@ p1_targets_list <- list(
     format="file"
   ),
   
-  # Read DRB reach attributes
+  # Read DRB reach attributes with all _1 segments for _2 reaches
   tar_target(
     p1_prms_reach_attr,
-    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+    munge_reach_attr_table(p1_prms_reach_attr_csvs)
   ),
   
   # Read DRB network adjacency matrix
@@ -226,6 +216,26 @@ p1_targets_list <- list(
                   overwrite_file = TRUE,
                   name = FORESCE_years), 
     format = 'file'
+  ),
+  
+  #Targets for the land cover reclassification .csv files
+  tar_target(
+    p1_NLCD_reclass_table_csv, 
+    '1_fetch/in/Legend_NLCD_Land_Cover.csv',
+    format = 'file'
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table_csv, 
+    '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+    format = 'file'
+  ),
+  tar_target(
+    p1_NLCD_reclass_table, 
+    read_csv(p1_NLCD_reclass_table_csv, show_col_types = FALSE)
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table, 
+    read_csv(p1_FORESCE_reclass_table_csv, show_col_types = FALSE)
   ),
   
   # Downlaod Road Salt accumulation data for the drb
