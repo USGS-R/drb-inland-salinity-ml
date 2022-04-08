@@ -2,7 +2,7 @@ FORESCE_value,FORESCE_description,Reclassify_match,Reclassify_description
 9,Open Water,1,Water
 4,Fallow/Idle,2,Cultivated Crops
 20,"Perennial grasses - Representing switchgrass, miscanthus, prairie grasses, or other heavily managed grass crops used for cellulosic biofuel feedstock ",2,Cultivated Crops
-0,No Data,2,Cultivated Crops
+0,No Data,NA,NA
 1,Hay / alfalfa,2,Cultivated Crops
 2,Corn,2,Cultivated Crops
 3,Soybeans,2,Cultivated Crops
