@@ -233,8 +233,8 @@ p2_targets_list <- list(
                      ## group by with both hru and prms because we need hru_segment to run the recursive function for upstream catchments
                      aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,hru_segment),
                                                 proportion_col_prefix = 'prop_lcClass',
-                                                hru_area_colname = hru_area_m2,
-                                                new_area_colname = total_PRMS_area_km2) %>%
+                                                hru_area_colname = hru_area_km2,
+                                                new_area_colname = total_PRMS_area) %>%
                      ## Adding Year column
                      mutate(Year = .y)}
                  )
