@@ -104,8 +104,8 @@ p2_targets_list <- list(
   tar_target(
     p2_PRMS_NLCD_lc_proportions_cat,
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area,
-                                   catchment_att = 'CAT') %>%
-      select(-contains('NODATA'))
+                          catchment_att = 'CAT',
+                          remove_NODATA_cols = TRUE)
   ),
   
   tar_target(
@@ -113,8 +113,8 @@ p2_targets_list <- list(
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area %>%
                             # filtering to only the comid_downs of each PRMS - nrow = ~459
                             filter(comid %in% p2_drb_comids_down$comid),
-                          catchment_att = 'TOT') %>%
-      select(-contains('NODATA'))
+                          catchment_att = 'TOT',
+                          remove_NODATA_cols = TRUE)
   ),  
   
   tar_target(
@@ -122,8 +122,7 @@ p2_targets_list <- list(
     proportion_lc_by_prms(p2_NLCD_LC_w_catchment_area %>%
                             # filtering to only the comid_downs of each PRMS - nrow = ~459
                             filter(comid %in% p2_drb_comids_down$comid),
-                          catchment_att = 'ACC') %>%
-      select(-contains('NODATA'))
+                          catchment_att = 'ACC', remove_NODATA_cols = TRUE)
   ), 
   
   ## Standardize the land cover class names for NLCD to following standardized classes table - ''1_fetch/in/Reclassified_Land_Cover_IS.csv'
