@@ -72,13 +72,6 @@ p2_targets_list <- list(
     read_csv(GFv1_NHDv2_xwalk_url, col_types = 'cccc')
   ),
   
-  # Simple target pairing PRMS_segids with hru_segment:
-  tar_target(p2_PRMS_hru_segment,
-             p2_prms_nhdv2_xwalk %>% mutate(PRMS_segid_split_col = PRMS_segid) %>%
-               separate(col = PRMS_segid_split_col, sep = '_', into =c('hru_segment', "PRMS_segment_suffix")) %>%
-               select(PRMS_segid, hru_segment) %>% mutate(hru_segment = as.integer(hru_segment))
-  ),
-  
   # Melt PRMS-NHDv2 xwalk table to return all COMIDs that drain to each PRMS segment
   tar_target(
     p2_drb_comids_all_tribs, 
