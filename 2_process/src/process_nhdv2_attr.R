@@ -356,8 +356,16 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   #Add hru segment identifier to match with the recursive function output ID
   nhdv2_attr_refined$hru_segment <- apply(str_split(nhdv2_attr_refined$PRMS_segid, 
                                                     pattern = '_', simplify = T), 
-                                          MARGIN = 1, FUN = first) %>%
-    as.numeric()
+                                          MARGIN = 1, FUN = first)
+  #edit identifier for split segments
+  nhdv2_attr_refined <- mutate(.data = nhdv2_attr_refined, 
+         hru_segment = case_when(PRMS_segid == '3_1' ~ '3_1',
+                                 PRMS_segid == '3_2' ~ '3_2',
+                                 PRMS_segid == '8_1' ~ '8_1',
+                                 PRMS_segid == '8_2' ~ '8_2',
+                                 PRMS_segid == '51_1' ~ '51_1',
+                                 PRMS_segid == '51_2' ~ '51_2',
+                                 TRUE ~ hru_segment))
   
   TOT_frmCAT_cols <- c('TOT_CWD_frmCAT', 'TOT_TAV7100_ANN_frmCAT', 
                        'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT')
@@ -420,14 +428,21 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
       pull(PRMS_segid)
   }
   #find the from and to segments for this reach
-  seg_match <- filter(prms_reach_attr, subseg_id == ind_reach) %>%
+  seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach) %>%
     select(from_segs, to_seg) %>%
     unique() %>%
     mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
     select(-from_segs, -to_seg) %>%
-    unlist() %>%
-    #add _1 to match PRMS seg ID
-    paste0(., '_1')
+    unlist()
+  
+  #add _1 and _2 to match PRMS seg ID
+  seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                         seg_match == '3_2' ~ '3_2',
+                         seg_match == '8_1' ~ '8_1',
+                         seg_match == '8_2' ~ '8_2',
+                         seg_match == '51_1' ~ '51_1',
+                         seg_match == '51_2' ~ '51_2',
+                         TRUE ~ paste0(seg_match, '_1'))
   #get the average of the attributes for the matched reaches
   fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
     select(all_of(attr_i)) %>%
