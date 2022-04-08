@@ -300,22 +300,23 @@ p2_targets_list <- list(
   ## Cat
   tar_target(
     all_lulc_data_cat,
-    {rbind(rbind(
+    {rbind(
       clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_cat,
                                 cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2'),
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_cat,
-                                cols_to_remove = 'hru_segment', area_col = total_PRMS_area, area_unit = 'm2')))
+                                cols_to_remove = 'prms_subseg_seg', area_col = total_PRMS_area, area_unit = 'km2'))
       }
   ),
   
   ## Tot
   tar_target(
     all_lulc_data_tot,
-    {rbind(rbind(
-      clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_tot,
-                                cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2'),
+    {rbind(
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_tot,
-                                cols_to_remove = 'hru_segment', area_col = total_PRMS_area, area_unit = 'm2')))
+                                cols_to_remove = NULL, area_col = total_upstream_PRMS_area, area_unit = 'km2'),
+      clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_tot,
+                                cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2')
+      )
     }
   ),
   

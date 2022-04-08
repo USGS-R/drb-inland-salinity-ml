@@ -32,7 +32,7 @@ clean_lulc_data_for_merge <- function(lulc_dfs,  area_col, area_unit = 'km2', co
       
   }
   
-  # Check if needs to be converted to list or not to apply lapply - Note might want to avoid the lapply + do.call process if not list
+  # In case lulc_dfs is 1 df, Check if needs to be converted to list or not to apply lapply - Note might want to avoid the lapply + do.call process all together if not list
   if(!is.list(lulc_dfs)){
     print('Input lulc dfs is not list, No list.rbind computed.')
     df_list <- list(lulc_dfs)
