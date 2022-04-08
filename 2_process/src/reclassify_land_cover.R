@@ -42,7 +42,8 @@ reclassify_land_cover <- function(land_cover_df,
 
 reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                                    years_suffix,
-                                   reclassify_table){
+                                   reclassify_table,
+                                   remove_NA_cols = TRUE){
 
   #' @description placing the process of reclassifying the NLCD (2000 +) land cover df into this tailored function. Works with NLCD catchment attribute ACC, CAT, and TOT)
   #' @param NLCD_lc_proportions_df list of NLCD dataframes with lc classes as cols - output of proportion_lc_by_prms()
@@ -63,7 +64,7 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                                            reclassify_table_reclass_col = 'Reclassify_match',
                                            pivot_longer_contains = glue('NLCD',.y)) %>% 
                   # some lc classes in NLCD were given NA ultimately - example: Alaska only shrub - we remove from table
-                  select(-contains('NA')) %>%
+                  {if(remove_NA_cols == TRUE) select(., -contains('NA')) else . } %>% 
                   # adding year column
                   mutate(Year = paste0('20',.y)) %>% 
                   # Renaming col names - removing the col to be consistent across dataframes

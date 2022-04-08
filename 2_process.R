@@ -176,6 +176,7 @@ p2_targets_list <- list(
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
                                               pivot_longer_contains = 'lcClass') %>% 
+                     
                        # See documentation in function
                      ## group by with both hru and prms because we need prms_subseg_seg to run the recursive function for upstream catchments
                      aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,prms_subseg_seg),
