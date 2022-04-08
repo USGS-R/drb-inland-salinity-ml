@@ -5,7 +5,7 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
                             "purrr", "sbtools", "terra",
-                            "patchwork", "glue")) 
+                            "patchwork", "glue",'nhdplusTools')) 
 
 source("1_fetch.R")
 source("2_process.R")
