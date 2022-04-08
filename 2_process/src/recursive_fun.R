@@ -10,8 +10,8 @@ recursive_fun<- function(x, df, col1, col2){
   # get row number where df$col1 is x 
   row_num <- which(df[[col1]] == x)
 
-  # Vector to store the upstream segments - Setting all as character to make consistent across all fun output
-  upstream_segs <- as.character(x)
+  # Vector to store the upstream segments
+  upstream_segs <- x
   
   #Get the from_segs and recursively loop over them
   from_segs <- df[[col2]][row_num][[1]]
