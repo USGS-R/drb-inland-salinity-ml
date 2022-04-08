@@ -330,6 +330,20 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+  ),
+
+  #Refine the attributes that are used for modeling
+  tar_target(
+    p2_nhdv2_attr_refined,
+    refine_features(nhdv2_attr = p2_nhdv2_attr,
+                    prms_nhdv2_xwalk = p2_prms_nhdv2_xwalk,
+                    nhdv2_reaches = p1_nhdv2reaches_sf,
+                    prms_attribute_df = p2_prms_attribute_df,
+                    #PHYSIO_AREA says which proportion of catchments are 
+                    #covered by physiographic regions
+                    #RUN7100 seems like it is by HUC02 instead of reach.
+                    #RFACT is perfectly correlated with RF7100
+                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))
   )
 )
 
