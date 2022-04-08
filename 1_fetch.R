@@ -220,12 +220,22 @@ p1_targets_list <- list(
   
   #Targets for the land cover reclassification .csv files
   tar_target(
+    p1_NLCD_reclass_table_csv, 
+    '1_fetch/in/Legend_NLCD_Land_Cover.csv',
+    format = 'file'
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table_csv, 
+    '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+    format = 'file'
+  ),
+  tar_target(
     p1_NLCD_reclass_table, 
-    read_csv('1_fetch/in/Legend_NLCD_Land_Cover.csv', show_col_types = FALSE), 
+    read_csv(p1_NLCD_reclass_table_csv, show_col_types = FALSE)
   ),
   tar_target(
     p1_FORESCE_reclass_table, 
-    read_csv('1_fetch/in/Legend_FORESCE_Land_Cover.csv', show_col_types = FALSE), 
+    read_csv(p1_FORESCE_reclass_table_csv, show_col_types = FALSE)
   ),
   
   # Downlaod Road Salt accumulation data for the drb
