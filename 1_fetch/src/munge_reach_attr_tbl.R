@@ -15,6 +15,8 @@ munge_reach_attr_table <- function(prms_reach_attr_csvs){
   # Special handling to add _1 split segments to PRMS segments with _2 suffix
   # reach attribute table; values for from_segs and to_seg were
   # derived based on visual inspection and manually entered
+  # length (subseglen) and seg_id_nat are from `p1_reaches_sf` 
+  # _1 split reaches have NA seg_id_nat, so the value for the _2 is used for _1.
   attr_tbl_w_splitsegs <- attr_tbl %>%
     mutate(to_seg = as.character(to_seg),
            subseg_seg = as.character(subseg_seg)) %>%
