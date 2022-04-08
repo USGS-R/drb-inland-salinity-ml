@@ -238,19 +238,17 @@ p2_targets_list <- list(
     p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment_fixed,
                  .y = FORESCE_years, 
-                 .f = ~{reclassify_land_cover(land_cover_df = .x,reclassify_table_csv_path = '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+                 .f = ~{reclassify_land_cover(land_cover_df = .x,
+                                              reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              sep = ',',
                                               pivot_longer_contains = 'lcClass') %>%
                      ## renaming area col so that it can be rbind-ed with p2_FORESCE_LC_per_catchment_correct_reclass_cat
                      rename(total_PRMS_area_km2 = areasqkm) %>% 
-                     ## adding hru_segment col
-                     left_join(p2_PRMS_hru_segment, by = 'PRMS_segid') %>% 
                      ## rearranging cols
-                     select(PRMS_segid, hru_segment, everything(), -ID) %>% 
-                     ## Adding Year column, and converting hru_segment col to character so that it can be merged appropriately
-                     mutate(Year = .y, hru_segment = as.character(hru_segment))}
+                     select(PRMS_segid, everything(), -ID) %>% 
+                     ## Adding Year column
+                     mutate(Year = .y)}
     )
     }
   ),
