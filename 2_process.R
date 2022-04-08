@@ -177,10 +177,10 @@ p2_targets_list <- list(
                                               reclassify_table_reclass_col = 'Reclassify_match',
                                               pivot_longer_contains = 'lcClass') %>% 
                        # See documentation in function
-                     ## group by with both hru and prms because we need hru_segment to run the recursive function for upstream catchments
-                     aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,hru_segment),
+                     ## group by with both hru and prms because we need prms_subseg_seg to run the recursive function for upstream catchments
+                     aggregate_proportions_hrus(group_by_segment_colname = vars(PRMS_segid,prms_subseg_seg),
                                                 proportion_col_prefix = 'prop_lcClass',
-                                                hru_area_colname = hru_area_m2,
+                                                hru_area_colname = hru_area_km2,
                                                 new_area_colname = total_PRMS_area) %>%
                      ## Adding Year column
                      mutate(Year = .y)}
@@ -199,17 +199,17 @@ p2_targets_list <- list(
       rowwise() %>%
       # Collect all upstream segs per individual seg_id using recursive_fun() (row wise application)
       mutate(all_from_segs = list(recursive_fun(x = subseg_seg,  df = ., col1 = 'subseg_seg', col2 = 'from_segs'))) %>%
-      # unest to have new rows for each upstream catchment
+      # un-nest to have new rows for each upstream catchment
       unnest(all_from_segs, keep_empty = TRUE)
-    ),
+  ),
   
   # Produce p2_FORESCE_LC_per_catchment_reclass_tot 
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_tot,
     {lapply(p2_FORESCE_LC_per_catchment_reclass_cat, function(x)
       p2_prms_attribute_df %>% 
-        # join prop calculations - selected inner join because at the moment, p2_prms_attribute_df has more PRMS_segids than p2_FORESCE_LC_per_catchment_reclass_cat due to outdated catchmetns file
-        inner_join(x, by = c('all_from_segs' = 'hru_segment')) %>%
+        # join prop calculations
+        right_join(x, by = c('all_from_segs' = 'prms_subseg_seg')) %>%
         # group by PRMS id
         group_by(PRMS_segid_main, Year) %>% 
         summarise(
