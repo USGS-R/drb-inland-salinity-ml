@@ -333,6 +333,19 @@ p1_targets_list <- list(
                         sheet = 'Clean_NtoS') %>%
         rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
     }
+  ),
+  
+  #Load flow gages that are active in DRB
+  tar_target(
+    p1_flow_sites,
+    {
+      if(!('DRBActiveGages_2021Apr.csv' %in% 
+           list.files('1_fetch/in/'))){
+        stop('Please add DRBActiveGages_2021Apr.csv to 1_fetch/in')
+      }
+      read_csv('1_fetch/in/DRBActiveGages_2021Apr.csv', show_col_types = FALSE) %>%
+        rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
+    }
   )
 )
   
