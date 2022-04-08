@@ -9,7 +9,7 @@ catchment_area_check <- function(PRMS_shapefile, nhd_catchment_areas, area_diffe
   
   ## group by shapefile from hru to prms scale and convert from m2 to km2
   gpkg_df <- PRMS_shapefile  %>% st_drop_geometry() %>% group_by(PRMS_segid) %>% 
-    summarise(prms_gpkg_area_km2 = sum(hru_area_m2)/10^6)
+    summarise(prms_gpkg_area_km2 = sum(hru_area_km2))
   
   ##join gpkg catchments and nhd catchments, and calculate difference
   nlcd_area <- nhd_catchment_areas %>%
