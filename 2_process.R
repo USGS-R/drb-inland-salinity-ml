@@ -243,8 +243,8 @@ p2_targets_list <- list(
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
                                               pivot_longer_contains = 'lcClass') %>%
-                     ## renaming area col so that it can be rbind-ed with p2_FORESCE_LC_per_catchment_correct_reclass_cat
-                     rename(total_PRMS_area_km2 = areasqkm) %>% 
+                     # ## renaming area col so that it can be rbind-ed with p2_FORESCE_LC_per_catchment_correct_reclass_cat
+                     # rename(total_PRMS_area = areasqkm) %>% 
                      ## rearranging cols
                      select(PRMS_segid, everything(), -ID) %>% 
                      ## Adding Year column

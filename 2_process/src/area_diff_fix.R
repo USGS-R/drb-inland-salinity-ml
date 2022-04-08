@@ -68,7 +68,7 @@ dissolve_nhd_catchments_to_PRMS_segid <- function(selected_PRMS_list, PRMS_comid
   nhd_catchments_dissolved <- nhd_catchments %>%
     dplyr::group_by(PRMS_segid) %>% 
     ## sum the areasqkm. Some comid catchments are NA - those are remove in this aggregation 
-    dplyr::summarise(areasqkm = sum(areasqkm, na.rm = TRUE),
+    dplyr::summarise(total_PRMS_area = sum(areasqkm, na.rm = TRUE),
       across(geometry, ~ sf::st_union(.)), .groups = "keep") %>% ungroup()
   
   return(nhd_catchments_dissolved)
