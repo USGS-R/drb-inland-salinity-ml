@@ -21,6 +21,10 @@
 
 module load singularity python36
 
+#Container path
+#argument 1 is the name of the container to use.
+CONTAINER="/caldera/projects/usgs/water/impd/pump/drb-inland-salinity/containers/${1}"
+
 # Create temporary directory to be populated with directories to bind-mount in
 # the container where writable file systems are necessary.
 # By default the only host file systems mounted within the container are $HOME, /tmp, /proc, /sys, and /dev.
@@ -93,7 +97,7 @@ The tmp directory ${workdir} will be automatically removed after the job is canc
 END
 
 # Bind mount the above specified directories on the host into the Singularity container.
-singularity exec /caldera/projects/usgs/water/impd/pump/drb-inland-salinity/containers/drb-inland-salinity-container_latest.sif \
+singularity exec ${CONTAINER} \
     bash -c "cp /usr/local/lib/R/etc/Renviron.site.orig /usr/local/lib/R/etc/Renviron.site; \
             echo SINGULARITY_CONTAINER=\$SINGULARITY_CONTAINER >> /usr/local/lib/R/etc/Renviron.site; \
             echo SINGULARITY_BIND=\$SINGULARITY_BIND >> /usr/local/lib/R/etc/Renviron.site; \
