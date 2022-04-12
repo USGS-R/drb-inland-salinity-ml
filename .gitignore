@@ -11,6 +11,7 @@ archive/*
 rstudio*
 .config
 .local*
+*.out
 
 #R files
 # History files
