@@ -37,6 +37,14 @@ get_daily_nwis_data <- function(site_info,parameter,stat_cd_select,start_date = 
                                  Value_cd_merged = coalesce(`Value_cd`,`ISM.Test.Bed...ISM.barge._Value_cd`)) %>%
                           select(agency_cd,site_no,Date,Value_merged,Value_cd_merged,Value_Max,Value_Max_cd) %>%
                           rename("Value"="Value_merged","Value_cd"="Value_cd_merged"),
+                        # 01435000: Returned data contains time series from 'Intake' and multiple piezometers. 
+                        # Select data that are representative of the main river channel:
+                        "01435000" = site_data %>%
+                          mutate(Value = `Channel.WQ_Value`,
+                                 Value_cd = `Channel.WQ_Value_cd`,
+                                 Value_Max = `Channel.WQ_Value_Max`,
+                                 Value_Max_cd = `Channel.WQ_Value_Max_cd`) %>%
+                          select(agency_cd,site_no,Date,Value,Value_cd,Value_Max,Value_Max_cd),
                         "01412350" = site_data %>%
                           mutate(Value = `.Discontinued._Value`,
                                  Value_cd = `.Discontinued._Value_cd`,
