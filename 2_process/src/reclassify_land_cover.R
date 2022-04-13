@@ -79,7 +79,9 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
 ## -- Specific aggregation steps for the already reclassified FORESCE dataset 
 ## Function that was previously in FORESCE_agg_lc_props.R
 
-aggregate_proportions_hrus <- function(df, group_by_segment_colname, proportion_col_prefix, hru_area_colname, new_area_colname, remove_NA_cols = TRUE){
+aggregate_proportions_hrus <- function(df, group_by_segment_colname, 
+                                       proportion_col_prefix, hru_area_colname, 
+                                       new_area_colname, remove_NA_cols = TRUE){
   
   #'@description aggregation function to get land cover class proportions for PRMS_catchment_area 
   #'@param df data frame to aggregate
@@ -89,18 +91,38 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname, proportion_
   #'@param new_area_colname str. New colname for aggregated area
   #'@example aggregate_proportions_hrus(group_by_segment_colname = hru_segment, proportion_col_prefix = 'prop_lcClass', hru_area_colname = hru_area, new_area_colname = total_PRMS_area)
   
-  df <- df %>% 
-    # some lc classes in NLCD were given NA class
-    {if(remove_NA_cols == TRUE) select(., -contains('NA')) else . } %>%
-    # Create temp cols of area of lc class per hru - NOTE: simply mutate current cols and no longer have proportion values
-    mutate(across(starts_with(proportion_col_prefix),  ~(.x * {{hru_area_colname}})))%>% 
-    # group by hru segments - droping from 761 row to 416 - to get a single "PRMS" catchment per PRMS segment
+  # some lc classes in FORESCE were given NA class
+  # Subtract the NA area and remove the NA class
+  if(remove_NA_cols == TRUE){
+    #get all proportions to area units
+    df <- mutate(.data = df, 
+                 across(starts_with(proportion_col_prefix),
+                        ~(.x * {{hru_area_colname}}))) %>%
+      #drop NA area
+      select(-contains('NA'), -{{hru_area_colname}}) %>%
+      #compute new area without NA and compute new proportions
+      mutate({{hru_area_colname}} := rowSums(select(.,starts_with(proportion_col_prefix)))) %>% 
+      mutate(across(starts_with(proportion_col_prefix),
+                    ~(.x / {{hru_area_colname}}))) %>%
+      #There are 3 HRUs with only NA land cover data (all estuary).
+      # these result in NaN values for the proportions. Drop these.
+      # Thankfully, there are other HRUs for these PRMS segments that are not NA.
+      filter(!is.na(prop_lcClass_1))
+  }
+
+  df <- df %>%
+    # Create temp cols of area of lc class per hru
+    # NOTE: simply mutate current cols and no longer have proportion values
+    mutate(across(starts_with(proportion_col_prefix),
+                  ~(.x * {{hru_area_colname}}))) %>%
+    # group by hru segments - dropping to 459 to get a single "PRMS" catchment per PRMS segment
     group_by_at(group_by_segment_colname) %>%
     summarise(
       # calc total area of aggregated catchments
       total_area = sum({{hru_area_colname}}),
       # calc new proportion with new catchment area
-      across(starts_with(proportion_col_prefix), ~(sum(.x)/total_area)), .groups = 'drop_last') %>% 
+      across(starts_with(proportion_col_prefix),
+             ~(sum(.x)/total_area)), .groups = 'drop_last') %>%
     #rename col to name as input
     rename({{new_area_colname}} := total_area)
   
