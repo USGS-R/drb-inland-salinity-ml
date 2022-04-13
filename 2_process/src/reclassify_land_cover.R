@@ -92,12 +92,21 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname,
   #'@example aggregate_proportions_hrus(group_by_segment_colname = hru_segment, proportion_col_prefix = 'prop_lcClass', hru_area_colname = hru_area, new_area_colname = total_PRMS_area)
   
   # some lc classes in FORESCE were given NA class
-  # Subtract the NA area and remove the NA class
+  # for estuary NAs, assign all NA area to "water" area
+  # for other NAs subtract the NA area
+  # remove the NA lc class
   if(remove_NA_cols == TRUE){
-    #get all proportions to area units
-    df <- mutate(.data = df, 
-                 across(starts_with(proportion_col_prefix),
-                        ~(.x * {{hru_area_colname}}))) %>%
+    # Convert the estuary NA proportion to "water" proportion (class 1)
+    # most estuary NAs are > 0.15 in proportion. There are 3 others ID'd manually
+    df <- mutate(.data = df,
+                 prop_lcClass_1 = case_when(prop_lcClass_NA > 0.15 ~ prop_lcClass_1 + prop_lcClass_NA,
+                                            ID == 392 ~ prop_lcClass_1 + prop_lcClass_NA,
+                                            ID == 370 ~ prop_lcClass_1 + prop_lcClass_NA,
+                                            ID == 413 ~ prop_lcClass_1 + prop_lcClass_NA,
+                                            TRUE ~ prop_lcClass_1)) %>%
+      #get all proportions to area units
+      mutate(across(starts_with(proportion_col_prefix),
+                    ~(.x * {{hru_area_colname}}))) %>%
       #drop NA area
       select(-contains('NA'), -{{hru_area_colname}}) %>%
       #compute new area without NA and compute new proportions
