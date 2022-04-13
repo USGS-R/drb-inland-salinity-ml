@@ -83,7 +83,7 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
 ## Function that was previously in FORESCE_agg_lc_props.R
 aggregate_proportions_hrus <- function(df, group_by_segment_colname, 
                                        proportion_col_prefix, hru_area_colname, 
-                                       new_area_colname, remove_NA_cols = TRUE){  
+                                       new_area_colname, remove_NA_cols = TRUE){
   #'@description aggregation function to get land cover class proportions for PRMS_catchment_area 
   #'@param df data frame to aggregate
   #'@param group_by_segment_colname colname for segments that will be used for the group by
