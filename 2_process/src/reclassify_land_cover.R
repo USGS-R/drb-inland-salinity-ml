@@ -2,7 +2,8 @@ reclassify_land_cover <- function(land_cover_df,
                                   reclassify_table,
                                   reclassify_table_lc_col,
                                   reclassify_table_reclass_col,
-                                  pivot_longer_contains){
+                                  pivot_longer_contains,
+                                  remove_NA_cols = TRUE){
   
   #' @description Reclassify land cover df with cols as individual lc classes to pre-defined land cover class
   #' @param land_cover_df dataframe with lc classes as cols 
@@ -33,8 +34,10 @@ reclassify_land_cover <- function(land_cover_df,
     select(-c(old_class, merge_col, {{reclassify_table_reclass_col}}))
 
   ## pivot_wider to return lcClass labels to columns. Summarizing via a sum
-  final_df <- pivot_wider(new_classes_df, names_from = new_class, names_prefix = 'prop_', values_from = Prop_class_in_catchment, values_fn = sum)
-  
+  final_df <- pivot_wider(new_classes_df, names_from = new_class, names_prefix = 'prop_', values_from = Prop_class_in_catchment, values_fn = sum) %>% 
+    # some lc classes in NLCD were given NA class
+    {if(remove_NA_cols == TRUE) select(., -contains('NA')) else . } %>%
+    
   return(final_df)
 }
 
@@ -78,7 +81,6 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
 
 ## -- Specific aggregation steps for the already reclassified FORESCE dataset 
 ## Function that was previously in FORESCE_agg_lc_props.R
-
 aggregate_proportions_hrus <- function(df, group_by_segment_colname, 
                                        proportion_col_prefix, hru_area_colname, 
                                        new_area_colname, remove_NA_cols = TRUE){
@@ -124,7 +126,6 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname,
     # NOTE: simply mutate current cols and no longer have proportion values
     mutate(across(starts_with(proportion_col_prefix),
                   ~(.x * {{hru_area_colname}}))) %>%
-    # group by hru segments - dropping to 459 to get a single "PRMS" catchment per PRMS segment
     group_by_at(group_by_segment_colname) %>%
     summarise(
       # calc total area of aggregated catchments
@@ -137,5 +138,4 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname,
   
   return(df)
 }
-
 
