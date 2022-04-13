@@ -227,7 +227,10 @@ p2_targets_list <- list(
                                               reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              pivot_longer_contains = 'lcClass') %>% 
+                                              pivot_longer_contains = 'lcClass', 
+                                              proportion_col_prefix = 'prop_lcClass', 
+                                              hru_area_colname = hru_area_km2, 
+                                              remove_NA_cols = TRUE) %>% 
                      
                        # See documentation in function
                      ## group by with both hru and prms because we need prms_subseg_seg to run the recursive function for upstream catchments
@@ -250,9 +253,10 @@ p2_targets_list <- list(
                                               reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              pivot_longer_contains = 'lcClass') %>%
-                     # ## renaming area col so that it can be rbind-ed with p2_FORESCE_LC_per_catchment_correct_reclass_cat
-                     # rename(total_PRMS_area = areasqkm) %>% 
+                                              pivot_longer_contains = 'lcClass',
+                                              proportion_col_prefix = 'prop_lcClass',
+                                              hru_area_colname = total_PRMS_area,
+                                              remove_NA_cols = TRUE) %>%
                      ## rearranging cols
                      select(PRMS_segid, everything(), -ID) %>% 
                      ## Adding Year column
@@ -413,7 +417,7 @@ p2_targets_list <- list(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
   ),
-
+  
   #Refine the attributes that are used for modeling
   tar_target(
     p2_nhdv2_attr_refined,
@@ -425,10 +429,9 @@ p2_targets_list <- list(
                     #covered by physiographic regions
                     #RUN7100 seems like it is by HUC02 instead of reach.
                     #RFACT is perfectly correlated with RF7100
-                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))
+                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))    
   )
 )
-
 
 
 
