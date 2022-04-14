@@ -7,6 +7,13 @@
 #SBATCH --mem=32GB                      # don't settle for less than 32 GB
 #SBATCH --mail-type=ALL                 # enable email notifications for job status. Sends to submitting user
 
+################################################################################
+#This script is designed to be run with the container name as an sbatch argument. 
+#The container needs to be located in /caldera/projects/usgs/water/impd/pump/drb-inland-salinity/containers/
+#Example:
+# sbatch launch-rstudio-container.slurm mycontainer.sif
+################################################################################
+
 ###################################  NOTE  #####################################
 # This submission script is based on the rocker project's singularity docs as  #
 # of 2022-01-18, and should work with rocker/rstudio:4.1.2 or any images       #
