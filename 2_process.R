@@ -428,7 +428,7 @@ p2_targets_list <- list(
   # Create combined NHDv2 attribute data frame that includes both the cumulative upstream and catchment-scale values
   tar_target(
     p2_nhdv2_attr,
-    create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+    create_nhdv2_attr_table(p2_nhdv2_attr_upstream, p2_nhdv2_attr_catchment)
   ),
 
   #Refine the attributes that are used for modeling
