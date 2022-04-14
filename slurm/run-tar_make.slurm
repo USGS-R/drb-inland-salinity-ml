@@ -7,6 +7,13 @@
 #SBATCH --ntasks-per-node=1             # only request one core
 #SBATCH --mail-type=ALL                 # enable email notifications for job status. Sends to submitting user
 
+####################
+#This script is designed to be run with the container name as an sbatch argument. 
+#The container needs to be located in /caldera/projects/usgs/water/impd/pump/drb-inland-salinity/containers/
+#Example:
+# sbatch run-tar_make.slurm mycontainer.sif
+####################
+
 module load singularity
 
 #Container path
