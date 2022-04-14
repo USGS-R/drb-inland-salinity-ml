@@ -14,4 +14,4 @@ module load singularity
 CONTAINER="/caldera/projects/usgs/water/impd/pump/drb-inland-salinity/containers/${1}"
 
 # Run the tar_make() command
-singularity exec ${CONTAINER} Rscript './slurm/tar_make.R'
+singularity exec ${CONTAINER} Rscript -e 'source('_targets.R'); tar_make()'
