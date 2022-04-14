@@ -12,6 +12,9 @@ reclassify_land_cover <- function(land_cover_df,
   #' @param reclassify_table_lc_col col that contains original classes of the land_cover_df dataframe
   #' @param reclassify_table_reclass_col col in reclassify csv that contains the new land cover classes 
   #' @param pivot_longer_contains common colname str found in land_cover_df land cover cols (e.g. 'lcClass' or 'NLCDClass')
+  #' @param proportion_col_prefix prefix col for lc class proportion value columns
+  #' @param hru_area_colname colname for hru area
+  #' @param remove_NA_cols logical for removing the NA land cover class or not. Allocates NAs in the estuary to be water class.
   #' @value output is a updated version of the land_cover_df with new cols representing the new classes 
   
   # Load reclassification csv only taking class values, not description cols
@@ -81,6 +84,7 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
   #' @param NLCD_lc_proportions_df list of NLCD dataframes with lc classes as cols - output of proportion_lc_by_prms()
   #' @param years_suffix vectors of years (YY) of NLCD data - defined in _targets.R as NLCD_years_suffix
   #' @param reclassify_table reclassification lookup table for NLCD
+  #' @param remove_NA_cols logical for removing the NA land cover class or not
   #' @value output is a list of land cover dfs split by year and updated with new cols representing the new classes
   
    df <- purrr::map(
