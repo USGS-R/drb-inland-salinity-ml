@@ -203,7 +203,7 @@ p2_targets_list <- list(
   
   ## Proportion calculation for PRMS_segid that use fixed nhd-based catchment polygons
   tar_target(
-    p2_FORESCE_LC_per_catchment_fixed,
+    p2_FORESCE_LC_per_catchment_nhd_dissolve,
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(
       ## using dissolved catchment polygons here
       polygon_sf = p2_nhd_catchments_dissolved_sf,
@@ -226,7 +226,7 @@ p2_targets_list <- list(
 
   ## reclassifying on original subsetted FORESCE LC proportions datasets
   tar_target(
-    p2_FORESCE_LC_per_catchment_reclass_correct_cat,
+    p2_FORESCE_LC_per_catchment_PRMS_reclass_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
                  .y = FORESCE_years, 
                  .f = ~{reclassify_land_cover(land_cover_df = .x,
@@ -254,8 +254,8 @@ p2_targets_list <- list(
   
   ## Reclassifying on fixed FORESCE LC proportions datasets  + cleaning/munging for rbind 
   tar_target(
-    p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
-    {purrr::map2(.x = p2_FORESCE_LC_per_catchment_fixed,
+    p2_FORESCE_LC_per_catchment_nhd_dissolve_reclass_cat,
+    {purrr::map2(.x = p2_FORESCE_LC_per_catchment_nhd_dissolve,
                  .y = FORESCE_years, 
                  .f = ~{reclassify_land_cover(land_cover_df = .x,
                                               reclassify_table = p1_FORESCE_reclass_table,
@@ -278,8 +278,8 @@ p2_targets_list <- list(
   ## merge correct and fixed p2_FORESCE_LC_per_catchments_reclass_cat
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_cat,
-    {map2(.x = p2_FORESCE_LC_per_catchment_reclass_correct_cat,
-          .y = p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
+    {map2(.x = p2_FORESCE_LC_per_catchment_PRMS_reclass_cat,
+          .y = p2_FORESCE_LC_per_catchment_nhd_dissolve_reclass_cat,
           .f = ~rbind(.x, .y))}
   ),
   
