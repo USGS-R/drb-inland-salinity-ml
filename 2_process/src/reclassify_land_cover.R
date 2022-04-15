@@ -130,7 +130,7 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname,
 
   df <- df %>%
     # Create temp cols of area of lc class per hru
-    # NOTE: simply mutate current cols and no longer have proportion values
+    # NOTE we keep current col name while directly modifying the col values. Therefore, even though the colname stays the same, the values  are no longer proportion values. This is an intermediate step. 
     mutate(across(starts_with(proportion_col_prefix),
                   ~(.x * {{hru_area_colname}}))) %>%
     # group by hru segments - dropping to 390 to get a single "PRMS" catchment per PRMS segment
