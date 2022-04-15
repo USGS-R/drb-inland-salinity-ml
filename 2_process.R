@@ -210,7 +210,13 @@ p2_targets_list <- list(
       raster = x, categorical_raster = TRUE,
       raster_summary_fun = NULL,
       new_cols_prefix = 'lcClass',
-      fill = 0))
+      fill = 0) %>%
+        #Add column of prms_subseg_seg to match p2_FORESCE_LC_per_catchment
+        left_join(., 
+                  p1_catchments_edited_sf %>% 
+                    select(PRMS_segid, prms_subseg_seg) %>% 
+                    sf::st_drop_geometry(), 'PRMS_segid')
+        )
     }
   ), 
   
@@ -239,7 +245,9 @@ p2_targets_list <- list(
                                                 hru_area_colname = hru_area_km2,
                                                 new_area_colname = total_PRMS_area) %>%
                      ## Adding Year column
-                     mutate(Year = .y)}
+                     mutate(Year = .y) %>% 
+                     ## Reorder the land cover columns
+                     select(order(colnames(.)))}
                  )
     }
   ),
@@ -260,7 +268,9 @@ p2_targets_list <- list(
                      ## rearranging cols
                      select(PRMS_segid, everything(), -ID) %>% 
                      ## Adding Year column
-                     mutate(Year = .y)}
+                     mutate(Year = .y) %>%
+                     ## Reorder the land cover columns
+                     select(order(colnames(.)))}
     )
     }
   ),
@@ -304,7 +314,8 @@ p2_targets_list <- list(
           across(starts_with('prop'), ~(sum((.x*total_PRMS_area)/total_upstream_PRMS_area))),
           .groups = 'drop_last') %>%
         drop_na() %>% 
-        rename(., PRMS_segid = PRMS_segid_main)
+        rename(., PRMS_segid = PRMS_segid_main) %>%
+        ungroup()
       )}
   ),
   
