@@ -107,7 +107,9 @@ reclassify_LC_for_NLCD <- function(NLCD_lc_proportions_df,
                   # adding year column
                   mutate(Year = paste0('20',.y)) %>% 
                   # Renaming col names - removing the col to be consistent across dataframes
-                  rename_with(.fn = function(x) sub("NLCD\\d+", "lcClass\\1", x), .cols = starts_with("prop_"))
+                  rename_with(.fn = function(x) sub("NLCD\\d+", "lcClass\\1", x), .cols = starts_with("prop_"))  %>%
+                  # Reorder the land cover columns
+                  select(order(colnames(.)))
               }
     )
   
