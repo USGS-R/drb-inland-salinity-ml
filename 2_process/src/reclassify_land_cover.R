@@ -142,7 +142,8 @@ aggregate_proportions_hrus <- function(df, group_by_segment_colname,
       across(starts_with(proportion_col_prefix),
              ~(sum(.x)/total_area)), .groups = 'drop_last') %>%
     #rename col to name as input
-    rename({{new_area_colname}} := total_area)
+    rename({{new_area_colname}} := total_area) %>% 
+    ungroup()
   
   return(df)
 }
