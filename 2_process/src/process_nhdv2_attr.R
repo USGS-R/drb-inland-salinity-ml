@@ -94,7 +94,7 @@ calc_avg_NADP <- function(NADP_data){
   if(years[1] < 1985 | years[2] > 2014){
     stop(paste("For NADP data, we expected years 1985-2014 but the downloaded data contains other years: ",
                paste(years,collapse= ' - '),
-               ". In 1_fetch/in/NHDVarsOfInterest.csv, check column sb_item_retrieve for Dataset_name NADP_CAT."))
+               ". In 1_fetch/in/NHDVarsOfInterest.csv, check column sb_item_retrieve for Dataset_name NADP."))
   }
   
   #Replace -9999 with NA
@@ -254,6 +254,12 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   # monthly average precipitation data:
   if(unique(vars_item$sb_id) %in% c("5734acafe4b0dae0d5de622d")){
     col_names$col_name <- names(dat)[names(dat) != "COMID"]
+  }
+  
+  # NADP data:
+  if(unique(vars_item$sb_id) == "57e2ac2fe4b0908250045981"){
+    col_names$col_name <- str_replace(col_names$col_name, pattern = "_YYYY", 
+                                      replacement = "")
   }
   
   # Separate columns based on the aggregation operation we need to scale the NHD-catchment-values to PRMS-scale values
