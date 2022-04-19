@@ -98,7 +98,9 @@ calc_avg_NADP <- function(NADP_data){
   }
   
   #Replace -9999 with NA
-  NADP_data[NADP_data == -9999] <- NA
+  if(any(NADP_data == -9999)){
+    NADP_data[NADP_data == -9999] <- NA
+  }
   
   # Group columns by constituent and calculate the long-term average deposition
   # return a data frame with one row per COMID and one column to contain each of 12 long-term monthly averages
