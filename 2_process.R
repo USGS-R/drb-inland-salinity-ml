@@ -363,23 +363,6 @@ p2_targets_list <- list(
                            end_year = as.character(lubridate::year(dummy_date)),
                            fill_all_years = TRUE)
   ),
-
-  # Target for NADP initial Processing  
-  tar_target(
-    p2_NADP_Data,
-    lapply(list.files(path = p1_NADP_data_unzipped, full.names = T),
-           function(x) read.csv(x, sep = ',') %>%
-                    # select only cols starting with cat and COMID co
-                    select(COMID | starts_with('CAT')) %>%
-                    # take only COMIDS in drb
-                    filter(COMID %in% p2_drb_comids_all_tribs$comid) %>%
-                    # add year col to ID each dataset - using regex to extract the year between NADP_ and _CONUS
-                    mutate(Year = as.numeric(str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)"))) %>%
-                    # remove year in col name to have all colnames equal across datasets
-                    setNames(gsub('_\\d{4}', '', names(.)))) %>%
-               # rbind the list of cleaned dfs
-      do.call(rbind, .)
-  ),
   
   # Process NHDv2 attributes referenced to cumulative upstream area;
   # returns object target of class "list". List elements for CAT_PPT
