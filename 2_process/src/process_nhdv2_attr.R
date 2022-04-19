@@ -69,6 +69,51 @@ calc_monthly_avg_ppt <- function(ppt_data){
 }
 
 
+calc_avg_NADP <- function(NADP_data){
+  #' 
+  #' @description Function to calculate long-term average NADP for each NHDPlusV2 reach, 
+  #' represented by a unique COMID
+  #'
+  #' @param NADP_data data frame containing annual NADP data for all COMIDs of interest; 
+  #' downloaded from ScienceBase.Note that we are expecting the years represented 
+  #' in NADP_data to span the 30-year period including 1985-2014, and 
+  #' this function will error out if years before 1985 or after 2014 are detected. 
+  #'
+  #' @value returns a data frame with one row per COMID and one column to contain each of 
+  #' long-term monthly averages
+  #'
+  
+  # Check that years represented in NADP column names include the time period we were expecting
+  years <- NADP_data %>%
+    names(.) %>%
+    str_extract(.,"[[\\d]]+") %>%
+    unique(.) %>%
+    as.numeric(.) %>%
+    range(.,na.rm=TRUE)
+  
+  if(years[1] < 1985 | years[2] > 2014){
+    stop(paste("For NADP data, we expected years 1985-2014 but the downloaded data contains other years: ",
+               paste(years,collapse= ' - '),
+               ". In 1_fetch/in/NHDVarsOfInterest.csv, check column sb_item_retrieve for Dataset_name NADP_CAT."))
+  }
+  
+  #Replace -9999 with NA
+  NADP_data[NADP_data == -9999] <- NA
+  
+  # Group columns by constituent and calculate the long-term average deposition
+  # return a data frame with one row per COMID and one column to contain each of 12 long-term monthly averages
+  NADP_data_summarized <- NADP_data %>%
+    pivot_longer(!COMID, names_to = "cons_yr", values_to = "value") %>%
+    mutate(cons = str_replace(cons_yr,"_[[\\d]]+","")) %>%
+    group_by(COMID,cons) %>%
+    summarize(mean_NADP = mean(value, na.rm = TRUE),
+              .groups="drop") %>%
+    pivot_wider(names_from = cons, values_from = mean_NADP)
+  
+  return(NADP_data_summarized)
+}
+
+
 
 process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   #' 
@@ -93,6 +138,13 @@ process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   if(grepl("PPT_TOT",file_path)|grepl("PPT_ACC",file_path)){
     message("Calculating long-term monthly average precipitation from annual data")
     dat <- calc_monthly_avg_ppt(dat)
+  }
+  
+  # For NADP data we want to return the long-term (1984-2014) average 
+  # instead of annual values for each consitituent
+  if(grepl("NADP",file_path)){
+    message("Calculating long-term average NADP from annual data")
+    dat <- calc_avg_NADP(dat)
   }
     
   # Process downloaded data
@@ -157,6 +209,13 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   if(grepl("PPT_CAT",file_path)){
     message("Calculating long-term monthly average precipitation from annual data")
     dat <- calc_monthly_avg_ppt(dat)
+  }
+  
+  # For NADP data we want to return the long-term (1985-2014) average 
+  # instead of annual values
+  if(grepl("NADP",file_path)){
+    message("Calculating long-term average NADP from annual data")
+    dat <- calc_avg_NADP(dat)
   }
   
   # 4. Identify columns of interest

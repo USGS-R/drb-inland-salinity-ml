@@ -271,7 +271,7 @@ p1_targets_list <- list(
       # Parse sb_id from sb link 
       mutate(sb_id = str_extract(Science.Base.Link,"[^/]*$")) %>%
       # Omit NADP and LandCover rows since we are loading those separately
-      filter(!Theme %in% c('Chemical', 'Land Cover')) %>%
+      filter(!Theme %in% c('Land Cover')) %>%
       group_by(sb_id) %>%
       tar_group(),
     iteration = "group"
