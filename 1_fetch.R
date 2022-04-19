@@ -8,13 +8,16 @@ source('1_fetch/src/download_tifs_annual.R')
 source("1_fetch/src/get_gf.R")
 source("1_fetch/src/fetch_sb_data.R")
 source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
+source("1_fetch/src/download_file.R")
+source("1_fetch/src/munge_reach_attr_tbl.R")
 
 p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
   tar_target(
     p1_wqp_data,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds")
+    readRDS(file = "1_fetch/in/DRB.WQdata.rds"),
+    deployment = 'main'
   ),
   
   # Identify NWIS sites with SC data 
@@ -32,10 +35,11 @@ p1_targets_list <- list(
     p1_nwis_sites_daily,
     p1_nwis_sites %>%
       # retain "dv" sites that contain data records after user-specified {earliest_date}
-      filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
-      # for sites with multiple time series (ts_id), 
-      # retain the most recent time series for site_info
-      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
+      filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites), 
+      end_date > earliest_date, begin_date < dummy_date) %>%
+      # for sites with multiple time series (ts_id), retain the most recent time series for site_info
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
+    deployment = 'main'
   ),
   
   # Download NWIS daily data
@@ -52,10 +56,11 @@ p1_targets_list <- list(
     p1_nwis_sites_inst,
     p1_nwis_sites %>%
       # retain "uv" sites that contain data records after user-specified {earliest_date}
-      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
-      # for sites with multiple time series (ts_id), 
-      # retain the most recent time series for site_info
-      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
+      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites), 
+      end_date > earliest_date, begin_date < dummy_date) %>%
+      # for sites with multiple time series (ts_id), retain the most recent time series for site_info
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
+    deployment = 'main'
   ),
   
   # Create log file to track sites with multiple time series
@@ -85,7 +90,8 @@ p1_targets_list <- list(
     # Because of that and since it's small (<700 Kb) I figured it'd be fine to
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
 
   # Unzip zipped shapefile
@@ -96,13 +102,15 @@ p1_targets_list <- list(
     shp_files <- unzip(p1_reaches_shp_zip, exdir = shapedir)
     # return just the .shp file
     grep(".shp", shp_files, value = TRUE)},
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # read shapefile into sf object
   tar_target(
     p1_reaches_sf,
-    st_read(p1_reaches_shp,quiet=TRUE)
+    st_read(p1_reaches_shp,quiet=TRUE),
+    deployment = 'main'
   ),
 
   # Download NHDPlusV2 flowlines for DRB
@@ -112,30 +120,32 @@ p1_targets_list <- list(
     deployment = 'main'
   ),  
   
-  # Download PRMS catchments for region 02
-  ## Downloaded from ScienceBase: 
-  ## https://www.sciencebase.gov/catalog/item/5362b683e4b0c409c6289bf6
+  # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
   tar_target(
-    p1_catchments_shp,
-    get_gf(out_dir = "1_fetch/out/", sb_id = '5362b683e4b0c409c6289bf6', 
-           sb_name = gf_data_select),
+    p1_catchments_edited_gpkg,
+    download_file(GFv1_HRUs_edited_url,
+                  fileout = "1_fetch/out/GFv1_catchments_edited.gpkg", 
+                  mode = "wb", quiet = TRUE),
     format = "file",
     deployment = 'main'
   ),
   
-  # Read PRMS catchment shapefile into sf object and filter to DRB
+  # Read in edited HRU polygons
   tar_target(
-    p1_catchments_sf,
-    {st_read(dsn = p1_catchments_shp,layer="nhru", quiet=TRUE) %>%
-        filter(hru_segment %in% p1_reaches_sf$subsegseg) %>%
-        suppressWarnings()
-      }
-  ),
-  
-  ## Fix issue geometries in p1_catchments_sf by defining a 0 buffer around polylines
-  tar_target(
-    p1_catchments_sf_valid, 
-    st_buffer(p1_catchments_sf,0)
+    p1_catchments_edited_sf,
+    sf::st_read(dsn = p1_catchments_edited_gpkg, layer = "GFv1_catchments_edited", quiet = TRUE) %>%
+      mutate(PRMS_segid_split_col = PRMS_segid) %>%
+      separate(col = PRMS_segid_split_col, sep = '_', into =c('prms_subseg_seg', "PRMS_segment_suffix")) %>%
+      mutate(hru_area_km2 = hru_area_m2/10^6,
+             prms_subseg_seg = case_when(PRMS_segid == '3_1' ~ '3_1',
+                                          PRMS_segid == '3_2' ~ '3_2',
+                                          PRMS_segid == '8_1' ~ '8_1',
+                                          PRMS_segid == '8_2' ~ '8_2',
+                                          PRMS_segid == '51_1' ~ '51_1',
+                                          PRMS_segid == '51_2' ~ '51_2',
+                                          TRUE ~ prms_subseg_seg)) %>%
+      select(-hru_area_m2, -PRMS_segment_suffix),
+    deployment = 'main'
   ),
   
   # Download DRB network attributes
@@ -151,11 +161,10 @@ p1_targets_list <- list(
     deployment = 'main'
   ),
   
-  # Read DRB reach attributes
+  # Read DRB reach attributes with all _1 segments for _2 reaches
   tar_target(
     p1_prms_reach_attr,
-    read_csv(grep("reach_attributes",p1_prms_reach_attr_csvs,value=TRUE),
-             show_col_types = FALSE)
+    munge_reach_attr_table(p1_prms_reach_attr_csvs)
   ),
   
   # Read DRB network adjacency matrix
@@ -179,13 +188,22 @@ p1_targets_list <- list(
     read_csv(p1_sntemp_inputs_outputs_csv,show_col_types = FALSE)
   ),
 
-  # Download NLCD datasets 
+  # Read in all nlcd data from 2001-2019 
+  # Note: NLCD data must already be downloaded locally and manually placed in NLCD_LC_path ('1_fetch/in/NLCD_final/')
   tar_target(
-    p1_NLCD_data_zipped, 
-    download_NHD_data(sb_id = sb_ids_NLCD,
+    p1_NLCD_LC_data,
+    read_subset_LC_data(LC_data_folder_path = NLCD_LC_path,
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID),
+                        Comid_col = 'COMID', NLCD_type = NULL)
+  ),
+    
+  # Download other NLCD 2011 datasets 
+  tar_target(
+    p1_NLCD2011_data_zipped, 
+    download_NHD_data(sb_id = sb_ids_NLCD2011,
                       out_path = '1_fetch/out',
-                      downloaded_data_folder_name = NLCD_folders,
-                      output_data_parent_folder = 'NLCD_LC_Data'),
+                      downloaded_data_folder_name = NLCD2011_folders,
+                      output_data_parent_folder = 'NLCD_LC_2011_Data'),
     format = 'file',
     deployment = 'main'
   ),
@@ -193,8 +211,8 @@ p1_targets_list <- list(
   # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
   tar_target(
-    p1_NLCD_data_unzipped,
-    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD_data_zipped,
+    p1_NLCD2011_data_unzipped,
+    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
                    create_unzip_subfolder = T),
     format = 'file'
   ),
@@ -203,11 +221,9 @@ p1_targets_list <- list(
   ## Note that this returns a vector of dfs if more than one NLCD data is in
   ## p1_NLCD_data_unzipped
   tar_target(
-    p1_NLCD_data,
-    read_subset_LC_data(LC_data_folder_path = p1_NLCD_data_unzipped, 
-                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% 
-                          st_drop_geometry() %>% 
-                          select(COMID), 
+    p1_NLCD2011_data,
+    read_subset_LC_data(LC_data_folder_path = p1_NLCD2011_data_unzipped, 
+                        Comids_in_AOI_df = p1_nhdv2reaches_sf %>% st_drop_geometry() %>% select(COMID), 
                         Comid_col = 'COMID')
   ),
 
@@ -220,9 +236,35 @@ p1_targets_list <- list(
                   filename = 'DRB_Historical_Reconstruction_1680-2010.zip',
                   download_path = '1_fetch/out',
                   ## Subset downloaded tifs to only process the  years that are relevant model
-                  year = c('2000','1990','1980','1970','1960'),
-                  name_unzip_folder = NULL), 
+                  year = FORESCE_years,
+                  name_unzip_folder = NULL,
+                  overwrite_file = TRUE,
+                  name = FORESCE_years), 
     format = 'file',
+    deployment = 'main'
+  ),
+  
+  #Targets for the land cover reclassification .csv files
+  tar_target(
+    p1_NLCD_reclass_table_csv, 
+    '1_fetch/in/Legend_NLCD_Land_Cover.csv',
+    format = 'file',
+    deployment = 'main'
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table_csv, 
+    '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
+    format = 'file',
+    deployment = 'main'
+  ),
+  tar_target(
+    p1_NLCD_reclass_table, 
+    read_csv(p1_NLCD_reclass_table_csv, show_col_types = FALSE),
+    deployment = 'main'
+  ),
+  tar_target(
+    p1_FORESCE_reclass_table, 
+    read_csv(p1_FORESCE_reclass_table_csv, show_col_types = FALSE),
     deployment = 'main'
   ),
   
@@ -230,14 +272,14 @@ p1_targets_list <- list(
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
   tar_target(
-    p1_rdsalt, download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
-                             filename = '1992_2015.zip',
-                             download_path = '1_fetch/out',
-                             overwrite_file = T,
-                             ## no year subsetting here as all years with 
-                             ## rdsalt data are relevant here
-                             year = NULL,
-                             name_unzip_folder = 'rd_salt'), 
+    p1_rdsalt, 
+    download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
+                  filename = '1992_2015.zip',
+                  download_path = '1_fetch/out',
+                  overwrite_file = T,
+                  ## no year subsetting here as all years with rdsalt data are relevant here
+                  year = NULL,
+                  name_unzip_folder = 'rd_salt'),
     format = 'file',
     deployment = 'main'
   ),
@@ -246,7 +288,8 @@ p1_targets_list <- list(
   tar_target(
     p1_vars_of_interest_csv,
     '1_fetch/in/NHDVarsOfInterest.csv',
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
 
   # Variables from the Wieczorek dataset that are of interest 
@@ -261,7 +304,8 @@ p1_targets_list <- list(
       filter(!Theme %in% c('Chemical', 'Land Cover')) %>%
       group_by(sb_id) %>%
       tar_group(),
-    iteration = "group"
+    iteration = "group",
+    deployment = 'main'
   ),
 
   # Map over variables of interest to download NHDv2 attribute data from ScienceBase
@@ -307,13 +351,12 @@ p1_targets_list <- list(
   # Unzip monthly natural baseflow file
   tar_target(
     p1_natural_baseflow_csv,
-    {
-      unzip(zipfile=p1_natural_baseflow_zip,
-            exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-      file.path(dirname(p1_natural_baseflow_zip), 
-                list.files(path = dirname(p1_natural_baseflow_zip),
-                           pattern = "*baseflow.*.csv"))
-    },
+    {unzip(zipfile=p1_natural_baseflow_zip,
+           exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+     file.path(dirname(p1_natural_baseflow_zip), 
+               list.files(path = dirname(p1_natural_baseflow_zip),
+                          pattern = "*baseflow.*.csv"))
+      },
     format = "file"
   )
 )

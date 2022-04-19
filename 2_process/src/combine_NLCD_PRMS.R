@@ -25,17 +25,21 @@ AOI_LC_w_area <- function(NLCD_LC_df, area_att, aoi_comids_df){
   }
 
 ###----
-# Estimate prop of LC coverage at PRMS catchment ('CAT') scale
-proportion_lc_by_prms <- function(NLCD_LC_df_w_area){
+
+# Estimate prop of LC coverage at PRMS catchment scale
+proportion_lc_by_prms <- function(NLCD_LC_df_w_area, area_col, length_col = 'LENGTHKM', catchment_att = 'CAT', remove_NODATA_cols = TRUE){
 
 #' @description This function takes the consolidated df from AOI_LC_w_area() and calculated the proportion share of each LC class at the PRMS segid scale
 #' @param NLCD_LC_df_w_area df output of AOI_LC_w_area that has LC data per COMID & PRMS id and area in (km2)
-#' @example proportion_lc_by_prms(NLCD_LC_df_w_area = p2_LC_w_catchment_area)
+#' @param area_col str col with catchment ('AREASQKM') or total upstream catchment area ('TOTDASQKM')
+#' @param length_col str name of col with length of catchment area ('LENGTHKM'). Default 'LENGTHKM'
+#' @param @param catchment_att Specifies the catchment attribute to subset to. Must be either 'CAT', "ACC", 'TOT'. Default = "CAT"
+#' @example proportion_lc_by_prms(NLCD_LC_df_w_area = p2_NLCD_LC_w_catchment_area, area_col = 'AREASQKM')
 
   area_df <- NLCD_LC_df_w_area %>%
-    mutate(AREASQKM_approx = case_when(AREASQKM == 0 ~ LENGTHKM^2, TRUE  ~ AREASQKM)) %>% 
+    mutate(AREASQKM_approx = case_when(.data[[area_col]] == 0 ~ .data[[length_col]]^2, TRUE  ~ .data[[area_col]])) %>% 
     # multiply COMID area by the LC percent for all the cols that start with 'CAT" - unit km2
-    mutate(across(starts_with('CAT'),~(.x/100)*AREASQKM_approx,.names="AREA_{col}")) %>%
+    mutate(across(starts_with(catchment_att),~(.x/100)*AREASQKM_approx,.names="AREA_{col}")) %>%
     # aggregate to PRMS scale through group_by()
     group_by(PRMS_segid) %>%
     # summarize group by at PRMS catchment scale
@@ -43,17 +47,16 @@ proportion_lc_by_prms <- function(NLCD_LC_df_w_area){
       # Sum to calculate total area of the PRMS  catchment - unit km2
       across(AREASQKM_approx, sum, .names='AREASQKM_PRMS'),
       # Sum to calculate  LC area at the PRMS catchment scale per LC class
-      across(starts_with(paste0('AREA_','CAT')), sum, .names = 'PRMS_{col}'),
+      across(starts_with(paste0('AREA_',catchment_att)), sum, .names = 'PRMS_{col}'),
       # calculate proportion coverage of specified LC class in the entire PRMS catchment - proportion
-      across(starts_with(paste0('PRMS_AREA_','CAT')), ~(.x/AREASQKM_PRMS),
+      across(starts_with(paste0('PRMS_AREA_',catchment_att)), ~(.x/AREASQKM_PRMS),
              .names="PROP_{col}"),
       # round the new cols 
-      across(starts_with(c('PROP','PRMS')), round, 2), 
+      across(starts_with(c('PROP','PRMS')), round, 4), 
     .groups="drop") %>% 
-    select(-starts_with('PRMS_AREA_CAT'))
+    select(-starts_with(paste0('PRMS_AREA_',catchment_att))) %>% 
+    {if(remove_NODATA_cols == TRUE) select(., -contains('NODATA')) else . }
 
   return(area_df)
 
 }
-
-
