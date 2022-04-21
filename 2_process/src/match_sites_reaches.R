@@ -54,7 +54,7 @@ get_site_flowlines <- function(reach_sf, sites, sites_crs, max_matches = 1, sear
   flowline_indices <- nhdplusTools::get_flowline_index(flines = reaches_nhd_fields,
                                                        points = sites_sf,
                                                        max_matches = max_matches,
-                                                       search_radius = search_radius*2,
+                                                       search_radius = units::set_units(search_radius*2, "m"),
                                                        precision = 1) %>%
     select(COMID, id, offset) %>%
     rename(subsegid = COMID, bird_dist_to_subseg_m = offset) %>% 
