@@ -315,7 +315,14 @@ p2_targets_list <- list(
           .groups = 'drop_last') %>%
         drop_na() %>% 
         rename(., PRMS_segid = PRMS_segid_main) %>%
-        ungroup()
+        ungroup() %>%
+        # Add prms_subseg_seg
+        right_join(x %>% select(PRMS_segid, prms_subseg_seg), 
+                   by = c('PRMS_segid' = 'PRMS_segid')) %>%
+        # Reorder the columns
+        select(order(colnames(.))) %>%
+        # Reorder the rows
+        arrange(PRMS_segid)
       )}
   ),
   
