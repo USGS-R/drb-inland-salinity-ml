@@ -335,7 +335,8 @@ p1_targets_list <- list(
     }
   ),
   
-  #Load flow gages that are active in DRB
+#Load flow gages that are active in DRB
+#DRBActiveGages_2021Apr.csv was manually downloaded from internal Sharepoint folder and placed in 1_fetch/in/.
   tar_target(
     p1_flow_sites,
     {
