@@ -45,7 +45,7 @@ p2_targets_list <- list(
     aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")
   ),
   
-  # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
+  # Combine 1) daily SC data and 2) instantaneous SC data that has been aggregated to daily 
   tar_target(
     p2_daily_combined,
     bind_rows(p1_daily_data, p2_inst_data_daily)
