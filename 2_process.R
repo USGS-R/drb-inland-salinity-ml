@@ -442,6 +442,8 @@ p2_targets_list <- list(
   ),
   
   #Get candidate sampling segments with road density >= 6 or NPDES >= 5
+  #These values are based on Martha's synoptic sites, which do not sample any reaches with road density >= 6, 
+  #and sample few sites with NPDES >= 5.
   tar_target(
     p2_candidate_syn_sites,
     {PRMS_segs <- c(filter(p2_nhdv2_attr_refined, TOT_TOTAL_ROAD_DENS >= 6) %>% 
