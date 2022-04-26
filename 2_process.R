@@ -460,8 +460,9 @@ p2_targets_list <- list(
                   select(PRMS_segid, TOT_TOTAL_ROAD_DENS, CAT_NPDES_MAJ_sum), 
                 by = c("subsegid" = "PRMS_segid"))
     
-    write_csv(syn_sites, file = '2022_DRBCandidateSynopticSites.csv')
-    '2022_DRBCandidateSynopticSites.csv'
+    syn_sites_fileout <- '2_process/out/2022_DRBCandidateSynopticSites.csv'
+    write_csv(syn_sites, file = syn_sites_fileout)
+    syn_sites_fileout
     },
     format = "file"
   )
