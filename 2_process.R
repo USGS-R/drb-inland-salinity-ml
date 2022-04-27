@@ -203,14 +203,20 @@ p2_targets_list <- list(
   
   ## Proportion calculation for PRMS_segid that use fixed nhd-based catchment polygons
   tar_target(
-    p2_FORESCE_LC_per_catchment_fixed,
+    p2_FORESCE_LC_per_catchment_nhd_dissolve,
     {lapply(p1_FORESCE_backcasted_LC, function(x) raster_to_catchment_polygons(
       ## using dissolved catchment polygons here
       polygon_sf = p2_nhd_catchments_dissolved_sf,
       raster = x, categorical_raster = TRUE,
       raster_summary_fun = NULL,
       new_cols_prefix = 'lcClass',
-      fill = 0))
+      fill = 0) %>%
+        #Add column of prms_subseg_seg to match p2_FORESCE_LC_per_catchment
+        left_join(., 
+                  p1_catchments_edited_sf %>% 
+                    select(PRMS_segid, prms_subseg_seg) %>% 
+                    sf::st_drop_geometry(), 'PRMS_segid')
+        )
     }
   ), 
   
@@ -220,14 +226,17 @@ p2_targets_list <- list(
 
   ## reclassifying on original subsetted FORESCE LC proportions datasets
   tar_target(
-    p2_FORESCE_LC_per_catchment_reclass_correct_cat,
+    p2_FORESCE_LC_per_catchment_PRMS_reclass_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment,
                  .y = FORESCE_years, 
                  .f = ~{reclassify_land_cover(land_cover_df = .x,
                                               reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              pivot_longer_contains = 'lcClass') %>% 
+                                              pivot_longer_contains = 'lcClass', 
+                                              proportion_col_prefix = 'prop_lcClass', 
+                                              hru_area_colname = hru_area_km2, 
+                                              remove_NA_cols = TRUE) %>% 
                      
                        # See documentation in function
                      ## group by with both hru and prms because we need prms_subseg_seg to run the recursive function for upstream catchments
@@ -236,27 +245,32 @@ p2_targets_list <- list(
                                                 hru_area_colname = hru_area_km2,
                                                 new_area_colname = total_PRMS_area) %>%
                      ## Adding Year column
-                     mutate(Year = .y)}
+                     mutate(Year = .y) %>% 
+                     ## Reorder the land cover columns
+                     select(order(colnames(.)))}
                  )
     }
   ),
   
   ## Reclassifying on fixed FORESCE LC proportions datasets  + cleaning/munging for rbind 
   tar_target(
-    p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
-    {purrr::map2(.x = p2_FORESCE_LC_per_catchment_fixed,
+    p2_FORESCE_LC_per_catchment_nhd_dissolve_reclass_cat,
+    {purrr::map2(.x = p2_FORESCE_LC_per_catchment_nhd_dissolve,
                  .y = FORESCE_years, 
                  .f = ~{reclassify_land_cover(land_cover_df = .x,
                                               reclassify_table = p1_FORESCE_reclass_table,
                                               reclassify_table_lc_col = 'FORESCE_value',
                                               reclassify_table_reclass_col = 'Reclassify_match',
-                                              pivot_longer_contains = 'lcClass') %>%
-                     # ## renaming area col so that it can be rbind-ed with p2_FORESCE_LC_per_catchment_correct_reclass_cat
-                     # rename(total_PRMS_area = areasqkm) %>% 
+                                              pivot_longer_contains = 'lcClass',
+                                              proportion_col_prefix = 'prop_lcClass',
+                                              hru_area_colname = total_PRMS_area,
+                                              remove_NA_cols = TRUE) %>%
                      ## rearranging cols
                      select(PRMS_segid, everything(), -ID) %>% 
                      ## Adding Year column
-                     mutate(Year = .y)}
+                     mutate(Year = .y) %>%
+                     ## Reorder the land cover columns
+                     select(order(colnames(.)))}
     )
     }
   ),
@@ -264,8 +278,8 @@ p2_targets_list <- list(
   ## merge correct and fixed p2_FORESCE_LC_per_catchments_reclass_cat
   tar_target(
     p2_FORESCE_LC_per_catchment_reclass_cat,
-    {map2(.x = p2_FORESCE_LC_per_catchment_reclass_correct_cat,
-          .y = p2_FORESCE_LC_per_catchment_fixed_reclass_cat,
+    {map2(.x = p2_FORESCE_LC_per_catchment_PRMS_reclass_cat,
+          .y = p2_FORESCE_LC_per_catchment_nhd_dissolve_reclass_cat,
           .f = ~rbind(.x, .y))}
   ),
   
@@ -300,7 +314,15 @@ p2_targets_list <- list(
           across(starts_with('prop'), ~(sum((.x*total_PRMS_area)/total_upstream_PRMS_area))),
           .groups = 'drop_last') %>%
         drop_na() %>% 
-        rename(., PRMS_segid = PRMS_segid_main)
+        rename(., PRMS_segid = PRMS_segid_main) %>%
+        ungroup() %>%
+        # Add prms_subseg_seg
+        right_join(x %>% select(PRMS_segid, prms_subseg_seg), 
+                   by = c('PRMS_segid' = 'PRMS_segid')) %>%
+        # Reorder the columns
+        select(order(colnames(.))) %>%
+        # Reorder the rows
+        arrange(PRMS_segid)
       )}
   ),
   
@@ -396,7 +418,7 @@ p2_targets_list <- list(
     p2_nhdv2_attr,
     create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
   ),
-
+  
   #Refine the attributes that are used for modeling
   tar_target(
     p2_nhdv2_attr_refined,
@@ -408,10 +430,9 @@ p2_targets_list <- list(
                     #covered by physiographic regions
                     #RUN7100 seems like it is by HUC02 instead of reach.
                     #RFACT is perfectly correlated with RF7100
-                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))
+                    drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))    
   )
 )
-
 
 
 
