@@ -82,6 +82,7 @@ p3_targets_list <- list(
     plot_nhdv2_attr(attr_data = p2_nhdv2_attr_refined %>% select(-hru_segment),
                     network_geometry = p1_reaches_sf,
                     file_path = "3_visualize/out/nhdv2_attr_png/refined"),
+  ),
   # with synoptic sampling sites
   tar_target(
     p3_nhdv2_attr_syn_sites_png,
