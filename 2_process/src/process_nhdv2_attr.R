@@ -90,7 +90,7 @@ calc_avg_NADP <- function(NADP_data){
     unique(.) %>%
     as.numeric(.) %>%
     range(.,na.rm=TRUE)
-  
+  # Error out if year is not in the 30 year period between 1985 and 2014.  
   if(years[1] < 1985 | years[2] > 2014){
     stop(paste("For NADP data, we expected years 1985-2014 but the downloaded data contains other years: ",
                paste(years,collapse= ' - '),
