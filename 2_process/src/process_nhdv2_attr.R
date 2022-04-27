@@ -40,6 +40,11 @@ calc_monthly_avg_ppt <- function(ppt_data){
   #' @value returns a data frame with one row per COMID and one column to contain each of 12 long-term monthly averages
   #'
   
+  #Replace -9999 with NA
+  if(any(ppt_data == -9999)){
+    ppt_data[ppt_data == -9999] <- NA_real_
+  }
+  
   # Check that years represented in PPT column names include the time period we were expecting
   years <- ppt_data %>%
     names(.) %>%
@@ -83,6 +88,11 @@ calc_avg_NADP <- function(NADP_data){
   #' long-term monthly averages
   #'
   
+  #Replace -9999 with NA
+  if(any(NADP_data == -9999)){
+    NADP_data[NADP_data == -9999] <- NA_real_
+  }
+  
   # Check that years represented in NADP column names include the time period we were expecting
   years <- NADP_data %>%
     names(.) %>%
@@ -95,11 +105,6 @@ calc_avg_NADP <- function(NADP_data){
     stop(paste("For NADP data, we expected years 1985-2014 but the downloaded data contains other years: ",
                paste(years,collapse= ' - '),
                ". In 1_fetch/in/NHDVarsOfInterest.csv, check column sb_item_retrieve for Dataset_name NADP."))
-  }
-  
-  #Replace -9999 with NA
-  if(any(NADP_data == -9999)){
-    NADP_data[NADP_data == -9999] <- NA
   }
   
   # Group columns by constituent and calculate the long-term average deposition
