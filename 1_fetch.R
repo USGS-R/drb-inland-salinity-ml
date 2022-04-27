@@ -33,7 +33,8 @@ p1_targets_list <- list(
     p1_nwis_sites_daily,
     p1_nwis_sites %>%
       # retain "dv" sites that contain data records after user-specified {earliest_date}
-      filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
+      filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites), 
+      end_date > earliest_date, begin_date < dummy_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
   ),
@@ -50,7 +51,8 @@ p1_targets_list <- list(
     p1_nwis_sites_inst,
     p1_nwis_sites %>%
       # retain "uv" sites that contain data records after user-specified {earliest_date}
-      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites),end_date > earliest_date) %>%
+      filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites), 
+      end_date > earliest_date, begin_date < dummy_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
   ),
@@ -331,6 +333,20 @@ p1_targets_list <- list(
       }
       readxl::read_xlsx('1_fetch/in/DRB_2021_synoptic_sites_by_transect_20210819.xlsx', 
                         sheet = 'Clean_NtoS') %>%
+        rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
+    }
+  ),
+  
+#Load flow gages that are active in DRB
+#DRBActiveGages_2021Apr.csv was manually downloaded from internal Sharepoint folder and placed in 1_fetch/in/.
+  tar_target(
+    p1_flow_sites,
+    {
+      if(!('DRBActiveGages_2021Apr.csv' %in% 
+           list.files('1_fetch/in/'))){
+        stop('Please add DRBActiveGages_2021Apr.csv to 1_fetch/in')
+      }
+      read_csv('1_fetch/in/DRBActiveGages_2021Apr.csv', show_col_types = FALSE) %>%
         rename(site_id = site_no, lat = dec_lat_va, lon = dec_long_va)
     }
   )
