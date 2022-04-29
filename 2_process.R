@@ -42,7 +42,8 @@ p2_targets_list <- list(
   # Aggregate instantaneous SC data to daily min/mean/max
   tar_target(
     p2_inst_data_daily,
-    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, output_tz="America/New_York")
+    aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, 
+                            output_tz="America/New_York")
   ),
   
   # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
@@ -96,8 +97,8 @@ p2_targets_list <- list(
   tar_target(
     p2_NLCD_LC_w_catchment_area,
     AOI_LC_w_area(area_att = p1_nhdv2reaches_sf %>% 
-                                                st_drop_geometry() %>% 
-                                                select(COMID, AREASQKM,TOTDASQKM, LENGTHKM),
+                             st_drop_geometry() %>% 
+                             select(COMID, AREASQKM,TOTDASQKM, LENGTHKM),
                   NLCD_LC_df = p1_NLCD_LC_data,
                   aoi_comids_df = p2_drb_comids_all_tribs)
   ),
@@ -252,7 +253,7 @@ p2_targets_list <- list(
     }
   ),
   
-  ## Reclassifying on fixed FORESCE LC proportions datasets  + cleaning/munging for rbind 
+  ## Reclassifying on fixed FORESCE LC proportions datasets  + cleaning/munging for rbind
   tar_target(
     p2_FORESCE_LC_per_catchment_nhd_dissolve_reclass_cat,
     {purrr::map2(.x = p2_FORESCE_LC_per_catchment_nhd_dissolve,
@@ -339,7 +340,8 @@ p2_targets_list <- list(
     }
   ),
   
-  # Combine rd salt targets - from list of dfs to single df with added columns that summarize salt accumulation across all years. 
+  # Combine rd salt targets - from list of dfs to single df with added columns 
+  # that summarize salt accumulation across all years. 
   tar_target(
     p2_rdsalt_per_catchment_allyrs,
     # Reduce can iterate through elements in a list 1 after another 
@@ -350,7 +352,8 @@ p2_targets_list <- list(
       # Calculate prop of catchment rd salt acc across entire basin
       mutate(rd_salt_all_years_prop_drb = round((rd_salt_all_years/sum(rd_salt_all_years)),8)) %>% 
       # Remove annual rd_saltXYr cols
-      select(-starts_with('rd_sltX')) %>% arrange(desc(rd_salt_all_years_prop_drb))
+      select(-starts_with('rd_sltX')) %>% 
+      arrange(desc(rd_salt_all_years_prop_drb))
   ),
 
   # Filter discrete samples from sites thought to be influenced by tidal extent
@@ -363,7 +366,8 @@ p2_targets_list <- list(
   tar_target(
     p2_site_list_nontidal_csv,
     create_site_list_nontidal(p2_wqp_SC_filtered,p1_nwis_sites,p1_daily_data,p1_inst_data,
-                              hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,"2_process/out/DRB_SC_sitelist_nontidal.csv"),
+                              hucs=drb_huc8s,crs_out="NAD83",p2_sites_w_segs,
+                              "2_process/out/DRB_SC_sitelist_nontidal.csv"),
     format = "file"
   ),
   
@@ -450,9 +454,3 @@ p2_targets_list <- list(
                     drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))    
   )
 )
-
-
-
-
-
-
