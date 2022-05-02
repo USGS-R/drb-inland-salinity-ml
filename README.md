@@ -1,6 +1,10 @@
 # drb-inland-salinity-ml
 This repository contains a pipeline for data gathering, processing, modeling, and visualizing results for machine learning models that predict salinity in inland reaches of the Delaware River Basin (DRB).
 
+# Building the pipeline with S3 storage
+To build the pipeline with the S3 storage, you will need to provide AWS credentials. We have been doing this using the [`saml2aws` tool](https://github.com/Versent/saml2aws). See also @amsnyder's [post on this](https://github.com/amsnyder/s3_demo/blob/main/usgs_access.md). Note - when you do `saml2aws login` make sure you choose the `gs-chs-wma-dev` option because that is where the S3 bucket is. With those credentials in the `~/.aws/credentials` file, R should be able to use them to upload/download to the inland salinity bucket.
+
+
 # References
 
 The study area segment shapefiles are from:
