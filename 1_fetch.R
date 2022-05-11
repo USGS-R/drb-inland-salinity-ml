@@ -11,6 +11,12 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 
+# Note about 'local' targets:
+# The 'local' targets in this file are such b/c the respective fxn
+# does not return a single path and therefore targets cannot upload
+# to S3 and throws an error.
+# See https://github.com/USGS-R/drb-inland-salinity-ml/issues/152
+
 p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
@@ -150,6 +156,7 @@ p1_targets_list <- list(
   
   # Download DRB network attributes
   # Retrieved from: https://www.sciencebase.gov/catalog/item/5f6a289982ce38aaa2449135
+  # see note at top of file about 'local' targets
   tar_target(
     p1_prms_reach_attr_csvs,
     download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
@@ -199,6 +206,7 @@ p1_targets_list <- list(
   ),
     
   # Download other NLCD 2011 datasets 
+  # see note at top of file about 'local' targets
   tar_target(
     p1_NLCD2011_data_zipped, 
     download_NHD_data(sb_id = sb_ids_NLCD2011,
@@ -212,6 +220,7 @@ p1_targets_list <- list(
   
   # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
+  # see note at top of file about 'local' targets
   tar_target(
     p1_NLCD2011_data_unzipped,
     unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
@@ -233,6 +242,7 @@ p1_targets_list <- list(
   # Downlaod FORE-SCE backcasted LC tif files and subset to years we want
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
   ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
+  # see note at top of file about 'local' targets
   tar_target(
     p1_FORESCE_backcasted_LC, 
     download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
@@ -275,6 +285,7 @@ p1_targets_list <- list(
   # Downlaod Road Salt accumulation data for the drb
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
+  # see note at top of file about 'local' targets
   tar_target(
     p1_rdsalt, 
     download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
@@ -326,6 +337,7 @@ p1_targets_list <- list(
   
   # # download NADP data
   # ## source: https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
+  # see note at top of file about 'local' targets
   tar_target(
     p1_NADP_data_zipped,
     download_NHD_data(sb_id = NADP_sb_id,
@@ -337,6 +349,7 @@ p1_targets_list <- list(
   ),
 
   # unzip NADP data
+  # see note at top of file about 'local' targets
   tar_target(
     p1_NADP_data_unzipped,
     unzip_NHD_data(p1_NADP_data_zipped),
@@ -356,6 +369,7 @@ p1_targets_list <- list(
   ),
   
   # Unzip monthly natural baseflow file
+  # see note at top of file about 'local' targets
   tar_target(
     p1_natural_baseflow_csv,
     {unzip(zipfile=p1_natural_baseflow_zip,

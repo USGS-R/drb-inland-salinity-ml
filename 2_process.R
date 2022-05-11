@@ -21,6 +21,8 @@ p2_targets_list <- list(
   ),
   
   # Subset discrete SC data from harmonized WQP
+  # this is a 'local' target so making p3_wqp_ind_csv works
+  # see https://github.com/USGS-R/drb-inland-salinity-ml/issues/153
   tar_target(
     p2_wqp_SC_data,
     subset_wqp_SC_data(p2_filtered_wqp_data, omit_dups = TRUE),

@@ -9,6 +9,8 @@ source("3_visualize/src/summarize_nhdv2_attr.R")
 p3_targets_list <- list(
   
   # Plot daily data
+  # this is a 'local' target so making p3_daily_timeseries_ind_csv works
+  # see https://github.com/USGS-R/drb-inland-salinity-ml/issues/153
   tar_target(
     p3_daily_timeseries_png,
     plot_daily_data(sprintf("3_visualize/out/daily_timeseries_png/daily_data_%s.png",
@@ -20,6 +22,8 @@ p3_targets_list <- list(
   ),
   
   # Plot instantaneous data (hourly averages)
+  # this is a 'local' target so making p3_inst_timeseries_ind_csv works
+  # see https://github.com/USGS-R/drb-inland-salinity-ml/issues/153
   tar_target(
     p3_hourly_timeseries_png,
     plot_inst_data(sprintf("3_visualize/out/hourly_timeseries_png/hourly_data_%s.png",
@@ -91,6 +95,8 @@ p3_targets_list <- list(
   ),
   
   # Render data summary report (note that tar_render returns a target with format="file") 
+  # note - this is commented out b/c I'm getting an error 
+  # see https://github.com/USGS-R/drb-inland-salinity-ml/issues/154
   #tarchetypes::tar_render(p3_SC_report, 
                           #"3_visualize/src/report-wqp-salinity-data.Rmd",
                           #output_dir = "3_visualize/out",
@@ -98,6 +104,7 @@ p3_targets_list <- list(
   #),
   
   # Plot distribution of NHDv2 attribute variables across the PRMS network
+  # see note at top of 1_fetch.R re why this is a 'local' target
   tar_target(
     p3_nhdv2_attr_png,
     plot_nhdv2_attr(attr_data = p2_nhdv2_attr,
@@ -106,7 +113,9 @@ p3_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
+
   # refined
+  # see note at top of 1_fetch.R re why this is a 'local' target
   tar_target(
     p3_nhdv2_attr_refined_png,
     plot_nhdv2_attr(attr_data = p2_nhdv2_attr_refined %>% select(-hru_segment),
