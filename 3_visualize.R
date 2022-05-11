@@ -15,7 +15,8 @@ p3_targets_list <- list(
                             unique(p1_daily_data$site_no)),
                     p1_daily_data),
     format = "file",
-    pattern = map(p1_daily_data)
+    pattern = map(p1_daily_data),
+    repository = 'local'
   ),
   
   # Plot instantaneous data (hourly averages)
@@ -25,7 +26,8 @@ p3_targets_list <- list(
                            unique(p2_inst_data_hourly$site_no)),
                    p2_inst_data_hourly),
     format = "file",
-    pattern = map(p2_inst_data_hourly)
+    pattern = map(p2_inst_data_hourly),
+    repository = 'local'
   ),
   
   # Create and save log file containing data availability summary
@@ -89,11 +91,11 @@ p3_targets_list <- list(
   ),
   
   # Render data summary report (note that tar_render returns a target with format="file") 
-  tarchetypes::tar_render(p3_SC_report, 
-                          "3_visualize/src/report-wqp-salinity-data.Rmd",
-                          output_dir = "3_visualize/out",
-                          deployment = 'main'
-  ),
+  #tarchetypes::tar_render(p3_SC_report, 
+                          #"3_visualize/src/report-wqp-salinity-data.Rmd",
+                          #output_dir = "3_visualize/out",
+                          #deployment = 'main'
+  #),
   
   # Plot distribution of NHDv2 attribute variables across the PRMS network
   tar_target(
@@ -101,7 +103,8 @@ p3_targets_list <- list(
     plot_nhdv2_attr(attr_data = p2_nhdv2_attr,
                     network_geometry = p1_reaches_sf,
                     file_path = "3_visualize/out/nhdv2_attr_png"),
-    format = "file"
+    format = "file",
+    repository = 'local'
   ),
   # refined
   tar_target(
@@ -109,7 +112,8 @@ p3_targets_list <- list(
     plot_nhdv2_attr(attr_data = p2_nhdv2_attr_refined %>% select(-hru_segment),
                     network_geometry = p1_reaches_sf,
                     file_path = "3_visualize/out/nhdv2_attr_png/refined"),
-    format = "file"
+    format = "file",
+    repository = 'local'
   ),
   
   # Create and save a summary table that describes variation in the NHDv2 attribute variables across the PRMS network

@@ -158,7 +158,8 @@ p1_targets_list <- list(
                                    "sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
     format="file",
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   # Read DRB reach attributes with all _1 segments for _2 reaches
@@ -205,7 +206,8 @@ p1_targets_list <- list(
                       downloaded_data_folder_name = NLCD2011_folders,
                       output_data_parent_folder = 'NLCD_LC_2011_Data'),
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   # Unzip all NLCD downloaded datasets 
@@ -214,7 +216,8 @@ p1_targets_list <- list(
     p1_NLCD2011_data_unzipped,
     unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
                    create_unzip_subfolder = T),
-    format = 'file'
+    format = 'file',
+    repository = 'local'
   ),
   
   # Read in NLCD datasets and subset by comid in DRB
@@ -241,7 +244,8 @@ p1_targets_list <- list(
                   overwrite_file = TRUE,
                   name = FORESCE_years), 
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   #Targets for the land cover reclassification .csv files
@@ -281,7 +285,8 @@ p1_targets_list <- list(
                   year = NULL,
                   name_unzip_folder = 'rd_salt'),
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
@@ -327,14 +332,16 @@ p1_targets_list <- list(
                       out_path = '1_fetch/out',
                       downloaded_data_folder_name = 'NADP_Data'),
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
 
   # unzip NADP data
   tar_target(
     p1_NADP_data_unzipped,
     unzip_NHD_data(p1_NADP_data_zipped),
-    format = 'file'
+    format = 'file',
+    repository = 'local'
   ),
   
   # Download monthly natural baseflow for the DRB
@@ -357,7 +364,8 @@ p1_targets_list <- list(
                list.files(path = dirname(p1_natural_baseflow_zip),
                           pattern = "*baseflow.*.csv"))
       },
-    format = "file"
+    format = "file",
+    repository = 'local'
   )
 )
   
