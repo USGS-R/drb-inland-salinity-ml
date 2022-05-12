@@ -16,7 +16,7 @@ tar_option_set(packages = c("tidyverse", "lubridate",
 source("1_fetch.R")
 source("2_process.R")
 source("3_visualize.R")
-#source("4_predict.R")
+source("4_predict.R")
 
 dir.create("1_fetch/out/", showWarnings = FALSE)
 dir.create("2_process/out/", showWarnings = FALSE)
@@ -30,6 +30,7 @@ dir.create("4_predict/out/",showWarnings = FALSE)
 dir.create("4_predict/out/Boruta",showWarnings = FALSE)
 dir.create("4_predict/out/vip",showWarnings = FALSE)
 dir.create("4_predict/out/hypopt",showWarnings = FALSE)
+dir.create("4_predict/out/pred_obs",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -142,7 +143,6 @@ Boruta_cores <- 35
 cv_folds <- 5
 
 # Return the complete list of targets
-c(p1_targets_list, p2_targets_list, p3_targets_list)
-  #, p4_targets_list)
+c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list)
 
 

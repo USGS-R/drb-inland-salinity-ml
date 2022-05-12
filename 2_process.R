@@ -453,5 +453,6 @@ p2_targets_list <- list(
   # p2_PRMS_NLCD_lc_proportions_reclass_cat
   # #Can use for temperature vars, but doesn't cover full date range
   # p1_sntemp_inputs_outputs %>% select(seg_id_nat, date)
+  #gridMET data
   
 )
