@@ -5,7 +5,6 @@ clean_dflist_element <- function(x, area_col, area_unit, cols_to_remove, prefix 
   #' @param area_col Col name for area of area column.   
   #' @param area_unit unit of the area col. Default = km2. Options for area metrics (m2, km2, hectares, acres). If other, please edit function and add this case.
   #' @param columns_to_remove  Name of 1 or several columns that should be removed for the final df. Quotes needed. Default Null.
-  
   #' @example clean_dflist_element(lulc_dfs[[1]]) 
   #' @value cleaned df 
   
@@ -22,7 +21,7 @@ clean_dflist_element <- function(x, area_col, area_unit, cols_to_remove, prefix 
     # reorder columns PRMS_segid and Year
     select(PRMS_segid, PRMS_area_km2, Year, everything())
   
-  ## adding prefix
+  ## adding prefix to prop columns
   if(!is.null(prefix)){
   colnames(x)[startsWith(colnames(x), prefix =  'prop')] <- paste(prefix, colnames(x)[startsWith(colnames(x), prefix =  'prop')], sep = '_') 
   }

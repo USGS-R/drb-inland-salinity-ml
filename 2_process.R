@@ -334,9 +334,9 @@ p2_targets_list <- list(
     p2_all_lulc_data_cat,
     {rbind(
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_cat,
-                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'cat'),
+                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'CAT'),
       clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_cat,
-                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'cat'))
+                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'CAT'))
       }
   ),
   
@@ -346,9 +346,9 @@ p2_targets_list <- list(
     p2_all_lulc_data_tot,
     {rbind(
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_tot,
-                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_upstream_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'tot'),
+                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_upstream_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'TOT'),
       clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_tot,
-                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'tot'))
+                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'TOT'))
     }
   ),
   
