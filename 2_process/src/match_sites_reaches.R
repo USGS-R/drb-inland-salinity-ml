@@ -35,7 +35,7 @@ get_site_flowlines <- function(reach_sf, sites, sites_crs, max_matches = 1, sear
     st_transform(5070)
   
   sites_sf <- sites %>% rowwise() %>%
-    filter(across(c(lon, lat), ~ !is.na(.x))) %>%
+    filter(if_all(c(lon, lat), ~ !is.na(.x))) %>%
     mutate(Shape = list(st_point(c(lon, lat), dim = "XY"))) %>%
     st_as_sf() %>% st_set_crs(sites_crs) %>%
     st_transform(st_crs(reaches_nhd_fields)) %>%
@@ -54,7 +54,7 @@ get_site_flowlines <- function(reach_sf, sites, sites_crs, max_matches = 1, sear
   flowline_indices <- nhdplusTools::get_flowline_index(flines = reaches_nhd_fields,
                                                        points = sites_sf,
                                                        max_matches = max_matches,
-                                                       search_radius = search_radius*2,
+                                                       search_radius = units::set_units(search_radius*2, "m"),
                                                        precision = 1) %>%
     select(COMID, id, offset) %>%
     rename(subsegid = COMID, bird_dist_to_subseg_m = offset) %>% 

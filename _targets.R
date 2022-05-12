@@ -1,6 +1,10 @@
 library(targets)
 
-options(tidyverse.quiet = TRUE)
+options(tidyverse.quiet = TRUE,
+        #Use multiprocess on Windows, multicore in container (Linux).
+        clustermq.scheduler = "multicore")
+library(clustermq)
+
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",

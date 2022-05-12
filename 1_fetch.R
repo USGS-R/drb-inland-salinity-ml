@@ -16,7 +16,8 @@ p1_targets_list <- list(
   # Load harmonized WQP data product for discrete samples
   tar_target(
     p1_wqp_data,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds")
+    readRDS(file = "1_fetch/in/DRB.WQdata.rds"),
+    deployment = 'main'
   ),
   
   # Identify NWIS sites with SC data 
@@ -25,7 +26,8 @@ p1_targets_list <- list(
     {
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
-    }
+    },
+    deployment = 'main'
   ),
   
   # Subset daily NWIS sites
@@ -36,14 +38,17 @@ p1_targets_list <- list(
       filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites), 
       end_date > earliest_date, begin_date < dummy_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
-      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
+    deployment = 'main'
   ),
   
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
-    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_daily)
+    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,
+                        start_date=earliest_date,end_date=dummy_date),
+    pattern = map(p1_nwis_sites_daily),
+    deployment = 'main'
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -54,21 +59,26 @@ p1_targets_list <- list(
       filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites), 
       end_date > earliest_date, begin_date < dummy_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
-      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1)
+      group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
+    deployment = 'main'
   ),
   
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,"3_visualize/log/summary_multiple_inst_ts.csv"),
-    format = "file"
+    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,
+                          "3_visualize/log/summary_multiple_inst_ts.csv"),
+    format = "file",
+    deployment = 'main'
   ),
 
   # Download NWIS instantaneous data
   tar_target(
     p1_inst_data,
-    get_inst_nwis_data(p1_nwis_sites_inst,parameter,start_date=earliest_date,end_date=dummy_date),
-    pattern = map(p1_nwis_sites_inst)
+    get_inst_nwis_data(p1_nwis_sites_inst,parameter,
+                       start_date=earliest_date,end_date=dummy_date),
+    pattern = map(p1_nwis_sites_inst),
+    deployment = 'main'
   ),
 
   tar_target(
@@ -80,7 +90,8 @@ p1_targets_list <- list(
     # Because of that and since it's small (<700 Kb) I figured it'd be fine to
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
 
   # Unzip zipped shapefile
@@ -91,19 +102,22 @@ p1_targets_list <- list(
     shp_files <- unzip(p1_reaches_shp_zip, exdir = shapedir)
     # return just the .shp file
     grep(".shp", shp_files, value = TRUE)},
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # read shapefile into sf object
   tar_target(
     p1_reaches_sf,
-    st_read(p1_reaches_shp,quiet=TRUE)
+    st_read(p1_reaches_shp,quiet=TRUE),
+    deployment = 'main'
   ),
 
   # Download NHDPlusV2 flowlines for DRB
   tar_target(
     p1_nhdv2reaches_sf,
-    get_nhdv2_flowlines(drb_huc8s)
+    get_nhdv2_flowlines(drb_huc8s),
+    deployment = 'main'
   ),  
   
   # Download edited HRU polygons from https://github.com/USGS-R/drb-network-prep
@@ -112,7 +126,8 @@ p1_targets_list <- list(
     download_file(GFv1_HRUs_edited_url,
                   fileout = "1_fetch/out/GFv1_catchments_edited.gpkg", 
                   mode = "wb", quiet = TRUE),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Read in edited HRU polygons
@@ -129,7 +144,8 @@ p1_targets_list <- list(
                                           PRMS_segid == '51_1' ~ '51_1',
                                           PRMS_segid == '51_2' ~ '51_2',
                                           TRUE ~ prms_subseg_seg)) %>%
-      select(-hru_area_m2, -PRMS_segment_suffix)
+      select(-hru_area_m2, -PRMS_segment_suffix),
+    deployment = 'main'
   ),
   
   # Download DRB network attributes
@@ -137,9 +153,12 @@ p1_targets_list <- list(
   tar_target(
     p1_prms_reach_attr_csvs,
     download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
-                     file_name = c("reach_attributes_drb.csv","distance_matrix_drb.csv","sntemp_inputs_outputs_drb.zip"),
+                     file_name = c("reach_attributes_drb.csv",
+                                   "distance_matrix_drb.csv",
+                                   "sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
-    format="file"
+    format="file",
+    deployment = 'main'
   ),
   
   # Read DRB reach attributes with all _1 segments for _2 reaches
@@ -151,13 +170,15 @@ p1_targets_list <- list(
   # Read DRB network adjacency matrix
   tar_target(
     p1_ntw_adj_matrix,
-    read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),show_col_types = FALSE)
+    read_csv(grep("distance_matrix",p1_prms_reach_attr_csvs,value=TRUE),
+             show_col_types = FALSE)
   ),
   
   # Unzip DRB SNTemp Inputs-Outputs from temperature project
   tar_target(
     p1_sntemp_inputs_outputs_csv,
-    unzip(zipfile = grep("sntemp_inputs_outputs",p1_prms_reach_attr_csvs,value=TRUE), exdir = "1_fetch/out", overwrite = TRUE),
+    unzip(zipfile = grep("sntemp_inputs_outputs",p1_prms_reach_attr_csvs,value=TRUE), 
+          exdir = "1_fetch/out", overwrite = TRUE),
     format = "file"
   ),
   
@@ -183,7 +204,8 @@ p1_targets_list <- list(
                       out_path = '1_fetch/out',
                       downloaded_data_folder_name = NLCD2011_folders,
                       output_data_parent_folder = 'NLCD_LC_2011_Data'),
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
   
   # Unzip all NLCD downloaded datasets 
@@ -196,7 +218,8 @@ p1_targets_list <- list(
   ),
   
   # Read in NLCD datasets and subset by comid in DRB
-  ## Note that this returns a vector of dfs if more than one NLCD data is in the p1_NLCD_data_unzipped
+  ## Note that this returns a vector of dfs if more than one NLCD data is in
+  ## p1_NLCD_data_unzipped
   tar_target(
     p1_NLCD2011_data,
     read_subset_LC_data(LC_data_folder_path = p1_NLCD2011_data_unzipped, 
@@ -217,27 +240,32 @@ p1_targets_list <- list(
                   name_unzip_folder = NULL,
                   overwrite_file = TRUE,
                   name = FORESCE_years), 
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
   
   #Targets for the land cover reclassification .csv files
   tar_target(
     p1_NLCD_reclass_table_csv, 
     '1_fetch/in/Legend_NLCD_Land_Cover.csv',
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
   tar_target(
     p1_FORESCE_reclass_table_csv, 
     '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
   tar_target(
     p1_NLCD_reclass_table, 
-    read_csv(p1_NLCD_reclass_table_csv, show_col_types = FALSE)
+    read_csv(p1_NLCD_reclass_table_csv, show_col_types = FALSE),
+    deployment = 'main'
   ),
   tar_target(
     p1_FORESCE_reclass_table, 
-    read_csv(p1_FORESCE_reclass_table_csv, show_col_types = FALSE)
+    read_csv(p1_FORESCE_reclass_table_csv, show_col_types = FALSE),
+    deployment = 'main'
   ),
   
   # Downlaod Road Salt accumulation data for the drb
@@ -251,15 +279,17 @@ p1_targets_list <- list(
                   overwrite_file = T,
                   ## no year subsetting here as all years with rdsalt data are relevant here
                   year = NULL,
-                  name_unzip_folder = 'rd_salt'), 
-             format = 'file'
+                  name_unzip_folder = 'rd_salt'),
+    format = 'file',
+    deployment = 'main'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
   tar_target(
     p1_vars_of_interest_csv,
     '1_fetch/in/NHDVarsOfInterest.csv',
-    format = 'file'
+    format = 'file',
+    deployment = 'main'
   ),
 
   # Variables from the Wieczorek dataset that are of interest 
@@ -274,16 +304,19 @@ p1_targets_list <- list(
       filter(!Theme %in% c('Land Cover')) %>%
       group_by(sb_id) %>%
       tar_group(),
-    iteration = "group"
+    iteration = "group",
+    deployment = 'main'
   ),
 
   # Map over variables of interest to download NHDv2 attribute data from ScienceBase
   tar_target(
     p1_vars_of_interest_downloaded_csvs,
     fetch_nhdv2_attributes_from_sb(vars_item = p1_vars_of_interest, save_dir = "1_fetch/out", 
-                                   comids = p1_nhdv2reaches_sf$COMID, delete_local_copies = TRUE),
+                                   comids = p1_nhdv2reaches_sf$COMID, 
+                                   delete_local_copies = TRUE),
     pattern = map(p1_vars_of_interest),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Download monthly natural baseflow for the DRB
@@ -293,14 +326,18 @@ p1_targets_list <- list(
     download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
                      file_name = "baseflow_partial_model_pred_XX.zip",
                      out_dir="1_fetch/out"),
-    format = "file"
+    format = "file",
+    deployment = 'main'
   ),
   
   # Unzip monthly natural baseflow file
   tar_target(
     p1_natural_baseflow_csv,
-    {unzip(zipfile=p1_natural_baseflow_zip,exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-     file.path(dirname(p1_natural_baseflow_zip), list.files(path = dirname(p1_natural_baseflow_zip),pattern = "*baseflow.*.csv"))
+    {unzip(zipfile=p1_natural_baseflow_zip,
+           exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
+     file.path(dirname(p1_natural_baseflow_zip), 
+               list.files(path = dirname(p1_natural_baseflow_zip),
+                          pattern = "*baseflow.*.csv"))
       },
     format = "file"
   )
