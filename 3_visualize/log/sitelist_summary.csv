@@ -1,2 +1,0 @@
-n_unique_siteids,n_unique_latlon,n_all_WQP_sites,n_all_nwis_daily_sites,n_all_nwis_inst_sites,n_unique_nwis_sites,n_sites_intersect_WQPNWIS,n_obsdays_total,n_obsdays_nwis,n_obsdays_discrete
-3490,3415,3465,111,95,126,101,247235,179207,68028

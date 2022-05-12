@@ -12,6 +12,7 @@ rstudio*
 .config
 .local*
 *.out
+*.log
 
 #R files
 # History files

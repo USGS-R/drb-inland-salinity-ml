@@ -1,15 +1,22 @@
 library(targets)
 
-options(tidyverse.quiet = TRUE)
+options(tidyverse.quiet = TRUE,
+        #Use multiprocess on Windows, multicore in container (Linux).
+        clustermq.scheduler = "multicore")
+library(clustermq)
+
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
                             "purrr", "sbtools", "terra",
-                            "patchwork", "glue",'nhdplusTools')) 
+                            "patchwork", "glue", "nhdplusTools",
+                            "Boruta", "ranger", "vip", "tidymodels",
+                            "doParallel"))
 
 source("1_fetch.R")
 source("2_process.R")
 source("3_visualize.R")
+#source("4_predict.R")
 
 dir.create("1_fetch/out/", showWarnings = FALSE)
 dir.create("2_process/out/", showWarnings = FALSE)
@@ -19,6 +26,10 @@ dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/nhdv2_attr_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/nhdv2_attr_png/refined",showWarnings = FALSE)
+dir.create("4_predict/out/",showWarnings = FALSE)
+dir.create("4_predict/out/Boruta",showWarnings = FALSE)
+dir.create("4_predict/out/vip",showWarnings = FALSE)
+dir.create("4_predict/out/hypopt",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -119,7 +130,19 @@ NADP_sb_id <- '57e2ac2fe4b0908250045981'
 ## FORESCE list of FORESCE years
 FORESCE_years <- c('1940', '1950', '1960', '1970', '1980', '1990', '2000')
 
+
+#Boruta Random Forest Parameters
+#maximum number of runs for Boruta feature screening algorithm
+Boruta_runs <- 300
+#number of trees
+Boruta_trees <- 500
+#number of cores
+Boruta_cores <- 35
+#Cross validation folds
+cv_folds <- 5
+
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
+  #, p4_targets_list)
 
 
