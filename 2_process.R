@@ -334,21 +334,21 @@ p2_targets_list <- list(
     p2_all_lulc_data_cat,
     {rbind(
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_cat,
-                                cols_to_remove = 'prms_subseg_seg', area_col = total_PRMS_area, area_unit = 'km2'),
+                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'cat'),
       clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_cat,
-                                cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2'))
+                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'cat'))
       }
   ),
   
   ## Tot
+  ## note - rbind only works when same number of cols
   tar_target(
     p2_all_lulc_data_tot,
     {rbind(
       clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_tot,
-                                cols_to_remove = 'prms_subseg_seg', area_col = total_upstream_PRMS_area, area_unit = 'km2'),
+                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_upstream_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'tot'),
       clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_tot,
-                                cols_to_remove = NULL, area_col = AREASQKM_PRMS, area_unit = 'km2')
-      )
+                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'tot'))
     }
   ),
   
