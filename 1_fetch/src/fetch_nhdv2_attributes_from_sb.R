@@ -70,6 +70,12 @@ fetch_nhdv2_attributes_from_sb <- function(vars_item,save_dir,comids,delete_loca
     col_names <- format_col_names_years(col_names,years,yr_pattern = "YYYY")
   }
   
+  # annual NADP data:
+  if(unique(vars_item$sb_id) == "57e2ac2fe4b0908250045981"){
+    years <- str_extract(out_file,"\\d{2,}")
+    col_names <- format_col_names_years(col_names,years,yr_pattern = "YYYY")
+  }
+  
   # 4) Unzip out_files, filter to COMIDs of interest, and return combined data frame
   data_out <- lapply(out_file,unzip_and_clip_sb_data,
                      col_names = col_names,
