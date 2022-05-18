@@ -380,6 +380,20 @@ p1_targets_list <- list(
       },
     format = "file",
     repository = 'local'
+  ),
+
+  # CSV file of gridmet drivers aggregated to PRMS segments
+  tar_target(
+    p1_gridmet_csv,
+    "1_fetch/in/drb_climate_2022_04_06_segments.csv",
+    format = "file",
+  ),
+    
+  # Read gridmet csv into tibble
+  tar_target(
+    p1_gridmet,
+    read_csv(p1_gridmet_csv),
   )
+
 )
   
