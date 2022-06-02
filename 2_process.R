@@ -10,6 +10,7 @@ source("2_process/src/process_nhdv2_attr.R")
 source("2_process/src/recursive_fun.R")
 source("2_process/src/aggregate_observations.R")
 source('2_process/src/area_diff_fix.R')
+source('2_process/src/clean_lulc_data_for_merge.R')
 
 
 p2_targets_list <- list(
@@ -330,6 +331,30 @@ p2_targets_list <- list(
       )}
   ),
   
+  # Combine NLCD and FORESCE
+  ## Cat
+  tar_target(
+    p2_all_lulc_data_cat,
+    {rbind(
+      clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_cat,
+                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'CAT'),
+      clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_cat,
+                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'CAT'))
+      }
+  ),
+  
+  ## Tot
+  ## note - rbind only works when same number of cols
+  tar_target(
+    p2_all_lulc_data_tot,
+    {rbind(
+      clean_lulc_data_for_merge(p2_FORESCE_LC_per_catchment_reclass_tot,
+                                columns_to_remove = 'prms_subseg_seg', prms_area_col = 'total_upstream_PRMS_area', prms_area_unit = 'km2', prop_prefix = 'TOT'),
+      clean_lulc_data_for_merge(p2_PRMS_NLCD_lc_proportions_reclass_tot,
+                                columns_to_remove = NULL, prms_area_col = 'AREASQKM_PRMS', prms_area_unit = 'km2', prop_prefix = 'TOT'))
+    }
+  ),
+  
   # Extract Road Salt raster values to catchments polygons in the DRB - general function raster_to_catchment_polygons + Aggregate to hru_segment scale across each annual road salt df in list of p2_rdsalt_per_catchment - can then xwalk
   tar_target(
     p2_rdsalt_per_catchment,
@@ -392,23 +417,6 @@ p2_targets_list <- list(
                            end_year = as.character(lubridate::year(dummy_date)),
                            fill_all_years = TRUE)
   ),
-
-  # Target for NADP initial Processing  
-  tar_target(
-    p2_NADP_Data,
-    lapply(list.files(path = p1_NADP_data_unzipped, full.names = T),
-           function(x) read.csv(x, sep = ',') %>%
-                    # select only cols starting with cat and COMID co
-                    select(COMID | starts_with('CAT')) %>%
-                    # take only COMIDS in drb
-                    filter(COMID %in% p2_drb_comids_all_tribs$comid) %>%
-                    # add year col to ID each dataset - using regex to extract the year between NADP_ and _CONUS
-                    mutate(Year = as.numeric(str_extract_all(x, "(?<=unzipped/NADP_).+(?=_CONUS.txt)"))) %>%
-                    # remove year in col name to have all colnames equal across datasets
-                    setNames(gsub('_\\d{4}', '', names(.)))) %>%
-               # rbind the list of cleaned dfs
-      do.call(rbind, .)
-  ),
   
   # Process NHDv2 attributes referenced to cumulative upstream area;
   # returns object target of class "list". List elements for CAT_PPT
@@ -440,7 +448,7 @@ p2_targets_list <- list(
   # Create combined NHDv2 attribute data frame that includes both the cumulative upstream and catchment-scale values
   tar_target(
     p2_nhdv2_attr,
-    create_nhdv2_attr_table(p2_nhdv2_attr_upstream,p2_nhdv2_attr_catchment)
+    create_nhdv2_attr_table(p2_nhdv2_attr_upstream, p2_nhdv2_attr_catchment)
   ),
   
   #Refine the attributes that are used for modeling
