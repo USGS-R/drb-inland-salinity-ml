@@ -19,6 +19,15 @@ source("1_fetch/src/munge_reach_attr_tbl.R")
 
 p1_targets_list <- list(
   
+  # dummy target with high priority. This is here so that no consequential 
+  # targets are rebuilt if we forget to renew AWS credentials. 
+  tar_target(
+    p1_dummy,
+    readRDS(file = "1_fetch/in/DRB.WQdata.rds"),
+    deployment = 'main',
+    priority = 0.99 # default priority (0.8) is set globablly in _targets.R
+  ),
+  
   # Load harmonized WQP data product for discrete samples
   tar_target(
     p1_wqp_data,
