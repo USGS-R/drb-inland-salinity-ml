@@ -23,7 +23,7 @@ p1_targets_list <- list(
   # targets are rebuilt if we forget to renew AWS credentials. 
   tar_target(
     p1_dummy,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds"),
+    {},
     deployment = 'main',
     priority = 0.99 # default priority (0.8) is set globablly in _targets.R
   ),
@@ -42,7 +42,8 @@ p1_targets_list <- list(
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = 'never')
   ),
   
   # Subset daily NWIS sites
