@@ -10,10 +10,11 @@ scp /home/jsadler/.aws/credentials jsadler@tg-dtn1.cr.usgs.gov:/home/jsadler/.aw
 
 ## Access to credentials when using a container
 Singularity should be able to access the credentials without any extra steps because it uses the same file system as the host.
-Docker, however, does not use the host file system and would therefore the credentials file would need to be mounted from the host onto the Docker file system.
+Docker, however, does not use the host file system and therefore the credentials file would need to be mounted from the host onto the Docker file system. To do this, you can paste the `.aws/credentials` file into the mounted repository directory and add the following environment variable to the `_targets.R` script:   
+`Sys.setenv(AWS_SHARED_CREDENTIALS_FILE = "./credentials")`
 
 # Building locally
-Most of the time you shouldn't have to build the pipeline locally - you usually will be building it with S3 as the repository (see above). If for some reason that is needed for a particular file, you can add `repository = 'local'` to that targets argument. To build the full pipeline locally, you can change the `repository` option in `tar_objects_set` in the \_targets.R file. WARNING - this will trigger a rebuild of all targets. 
+Most of the time you shouldn't have to build the pipeline with locally stored targets - you usually will be building it with S3 as the repository (see above). If for some reason local builds are needed for a particular target, you can add `repository = 'local'` to that `tar_target()`'s argument. To build the full pipeline locally, you can change the `repository` option in `tar_objects_set` in the `_targets.R` file. WARNING - this will trigger a rebuild of all targets. 
 
 
 # References
