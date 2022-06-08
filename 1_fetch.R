@@ -19,6 +19,15 @@ source("1_fetch/src/munge_reach_attr_tbl.R")
 
 p1_targets_list <- list(
   
+  # dummy target with high priority. This is here so that no consequential 
+  # targets are rebuilt if we forget to renew AWS credentials. 
+  tar_target(
+    p1_dummy,
+    {},
+    deployment = 'main',
+    priority = 0.99 # default priority (0.8) is set globablly in _targets.R
+  ),
+  
   # Load harmonized WQP data product for discrete samples
   tar_target(
     p1_wqp_data,
@@ -33,7 +42,8 @@ p1_targets_list <- list(
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = 'never')
   ),
   
   # Subset daily NWIS sites
@@ -316,8 +326,8 @@ p1_targets_list <- list(
     read_csv(p1_vars_of_interest_csv, show_col_types = FALSE) %>%
       # Parse sb_id from sb link 
       mutate(sb_id = str_extract(Science.Base.Link,"[^/]*$")) %>%
-      # Omit NADP and LandCover rows since we are loading those separately
-      filter(!Theme %in% c('Chemical', 'Land Cover')) %>%
+      # Omit LandCover rows since we are loading those separately
+      filter(!Theme %in% c('Land Cover')) %>%
       group_by(sb_id) %>%
       tar_group(),
     iteration = "group",
@@ -333,28 +343,6 @@ p1_targets_list <- list(
     pattern = map(p1_vars_of_interest),
     format = "file",
     deployment = 'main'
-  ),
-  
-  # # download NADP data
-  # ## source: https://www.sciencebase.gov/catalog/item/57e2ac2fe4b0908250045981
-  # see note at top of file about 'local' targets
-  tar_target(
-    p1_NADP_data_zipped,
-    download_NHD_data(sb_id = NADP_sb_id,
-                      out_path = '1_fetch/out',
-                      downloaded_data_folder_name = 'NADP_Data'),
-    format = 'file',
-    deployment = 'main',
-    repository = 'local'
-  ),
-
-  # unzip NADP data
-  # see note at top of file about 'local' targets
-  tar_target(
-    p1_NADP_data_unzipped,
-    unzip_NHD_data(p1_NADP_data_zipped),
-    format = 'file',
-    repository = 'local'
   ),
   
   # Download monthly natural baseflow for the DRB

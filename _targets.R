@@ -17,7 +17,8 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                resources = tar_resources(
                  aws = tar_resources_aws(bucket = "drb-inland-salinity")),
                repository = "aws",
-               format = "rds"
+               format = "rds",
+               priority = 0.8
                )
 
 source("1_fetch.R")
