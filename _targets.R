@@ -1,5 +1,9 @@
 library(targets)
 
+Sys.setenv(
+    AWS_PROFILE = "dev"
+)
+
 options(tidyverse.quiet = TRUE,
         #Use multiprocess on Windows, multicore in container (Linux).
         clustermq.scheduler = "multicore")
@@ -9,7 +13,13 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
                             "purrr", "sbtools", "terra",
-                            "patchwork", "glue",'nhdplusTools')) 
+                            "patchwork", "glue",'nhdplusTools'),
+               resources = tar_resources(
+                 aws = tar_resources_aws(bucket = "drb-inland-salinity")),
+               repository = "aws",
+               format = "rds",
+               priority = 0.8
+               )
 
 source("1_fetch.R")
 source("2_process.R")

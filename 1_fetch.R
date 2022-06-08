@@ -11,7 +11,22 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 
+# Note about 'local' targets:
+# The 'local' targets in this file are such b/c the respective fxn
+# does not return a single path and therefore targets cannot upload
+# to S3 and throws an error.
+# See https://github.com/USGS-R/drb-inland-salinity-ml/issues/152
+
 p1_targets_list <- list(
+  
+  # dummy target with high priority. This is here so that no consequential 
+  # targets are rebuilt if we forget to renew AWS credentials. 
+  tar_target(
+    p1_dummy,
+    {},
+    deployment = 'main',
+    priority = 0.99 # default priority (0.8) is set globablly in _targets.R
+  ),
   
   # Load harmonized WQP data product for discrete samples
   tar_target(
@@ -27,7 +42,8 @@ p1_targets_list <- list(
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = 'never')
   ),
   
   # Subset daily NWIS sites
@@ -150,6 +166,7 @@ p1_targets_list <- list(
   
   # Download DRB network attributes
   # Retrieved from: https://www.sciencebase.gov/catalog/item/5f6a289982ce38aaa2449135
+  # see note at top of file about 'local' targets
   tar_target(
     p1_prms_reach_attr_csvs,
     download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
@@ -158,7 +175,8 @@ p1_targets_list <- list(
                                    "sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
     format="file",
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   # Read DRB reach attributes with all _1 segments for _2 reaches
@@ -198,6 +216,7 @@ p1_targets_list <- list(
   ),
     
   # Download other NLCD 2011 datasets 
+  # see note at top of file about 'local' targets
   tar_target(
     p1_NLCD2011_data_zipped, 
     download_NHD_data(sb_id = sb_ids_NLCD2011,
@@ -205,16 +224,19 @@ p1_targets_list <- list(
                       downloaded_data_folder_name = NLCD2011_folders,
                       output_data_parent_folder = 'NLCD_LC_2011_Data'),
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   # Unzip all NLCD downloaded datasets 
   ## Note - this returns a string or vector of strings of data path to unzipped datasets 
+  # see note at top of file about 'local' targets
   tar_target(
     p1_NLCD2011_data_unzipped,
     unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
                    create_unzip_subfolder = T),
-    format = 'file'
+    format = 'file',
+    repository = 'local'
   ),
   
   # Read in NLCD datasets and subset by comid in DRB
@@ -230,6 +252,7 @@ p1_targets_list <- list(
   # Downlaod FORE-SCE backcasted LC tif files and subset to years we want
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
   ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
+  # see note at top of file about 'local' targets
   tar_target(
     p1_FORESCE_backcasted_LC, 
     download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
@@ -241,7 +264,8 @@ p1_targets_list <- list(
                   overwrite_file = TRUE,
                   name = FORESCE_years), 
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   #Targets for the land cover reclassification .csv files
@@ -271,6 +295,7 @@ p1_targets_list <- list(
   # Downlaod Road Salt accumulation data for the drb
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
+  # see note at top of file about 'local' targets
   tar_target(
     p1_rdsalt, 
     download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
@@ -281,7 +306,8 @@ p1_targets_list <- list(
                   year = NULL,
                   name_unzip_folder = 'rd_salt'),
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
@@ -331,6 +357,7 @@ p1_targets_list <- list(
   ),
   
   # Unzip monthly natural baseflow file
+  # see note at top of file about 'local' targets
   tar_target(
     p1_natural_baseflow_csv,
     {unzip(zipfile=p1_natural_baseflow_zip,
@@ -339,7 +366,8 @@ p1_targets_list <- list(
                list.files(path = dirname(p1_natural_baseflow_zip),
                           pattern = "*baseflow.*.csv"))
       },
-    format = "file"
+    format = "file",
+    repository = 'local'
   )
 )
   
