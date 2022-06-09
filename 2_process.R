@@ -460,5 +460,14 @@ p2_targets_list <- list(
                     #RUN7100 seems like it is by HUC02 instead of reach.
                     #RFACT is perfectly correlated with RF7100
                     drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))    
+  ),
+  
+  #Dataframe of dynamic attributes
+  tar_target(
+    p2_nhdv2_dyn_attr,
+    add_dyn_attrs_to_reaches(attrs = p2_nhdv2_attr_refined,
+                             dyn_cols = c('HDENS'),
+                             start_date = earliest_date,
+                             end_date = dummy_date)
   )
 )
