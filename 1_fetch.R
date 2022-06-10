@@ -52,7 +52,7 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "dv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites), 
-      end_date > earliest_date, begin_date < dummy_date) %>%
+      end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main'
@@ -61,8 +61,8 @@ p1_targets_list <- list(
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
-    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,
-                        start_date=earliest_date,end_date=dummy_date),
+    get_daily_nwis_data(p1_nwis_sites_daily, parameter, stat_cd_select,
+                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
     deployment = 'main'
   ),
@@ -73,7 +73,7 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "uv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites), 
-      end_date > earliest_date, begin_date < dummy_date) %>%
+      end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main'
@@ -82,7 +82,7 @@ p1_targets_list <- list(
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,
+    find_sites_multipleTS(p1_nwis_sites, earliest_date, latest_date, omit_nwis_sites,
                           "3_visualize/log/summary_multiple_inst_ts.csv"),
     format = "file",
     deployment = 'main'
@@ -92,7 +92,7 @@ p1_targets_list <- list(
   tar_target(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,
-                       start_date=earliest_date,end_date=dummy_date),
+                       start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
     deployment = 'main'
   ),

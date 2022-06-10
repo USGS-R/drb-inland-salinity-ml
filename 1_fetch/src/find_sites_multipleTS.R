@@ -17,7 +17,7 @@ multTS_table <- site_list %>%
   # retain "uv" sites that contain data records after user-specified {earliest_date}
   filter(data_type_cd=="uv",!(site_no %in% omit_sites),end_date > earliest_date) %>%
   group_by(site_no) %>% 
-  # for active sites, set end_date equal to dummy_date and tally unique ts_id's
+  # for active sites, set end_date equal to latest_date and tally unique ts_id's
   mutate(end_date = case_when(end_date > latest_date ~ latest_date, TRUE ~ end_date),
          count_ts = length(unique(ts_id))) %>%
   # find sites with multiple time series
