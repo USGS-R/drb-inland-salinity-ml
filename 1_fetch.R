@@ -215,27 +215,22 @@ p1_targets_list <- list(
                         Comid_col = 'COMID', NLCD_type = NULL)
   ),
     
-  # Download other NLCD 2011 datasets 
+  # Download and unzip other NLCD 2011 datasets 
+  ## Note - this returns a string or vector of strings of data path to unzipped datasets
   # see note at top of file about 'local' targets
   tar_target(
-    p1_NLCD2011_data_zipped, 
-    download_NHD_data(sb_id = sb_ids_NLCD2011,
+    p1_NLCD2011_data_unzipped, 
+    {zip_files <- download_NHD_data(sb_id = sb_ids_NLCD2011,
                       out_path = '1_fetch/out',
                       downloaded_data_folder_name = NLCD2011_folders,
-                      output_data_parent_folder = 'NLCD_LC_2011_Data'),
+                      output_data_parent_folder = 'NLCD_LC_2011_Data')
+    unzipped_files <- unzip_NHD_data(downloaded_data_folder_path = zip_files,
+                                     create_unzip_subfolder = TRUE)
+    rm(zip_files)
+    unzipped_files
+    },
     format = 'file',
     deployment = 'main',
-    repository = 'local'
-  ),
-  
-  # Unzip all NLCD downloaded datasets 
-  ## Note - this returns a string or vector of strings of data path to unzipped datasets 
-  # see note at top of file about 'local' targets
-  tar_target(
-    p1_NLCD2011_data_unzipped,
-    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
-                   create_unzip_subfolder = T),
-    format = 'file',
     repository = 'local'
   ),
   
@@ -345,29 +340,26 @@ p1_targets_list <- list(
     deployment = 'main'
   ),
   
-  # Download monthly natural baseflow for the DRB
+  # Download and unzip monthly natural baseflow for the DRB
   # from Miller et al. 2021: https://www.sciencebase.gov/catalog/item/6023e628d34e31ed20c874e4
-  tar_target(
-    p1_natural_baseflow_zip,
-    download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
-                     file_name = "baseflow_partial_model_pred_XX.zip",
-                     out_dir="1_fetch/out"),
-    format = "file",
-    deployment = 'main'
-  ),
-  
-  # Unzip monthly natural baseflow file
   # see note at top of file about 'local' targets
   tar_target(
     p1_natural_baseflow_csv,
-    {unzip(zipfile=p1_natural_baseflow_zip,
-           exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-     file.path(dirname(p1_natural_baseflow_zip), 
-               list.files(path = dirname(p1_natural_baseflow_zip),
-                          pattern = "*baseflow.*.csv"))
-      },
+    {zip_file <- download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
+                     file_name = "baseflow_partial_model_pred_XX.zip",
+                     out_dir="1_fetch/out")
+    unzip(zipfile = zip_file,
+          exdir = dirname(zip_file), overwrite = TRUE)
+    unzipped_files <- file.path(dirname(zip_file), 
+                                list.files(path = dirname(zip_file),
+                                           pattern = "*baseflow.*.csv"))
+    unlink(zip_file, recursive = FALSE)
+    rm(zip_file)
+    unzipped_files
+    },
     format = "file",
-    repository = 'local'
+    repository = 'local',
+    deployment = 'main'
   )
 )
   
