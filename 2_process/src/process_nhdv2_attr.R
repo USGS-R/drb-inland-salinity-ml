@@ -499,32 +499,48 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
     ind_reach <- filter(nhdv2_attr, is.na(get(attr_i))) %>%
       pull(PRMS_segid)
   }
-  #find the from and to segments for this reach
-  seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach) %>%
-    select(from_segs, to_seg) %>%
-    unique() %>%
-    mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
-    select(-from_segs, -to_seg) %>%
-    unlist()
   
-  #add _1 and _2 to match PRMS seg ID
-  seg_match <- case_when(seg_match == '3_1' ~ '3_1',
-                         seg_match == '3_2' ~ '3_2',
-                         seg_match == '8_1' ~ '8_1',
-                         seg_match == '8_2' ~ '8_2',
-                         seg_match == '51_1' ~ '51_1',
-                         seg_match == '51_2' ~ '51_2',
-                         TRUE ~ paste0(seg_match, '_1'))
-  #get the average of the attributes for the matched reaches
-  fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
-    select(all_of(attr_i)) %>%
-    colMeans() %>%
-    as.numeric()
+  for (j in 1:length(ind_reach)){
+    #find the from and to segments for this reach
+    seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach[j]) %>%
+      select(from_segs, to_seg) %>%
+      unique() %>%
+      mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+      select(-from_segs, -to_seg) %>%
+      unlist()
+    
+    #add _1 and _2 to match PRMS seg ID
+    seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                           seg_match == '3_2' ~ '3_2',
+                           seg_match == '8_1' ~ '8_1',
+                           seg_match == '8_2' ~ '8_2',
+                           seg_match == '51_1' ~ '51_1',
+                           seg_match == '51_2' ~ '51_2',
+                           TRUE ~ paste0(seg_match, '_1'))
+    
+    #get the average of the attributes for the matched reaches
+    fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
+      select(all_of(attr_i)) %>%
+      colMeans() %>%
+      as.numeric()
+    
+    #assign to attribute table
+    if (j == 1){
+      nhdv2_attr <- mutate(nhdv2_attr, 
+                           attr = case_when(PRMS_segid == ind_reach[j] ~ fill_val,
+                                            TRUE ~ get(attr_i))
+      )
+    }else{
+      nhdv2_attr <- mutate(nhdv2_attr, 
+                           attr = case_when(PRMS_segid == ind_reach[j] ~ fill_val,
+                                            TRUE ~ attr)
+      )
+    }
+  }
+  
   #assign to attribute table
-  nhdv2_attr_refined <- mutate(nhdv2_attr,
-                               attr = case_when(PRMS_segid == ind_reach ~ fill_val,
-                                                              TRUE ~ get(attr_i))
-                               ) %>%
+  nhdv2_attr_refined <- nhdv2_attr %>%
     pull(attr)
+  
   return(nhdv2_attr_refined)
 }
