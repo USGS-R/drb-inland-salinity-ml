@@ -519,9 +519,19 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
                            TRUE ~ paste0(seg_match, '_1'))
     
     #get the average of the attributes for the matched reaches
-    fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
-      select(all_of(attr_i)) %>%
-      colMeans() %>%
+    reach_vals <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
+      select(all_of(attr_i))
+    #check if any are equal to exactly 0
+    if (any(as.numeric(reach_vals) == 0)){
+      warning('some neighboring reaches of reach ', ind_reach[j], 
+              'have a value of 0 for ', attr_i)
+    }
+    #check if all reaches have NA values
+    if (all(is.na(as.numeric(reach_vals)))){
+      warning('all neighboring reaches of reach ', ind_reach[j], 
+              'have a value of NA for ', attr_i, '. This reach will still be NA.')
+    }
+    fill_val <- colMeans(reach_vals, na.rm = TRUE) %>%
       as.numeric()
     
     #assign to attribute table
@@ -539,8 +549,7 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
   }
   
   #assign to attribute table
-  nhdv2_attr_refined <- nhdv2_attr %>%
-    pull(attr)
+  nhdv2_attr_refined <- pull(nhdv2_attr, attr)
   
   return(nhdv2_attr_refined)
 }
