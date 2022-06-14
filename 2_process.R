@@ -50,7 +50,7 @@ p2_targets_list <- list(
                             output_tz="America/New_York")
   ),
   
-  # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
+  # Combine 1) daily SC data and 2) instantaneous SC data that has been aggregated to daily 
   tar_target(
     p2_daily_combined,
     bind_rows(p1_daily_data, p2_inst_data_daily)
@@ -448,7 +448,11 @@ p2_targets_list <- list(
   # Create combined NHDv2 attribute data frame that includes both the cumulative upstream and catchment-scale values
   tar_target(
     p2_nhdv2_attr,
-    create_nhdv2_attr_table(p2_nhdv2_attr_upstream, p2_nhdv2_attr_catchment)
+    create_nhdv2_attr_table(p2_nhdv2_attr_upstream, p2_nhdv2_attr_catchment) %>%
+      #add CAT road salt to static attributes
+      left_join(p2_rdsalt_per_catchment_allyrs %>% 
+                  select(PRMS_segid, rd_salt_all_years_prop_drb) %>%
+                  rename(CAT_rdsalt_prop = rd_salt_all_years_prop_drb), by = 'PRMS_segid')
   ),
   
   #Refine the attributes that are used for modeling
@@ -469,8 +473,12 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_dyn_attr,
     add_dyn_attrs_to_reaches(attrs = p2_nhdv2_attr_refined,
-                             dyn_cols = c('HDENS'),
+                             dyn_cols = c('HDENS', 'MAJOR', 'NDAMS', 'NORM', 
+                                          'NID'),
                              start_date = earliest_date,
-                             end_date = dummy_date)
+                             end_date = dummy_date,
+                             baseflow = p2_natural_baseflow,
+                             CAT_Land = p2_all_lulc_data_cat,
+                             TOT_Land = p2_all_lulc_data_tot)
   )
 )

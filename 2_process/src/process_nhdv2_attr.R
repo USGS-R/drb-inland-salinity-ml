@@ -350,7 +350,7 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   #' It fills in 0 area PRMS areas with NHD areas.
   #' It fills in NA values from immediately neighboring reaches
   #' It computes stream density from the NHD catchments in the PRMS HRU
-  #' It computes TOT from CAT variables for 4 attributes.
+  #' It computes TOT from CAT variables for 5 attributes.
   #'
   #' @param nhdv2_attr the tbl of static attributes (columns) for each PRMS reach (rows)
   #' @param prms_nhdv2_xwalk the crosswalk tbl from NHD reaches to PRMS reaches
@@ -425,6 +425,7 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   # These 3 variables have some segments with 0s that are clearly incorrect:
   # CWD, TAV7100, TMIN7100 
   # and TOT for STRM_DENS should be recomputed due to the edits to CAT variables
+  # Also compute TOT road salt
   #Add hru segment identifier to match with the recursive function output ID
   nhdv2_attr_refined$hru_segment <- apply(str_split(nhdv2_attr_refined$PRMS_segid, 
                                                     pattern = '_', simplify = T), 
@@ -440,7 +441,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
                                  TRUE ~ hru_segment))
   
   TOT_frmCAT_cols <- c('TOT_CWD_frmCAT', 'TOT_TAV7100_ANN_frmCAT', 
-                       'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT')
+                       'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT',
+                       'TOT_rdsalt_prop_frmCAT')
   nhdv2_attr_refined[TOT_frmCAT_cols] <- NA
   #loop over all segments
   for(i in 1:length(unique(nhdv2_attr_refined$hru_segment))){
@@ -461,16 +463,19 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
       pull(CAT_TMIN7100_area_wtd)
     STR_DENS_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
       pull(CAT_STRM_DENS_area_wtd)
+    RDSALT_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_rdsalt_prop)
     
     #Compute TOT values
-    #need special handling for PRMS segments with _2
     ind_replace <- which(nhdv2_attr_refined$hru_segment == subseg)
     nhdv2_attr_refined$TOT_CWD_frmCAT[ind_replace] <- weighted.mean(CWD_segs,areas_segs)
     nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT[ind_replace] <- weighted.mean(TAV_segs,areas_segs)
     nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- weighted.mean(TMN_segs,areas_segs)
     nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- weighted.mean(STR_DENS_segs,areas_segs)
+    nhdv2_attr_refined$TOT_rdsalt_prop_frmCAT[ind_replace] <- sum(RDSALT_segs)
   }
   #Remove original TOT columns
+  #Note: road salt does not have a column to remove.
   nhdv2_attr_refined <- select(nhdv2_attr_refined, -c(TOT_CWD, TOT_TAV7100_ANN, TOT_TMIN7100, TOT_STRM_DENS))
   
   return(nhdv2_attr_refined)
