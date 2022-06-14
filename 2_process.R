@@ -471,7 +471,7 @@ p2_targets_list <- list(
   
   #Dataframe of dynamic attributes
   tar_target(
-    p2_nhdv2_dyn_attr,
+    p2_dyn_attr,
     add_dyn_attrs_to_reaches(attrs = p2_nhdv2_attr_refined,
                              dyn_cols = c('HDENS', 'MAJOR', 'NDAMS', 'NORM', 
                                           'NID'),
@@ -480,5 +480,26 @@ p2_targets_list <- list(
                              baseflow = p2_natural_baseflow,
                              CAT_Land = p2_all_lulc_data_cat,
                              TOT_Land = p2_all_lulc_data_tot)
+  ),
+  
+  #Remove static attributes that were made into dynamic attributes
+  tar_target(
+    p2_nhdv2_attr_refined_rm_dyn,
+    select(p2_nhdv2_attr_refined, -contains('HDENS'), -contains('MAJOR'), 
+           -contains('NDAMS'), -contains('NORM'), -contains('NID'))
+  ),
+  
+  #Join static attributes to dynamic dataframe
+  tar_target(
+    p2_all_attr,
+    left_join(p2_dyn_attr, p2_nhdv2_attr_refined_rm_dyn, by = 'PRMS_segid')
+  ),
+  
+  #Join attributes to SC observations and retain only the days with SC observations
+  tar_target(
+    p2_all_attr_SC_obs,
+    #need function to match by segment and by date. 
+    #Maybe loop over segments and join by date
+    #left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid')
   )
 )
