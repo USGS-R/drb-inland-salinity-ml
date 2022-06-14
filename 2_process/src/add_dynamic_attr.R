@@ -294,11 +294,19 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     
   }
   
-  #Assign monthly baseflow data
-  
+  # #Assign monthly baseflow data
+  # #Add year and month columns (to be dropped after joining)
+  # df$Year = year(df$Date)
+  # df$Month = month(df$Date)
+  # #Remove the leading 0 for Month in baseflow
+  # baseflow$Month = as.numeric(baseflow$Month)
+  # 
+  # #Join data to all segs by year and month
+  # df <- left_join(df, baseflow, by = c('seg' = 'PRMS_segid', 'Year', 'Month')) %>%
+  #   select(-Year, -Month)
   
 
-  return()
+  return(df)
 }
 
 get_four_digit_year <- function(two_digit_yr){
