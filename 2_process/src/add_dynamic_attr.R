@@ -1,8 +1,9 @@
 add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
-  #' @param attrs table of static attributes for each reach
-  #' @param dyn_cols vector of character names to use for dynamic columns
+  #' @param attrs table of static attributes (columns) for each reach (rows)
+  #' @param dyn_cols character vector of keywords to search for columns that 
+  #' should be converted into dynamic attributes.
   #' @param start_date first date to compute attributes
   #' @param end_date last date to compute attributes
   #' 
@@ -20,10 +21,10 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
   
   #Special handling for each variable
   if ('HDENS' %in% dyn_cols){
-    #Housing density has the format HDENS00
+    #Housing density has the format HDENSYY
     tmp_attrs <- select(attrs, PRMS_segid, contains('HDENS'))
     
-    #Convert the variable names to years
+    #Convert the column names to 4-digit years
     col_years = str_split(colnames(tmp_attrs)[-1], pattern = '_', simplify = T)[,2] %>%
       substr(start = 6, stop = 7) %>%
       get_four_digit_year()
@@ -33,40 +34,52 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
                               replacement = col_years[i-1])
     }
     colnames(tmp_attrs) <- tmp_colnames
-    rm(tmp_colnames)
+    rm(tmp_colnames, col_years)
     
     #format for new variable is NAME_lag, lag = 0 for these variables
     df$CAT_HDENS_0 = NA_real_
     df$TOT_HDENS_0 = NA_real_
     
-    #This is too slow - let's join all segs by date range
+    #Join data to all segs by date range
+    # Note: using this method instead of a case_when because
+    # case_when was very slow
     date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'), by = '10 years')
-    for (i in 1:length(date_ranges)){
+    for (i in 1:(length(date_ranges)+1)){
       if (i == 1){
-        df$CAT_HDENS_0[df$Date <= date_ranges[i]] <- left_join(df %>% filter(Date <= date_ranges[i]) %>% select(seg), 
-                                                               tmp_attrs %>% select(PRMS_segid, CAT_1960_area_wtd),
-                                                               by = c('seg' = 'PRMS_segid'))
+        df[df$Date <= date_ranges[i], c('CAT_HDENS_0', 'TOT_HDENS_0')] <- 
+          left_join(df %>% 
+                      filter(Date <= date_ranges[i]) %>% 
+                      select(seg), 
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_1960_area_wtd, TOT_1960),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_1960_area_wtd, TOT_1960)
+      }else if (i == (length(date_ranges)+1)){
+        df[df$Date > date_ranges[i-1], c('CAT_HDENS_0', 'TOT_HDENS_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_2010_area_wtd, TOT_2010),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_2010_area_wtd, TOT_2010)
+      }else{
+        #Get the year corresponding to the date range
+        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
+        #Get the column names to be selected
+        tmp_colnames <- c(paste0('CAT_', tmp_yr, '_area_wtd'),
+                          paste0('TOT_', tmp_yr))
+        
+        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
+           c('CAT_HDENS_0', 'TOT_HDENS_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, all_of(tmp_colnames)),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(all_of(tmp_colnames))
       }
-    }
-    for (i in 1:length(unique(df$seg))){
-      #Identify the center dates for decadal and annual information
-      #this is a decadal timeseries, so 5 yr windows
-      #if at the end of a timeseries, assign the most recent observation
-      df <- mutate(df, CAT_HDENS_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$CAT_1960_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$CAT_1970_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$CAT_1980_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$CAT_1990_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$CAT_2000_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$CAT_2010_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
-      
-      df <- mutate(df, TOT_HDENS_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$TOT_1960[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$TOT_1970[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$TOT_1980[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$TOT_1990[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$TOT_2000[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$TOT_2010[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
     }
   }
   
@@ -78,25 +91,44 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
     df$CAT_MAJOR_0 = NA_real_
     df$TOT_MAJOR_0 = NA_real_
     
-    for (i in 1:length(unique(df$seg))){
-      #Identify the center dates for decadal and annual information
-      #this is a decadal timeseries, so 5 yr windows
-      #if at the end of a timeseries, assign the most recent observation
-      df <- mutate(df, CAT_MAJOR_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$CAT_MAJOR1960_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$CAT_MAJOR1970_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$CAT_MAJOR1980_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$CAT_MAJOR1990_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$CAT_MAJOR2000_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$CAT_MAJOR2010_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
-      
-      df <- mutate(df, TOT_MAJOR_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$TOT_MAJOR1960[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$TOT_MAJOR1970[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$TOT_MAJOR1980[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$TOT_MAJOR1990[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$TOT_MAJOR2000[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$TOT_MAJOR2010[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
+    #Join data to all segs by date range
+    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
+    for (i in 1:(length(date_ranges)+1)){
+      if (i == 1){
+        df[df$Date <= date_ranges[i], c('CAT_MAJOR_0', 'TOT_MAJOR_0')] <- 
+          left_join(df %>% 
+                      filter(Date <= date_ranges[i]) %>% 
+                      select(seg), 
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_MAJOR1970_sum, TOT_MAJOR1970),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_MAJOR1970_sum, TOT_MAJOR1970)
+      }else if (i == (length(date_ranges)+1)){
+        df[df$Date > date_ranges[i-1], c('CAT_MAJOR_0', 'TOT_MAJOR_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_MAJOR2010_sum, TOT_MAJOR2010),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_MAJOR2010_sum, TOT_MAJOR2010)
+      }else{
+        #Get the year corresponding to the date range
+        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
+        #Get the column names to be selected
+        tmp_colnames <- c(paste0('CAT_MAJOR', tmp_yr, '_sum'),
+                          paste0('TOT_MAJOR', tmp_yr))
+        
+        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
+           c('CAT_MAJOR_0', 'TOT_MAJOR_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, all_of(tmp_colnames)),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(all_of(tmp_colnames))
+      }
     }
   }
   
@@ -108,25 +140,44 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
     df$CAT_NDAMS_0 = NA_real_
     df$TOT_NDAMS_0 = NA_real_
     
-    for (i in 1:length(unique(df$seg))){
-      #Identify the center dates for decadal and annual information
-      #this is a decadal timeseries, so 5 yr windows
-      #if at the end of a timeseries, assign the most recent observation
-      df <- mutate(df, CAT_NDAMS_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$CAT_NDAMS1960_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$CAT_NDAMS1970_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$CAT_NDAMS1980_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$CAT_NDAMS1990_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$CAT_NDAMS2000_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$CAT_NDAMS2010_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
-      
-      df <- mutate(df, TOT_NDAMS_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$TOT_NDAMS1960[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$TOT_NDAMS1970[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$TOT_NDAMS1980[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$TOT_NDAMS1990[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$TOT_NDAMS2000[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$TOT_NDAMS2010[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
+    #Join data to all segs by date range
+    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
+    for (i in 1:(length(date_ranges)+1)){
+      if (i == 1){
+        df[df$Date <= date_ranges[i], c('CAT_NDAMS_0', 'TOT_NDAMS_0')] <- 
+          left_join(df %>% 
+                      filter(Date <= date_ranges[i]) %>% 
+                      select(seg), 
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_NDAMS1970_sum, TOT_NDAMS1970),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_NDAMS1970_sum, TOT_NDAMS1970)
+      }else if (i == (length(date_ranges)+1)){
+        df[df$Date > date_ranges[i-1], c('CAT_NDAMS_0', 'TOT_NDAMS_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_NDAMS2010_sum, TOT_NDAMS2010),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_NDAMS2010_sum, TOT_NDAMS2010)
+      }else{
+        #Get the year corresponding to the date range
+        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
+        #Get the column names to be selected
+        tmp_colnames <- c(paste0('CAT_NDAMS', tmp_yr, '_sum'),
+                          paste0('TOT_NDAMS', tmp_yr))
+        
+        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
+           c('CAT_NDAMS_0', 'TOT_NDAMS_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, all_of(tmp_colnames)),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(all_of(tmp_colnames))
+      }
     }
   }
 
@@ -138,25 +189,44 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
     df$CAT_NORM_0 = NA_real_
     df$TOT_NORM_0 = NA_real_
     
-    for (i in 1:length(unique(df$seg))){
-      #Identify the center dates for decadal and annual information
-      #this is a decadal timeseries, so 5 yr windows
-      #if at the end of a timeseries, assign the most recent observation
-      df <- mutate(df, CAT_NORM_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$CAT_NORM1960_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$CAT_NORM1970_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$CAT_NORM1980_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$CAT_NORM1990_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$CAT_NORM2000_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$CAT_NORM2010_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
-      
-      df <- mutate(df, TOT_NORM_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$TOT_NORM1960[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$TOT_NORM1970[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$TOT_NORM1980[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$TOT_NORM1990[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$TOT_NORM2000[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$TOT_NORM2010[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
+    #Join data to all segs by date range
+    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
+    for (i in 1:(length(date_ranges)+1)){
+      if (i == 1){
+        df[df$Date <= date_ranges[i], c('CAT_NORM_0', 'TOT_NORM_0')] <- 
+          left_join(df %>% 
+                      filter(Date <= date_ranges[i]) %>% 
+                      select(seg), 
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_NORM_STORAGE1970_sum, TOT_NORM_STORAGE1970),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_NORM_STORAGE1970_sum, TOT_NORM_STORAGE1970)
+      }else if (i == (length(date_ranges)+1)){
+        df[df$Date > date_ranges[i-1], c('CAT_NORM_0', 'TOT_NORM_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_NORM_STORAGE2010_sum, TOT_NORM_STORAGE2010),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_NORM_STORAGE2010_sum, TOT_NORM_STORAGE2010)
+      }else{
+        #Get the year corresponding to the date range
+        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
+        #Get the column names to be selected
+        tmp_colnames <- c(paste0('CAT_NORM_STORAGE', tmp_yr, '_sum'),
+                          paste0('TOT_NORM_STORAGE', tmp_yr))
+        
+        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
+           c('CAT_NORM_0', 'TOT_NORM_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, all_of(tmp_colnames)),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(all_of(tmp_colnames))
+      }
     }
   }
   
@@ -168,25 +238,44 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
     df$CAT_NID_0 = NA_real_
     df$TOT_NID_0 = NA_real_
     
-    for (i in 1:length(unique(df$seg))){
-      #Identify the center dates for decadal and annual information
-      #this is a decadal timeseries, so 5 yr windows
-      #if at the end of a timeseries, assign the most recent observation
-      df <- mutate(df, CAT_NID_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$CAT_NID1960_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$CAT_NID1970_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$CAT_NID1980_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$CAT_NID1990_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$CAT_NID2000_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$CAT_NID2010_area_wtd[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
-      
-      df <- mutate(df, TOT_NID_0 = case_when(
-        Date <= '1965-09-30' ~ tmp_attrs$TOT_NID1960[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1975-09-30' & Date > '1965-09-30' ~ tmp_attrs$TOT_NID1970[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1985-09-30' & Date > '1975-09-30' ~ tmp_attrs$TOT_NID1980[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '1995-09-30' & Date > '1985-09-30' ~ tmp_attrs$TOT_NID1990[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date <= '2005-09-30' & Date > '1995-09-30' ~ tmp_attrs$TOT_NID2000[tmp_attrs$PRMS_segid == unique(df$seg)[i]],
-        Date > '2005-09-30' ~ tmp_attrs$TOT_NID2010[tmp_attrs$PRMS_segid == unique(df$seg)[i]],))
+    #Join data to all segs by date range
+    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
+    for (i in 1:(length(date_ranges)+1)){
+      if (i == 1){
+        df[df$Date <= date_ranges[i], c('CAT_NID_0', 'TOT_NID_0')] <- 
+          left_join(df %>% 
+                      filter(Date <= date_ranges[i]) %>% 
+                      select(seg), 
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_NID_STORAGE1970_sum, TOT_NID_STORAGE1970),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_NID_STORAGE1970_sum, TOT_NID_STORAGE1970)
+      }else if (i == (length(date_ranges)+1)){
+        df[df$Date > date_ranges[i-1], c('CAT_NID_0', 'TOT_NID_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_NID_STORAGE2010_sum, TOT_NID_STORAGE2010),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_NID_STORAGE2010_sum, TOT_NID_STORAGE2010)
+      }else{
+        #Get the year corresponding to the date range
+        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
+        #Get the column names to be selected
+        tmp_colnames <- c(paste0('CAT_NID_STORAGE', tmp_yr, '_sum'),
+                          paste0('TOT_NID_STORAGE', tmp_yr))
+        
+        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
+           c('CAT_NID_0', 'TOT_NID_0')] <- 
+          left_join(df %>% 
+                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, all_of(tmp_colnames)),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(all_of(tmp_colnames))
+      }
     }
   }
   
