@@ -13,6 +13,7 @@ rstudio*
 .local*
 *.out
 *.log
+credentials
 
 #R files
 # History files
