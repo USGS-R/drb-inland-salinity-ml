@@ -1,4 +1,5 @@
-add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
+add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
+                                     baseflow, CAT_Land, TOT_Land){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
   #' @param attrs table of static attributes (columns) for each reach (rows)
@@ -6,6 +7,9 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
   #' should be converted into dynamic attributes.
   #' @param start_date first date to compute attributes
   #' @param end_date last date to compute attributes
+  #' @param baseflow table of monthly baseflow estimates for each reach
+  #' @param CAT_Land table of catchment land cover class proportions
+  #' @param TOT_Land table of total upstream land cover class proportions
   #' 
   #' @return tbl with the added features.
   
@@ -289,6 +293,10 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date){
     #several variables to grab
     
   }
+  
+  #Assign monthly baseflow data
+  
+  
 
   return()
 }

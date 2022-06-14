@@ -501,5 +501,6 @@ p2_targets_list <- list(
     #need function to match by segment and by date. 
     #Maybe loop over segments and join by date
     #left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid')
+    {}
   )
 )
