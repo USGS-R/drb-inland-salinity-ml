@@ -42,7 +42,9 @@ target_summary_stats <- function(df,ValueVar,fileout){
               sd = round(sd(.data[[ValueVar]],na.rm=TRUE),6))
   
   # Save summary table
+  options(scipen = 999)
   readr::write_csv(data_summary,fileout)
+  options(scipen = 0)
   
   return(fileout)
   
