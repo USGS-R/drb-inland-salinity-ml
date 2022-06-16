@@ -30,8 +30,15 @@ p1_targets_list <- list(
   
   # Load harmonized WQP data product for discrete samples
   tar_target(
+    p1_wqp_data_rds,
+    "1_fetch/in/DRB.WQdata.rds",
+    format = 'file',
+    repository = 'local',
+    deployment = 'main'
+  ),
+  tar_target(
     p1_wqp_data,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds"),
+    readRDS(file = p1_wqp_data_rds),
     deployment = 'main'
   ),
   
@@ -107,6 +114,7 @@ p1_targets_list <- list(
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
 
@@ -273,12 +281,14 @@ p1_targets_list <- list(
     p1_NLCD_reclass_table_csv, 
     '1_fetch/in/Legend_NLCD_Land_Cover.csv',
     format = 'file',
+    repository = 'local',
     deployment = 'main'
   ),
   tar_target(
     p1_FORESCE_reclass_table_csv, 
     '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
     format = 'file',
+    repository = 'local',
     deployment = 'main'
   ),
   tar_target(
@@ -315,6 +325,7 @@ p1_targets_list <- list(
     p1_vars_of_interest_csv,
     '1_fetch/in/NHDVarsOfInterest.csv',
     format = 'file',
+    repository = 'local',
     deployment = 'main'
   ),
 
