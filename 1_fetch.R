@@ -25,6 +25,7 @@ p1_targets_list <- list(
     p1_dummy,
     {},
     deployment = 'main',
+    cue = tar_cue('always'),
     priority = 0.99 # default priority (0.8) is set globablly in _targets.R
   ),
   
@@ -379,6 +380,21 @@ p1_targets_list <- list(
       },
     format = "file",
     repository = 'local'
+  ),
+
+  # CSV file of gridmet drivers aggregated to PRMS segments
+  tar_target(
+    p1_gridmet_csv,
+    "1_fetch/in/drb_climate_2022_04_06_segments.csv",
+    format = "file",
+    repository = "local"
+  ),
+    
+  # Read gridmet csv into tibble
+  tar_target(
+    p1_gridmet,
+    read_csv(p1_gridmet_csv, show_col_types = FALSE),
   )
+
 )
   
