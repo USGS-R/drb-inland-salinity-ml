@@ -82,9 +82,10 @@ p3_targets_list <- list(
   tar_target(
     p3_daily_timeseries_summary_csv,
     {options(scipen = 999)
-      target_summary_stats(p1_daily_data, "Value",
+      file <- target_summary_stats(p1_daily_data, "Value",
                            "3_visualize/log/daily_timeseries_summary.csv")
-      options(scipen = 0)},
+      options(scipen = 0)
+      file},
     format = "file",
     repository = 'local',
     deployment = 'main'
@@ -94,9 +95,10 @@ p3_targets_list <- list(
   tar_target(
     p3_inst_timeseries_summary_csv,
     {options(scipen = 999)
-      target_summary_stats(p1_inst_data, "Value_Inst",
+      file <- target_summary_stats(p1_inst_data, "Value_Inst",
                            "3_visualize/log/inst_timeseries_summary.csv")
-      options(scipen = 0)},
+      options(scipen = 0)
+      file},
     format = "file",
     repository = 'local',
     deployment = 'main'
