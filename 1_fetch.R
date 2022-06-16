@@ -393,7 +393,7 @@ p1_targets_list <- list(
   # Read gridmet csv into tibble
   tar_target(
     p1_gridmet,
-    read_csv(p1_gridmet_csv),
+    read_csv(p1_gridmet_csv, show_col_types = FALSE),
   )
 
 )
