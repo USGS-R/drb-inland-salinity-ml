@@ -11,6 +11,9 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 
+# tar_cue for downloading NWIS sites and data
+NWIS_cue = 'never'
+
 # Note about 'local' targets:
 # The 'local' targets in this file are such b/c the respective fxn
 # does not return a single path and therefore targets cannot upload
@@ -26,7 +29,7 @@ p1_targets_list <- list(
     {},
     deployment = 'main',
     cue = tar_cue('always'),
-    priority = 0.99 # default priority (0.8) is set globablly in _targets.R
+    priority = 0.99 # default priority (0.8) is set globally in _targets.R
   ),
   
   # Load harmonized WQP data product for discrete samples
@@ -51,7 +54,7 @@ p1_targets_list <- list(
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
     deployment = 'main',
-    cue = tar_cue(mode = 'never')
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Subset daily NWIS sites
@@ -63,7 +66,8 @@ p1_targets_list <- list(
       end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Download NWIS daily data
@@ -72,7 +76,8 @@ p1_targets_list <- list(
     get_daily_nwis_data(p1_nwis_sites_daily, parameter, stat_cd_select,
                         start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -84,7 +89,8 @@ p1_targets_list <- list(
       end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Create log file to track sites with multiple time series
@@ -102,7 +108,8 @@ p1_targets_list <- list(
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,
                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
 
   tar_target(
