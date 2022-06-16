@@ -25,6 +25,7 @@ p1_targets_list <- list(
     p1_dummy,
     {},
     deployment = 'main',
+    cue = tar_cue('always'),
     priority = 0.99 # default priority (0.8) is set globablly in _targets.R
   ),
   
@@ -386,6 +387,7 @@ p1_targets_list <- list(
     p1_gridmet_csv,
     "1_fetch/in/drb_climate_2022_04_06_segments.csv",
     format = "file",
+    repository = "local"
   ),
     
   # Read gridmet csv into tibble
