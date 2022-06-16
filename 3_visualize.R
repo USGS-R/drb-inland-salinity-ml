@@ -40,6 +40,7 @@ p3_targets_list <- list(
     summarize_site_list(p2_site_list_nontidal_csv,p1_daily_data,p1_inst_data,
                         fileout = "3_visualize/log/sitelist_summary.csv"),
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
   
@@ -49,6 +50,7 @@ p3_targets_list <- list(
     command = save_target_ind_files("3_visualize/log/daily_timeseries_ind.csv",
                                     names(p3_daily_timeseries_png)),
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
   
@@ -58,6 +60,7 @@ p3_targets_list <- list(
     command = save_target_ind_files("3_visualize/log/inst_timeseries_ind.csv",
                                     names(p3_hourly_timeseries_png)),
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
   
@@ -71,6 +74,7 @@ p3_targets_list <- list(
       save_target_ind_files("3_visualize/log/wqp_data_ind.csv", "p2_wqp_SC_data")
       },
     format = "file",
+    repository = 'local',
     deployment = "main"
   ),
   
@@ -82,6 +86,7 @@ p3_targets_list <- list(
                            "3_visualize/log/daily_timeseries_summary.csv")
       options(scipen = 0)},
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
   
@@ -93,6 +98,7 @@ p3_targets_list <- list(
                            "3_visualize/log/inst_timeseries_summary.csv")
       options(scipen = 0)},
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
   
@@ -131,14 +137,16 @@ p3_targets_list <- list(
   tar_target(
     p3_nhdv2_attr_summary_csv,
     summarize_nhdv2_attr(p2_nhdv2_attr,"3_visualize/out/nhdv2_attr_summary.csv"),
-    format = "file"
+    format = "file",
+    repository = 'local'
   ),
   # refined
   tar_target(
     p3_nhdv2_attr_summary_refined_csv,
     summarize_nhdv2_attr(p2_nhdv2_attr_refined %>% select(-hru_segment),
                          "3_visualize/out/nhdv2_attr_summary_refined.csv"),
-    format = "file"
+    format = "file",
+    repository = 'local'
   ),
   
   # Create and save a summary table that indicates the NA's among contributing 
@@ -146,7 +154,8 @@ p3_targets_list <- list(
   tar_target(
     p3_nhdv2_attr_missing_data_csv,
     summarize_catchment_nhdv2_attr_missing(p2_nhdv2_attr_catchment,"3_visualize/out/nhdv2_attr_missing_data.csv"),
-    format = "file"
+    format = "file",
+    repository = 'local'
   )
 )
 
