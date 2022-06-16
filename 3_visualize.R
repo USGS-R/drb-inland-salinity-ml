@@ -81,11 +81,8 @@ p3_targets_list <- list(
   # Create and save summary log file for NWIS daily data
   tar_target(
     p3_daily_timeseries_summary_csv,
-    {options(scipen = 999)
-      file <- target_summary_stats(p1_daily_data, "Value",
-                           "3_visualize/log/daily_timeseries_summary.csv")
-      options(scipen = 0)
-      file},
+    target_summary_stats(p1_daily_data, "Value",
+                         "3_visualize/log/daily_timeseries_summary.csv"),
     format = "file",
     repository = 'local',
     deployment = 'main'
@@ -94,11 +91,8 @@ p3_targets_list <- list(
   # Create and save summary log file for NWIS instantaneous data
   tar_target(
     p3_inst_timeseries_summary_csv,
-    {options(scipen = 999)
-      file <- target_summary_stats(p1_inst_data, "Value_Inst",
-                           "3_visualize/log/inst_timeseries_summary.csv")
-      options(scipen = 0)
-      file},
+    target_summary_stats(p1_inst_data, "Value_Inst",
+                         "3_visualize/log/inst_timeseries_summary.csv"),
     format = "file",
     repository = 'local',
     deployment = 'main'
