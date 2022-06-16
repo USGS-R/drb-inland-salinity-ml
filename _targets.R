@@ -1,7 +1,8 @@
 library(targets)
 
 Sys.setenv(
-    AWS_PROFILE = "dev"
+    AWS_PROFILE = "dev",
+    AWS_REGION = 'us-east-1'
 )
 
 options(tidyverse.quiet = TRUE,
