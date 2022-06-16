@@ -41,7 +41,7 @@ calc_monthly_avg_ppt <- function(ppt_data){
   #'
   
   #Replace -9999 with NA
-  if(any(ppt_data == -9999)){
+  if(any(ppt_data == -9999, na.rm = T)){
     ppt_data[ppt_data == -9999] <- NA_real_
   }
   
@@ -136,6 +136,7 @@ process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   #' cumulative upstream watershed.
   #' 
 
+  message(file_path)
   # Read in downloaded data 
   # only specify col_type for COMID since cols will differ for each downloaded data file
   dat <- read_csv(file_path, col_types = cols(COMID = "c"), show_col_types = FALSE)
@@ -195,6 +196,7 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   #' for each variable and PRMS segment.
   #' 
   
+  message(file_path)
   # 1. Parse dataset name from file_path
   data_name <- str_split(basename(file_path),".[[:alnum:]]+$")[[1]][1]
   
