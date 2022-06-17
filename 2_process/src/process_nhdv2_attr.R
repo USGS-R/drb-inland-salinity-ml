@@ -391,11 +391,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   
   #STRM_DENS
   #Compute stream density from the NHD catchment reach length and area
-  #only for the 5 NA PRMS segments. These have 1 or 2 NHD catchments.
-  # other PRMS segments with some NA stream densities cover areas <3% of total area.
   #Gather the PRMS areas for these reaches
-  ind_areas <- filter(nhdv2_attr_refined, is.na(CAT_STRM_DENS_area_wtd)) %>%
-    select(PRMS_segid, CAT_BASIN_AREA_sum)
+  ind_areas <- select(nhdv2_attr_refined, PRMS_segid, CAT_BASIN_AREA_sum)
   #Gather the sum of NHD reach lengths in km
   ind_areas$length_km <- 0
   for (i in 1:nrow(ind_areas)){
