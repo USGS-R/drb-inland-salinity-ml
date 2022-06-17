@@ -41,7 +41,7 @@ calc_monthly_avg_ppt <- function(ppt_data){
   #'
   
   #Replace -9999 with NA
-  if(any(ppt_data == -9999)){
+  if(any(ppt_data == -9999, na.rm = T)){
     ppt_data[ppt_data == -9999] <- NA_real_
   }
   
@@ -136,6 +136,7 @@ process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   #' cumulative upstream watershed.
   #' 
 
+  message(file_path)
   # Read in downloaded data 
   # only specify col_type for COMID since cols will differ for each downloaded data file
   dat <- read_csv(file_path, col_types = cols(COMID = "c"), show_col_types = FALSE)
@@ -195,6 +196,7 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   #' for each variable and PRMS segment.
   #' 
   
+  message(file_path)
   # 1. Parse dataset name from file_path
   data_name <- str_split(basename(file_path),".[[:alnum:]]+$")[[1]][1]
   
@@ -389,11 +391,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   
   #STRM_DENS
   #Compute stream density from the NHD catchment reach length and area
-  #only for the 5 NA PRMS segments. These have 1 or 2 NHD catchments.
-  # other PRMS segments with some NA stream densities cover areas <3% of total area.
   #Gather the PRMS areas for these reaches
-  ind_areas <- filter(nhdv2_attr_refined, is.na(CAT_STRM_DENS_area_wtd)) %>%
-    select(PRMS_segid, CAT_BASIN_AREA_sum)
+  ind_areas <- select(nhdv2_attr_refined, PRMS_segid, CAT_BASIN_AREA_sum)
   #Gather the sum of NHD reach lengths in km
   ind_areas$length_km <- 0
   for (i in 1:nrow(ind_areas)){

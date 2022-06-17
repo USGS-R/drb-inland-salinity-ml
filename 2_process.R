@@ -414,7 +414,7 @@ p2_targets_list <- list(
                              select(PRMS_segid,comid_down) %>% 
                              rename('COMID' = 'comid_down'),
                            start_year = as.character(lubridate::year(earliest_date)),
-                           end_year = as.character(lubridate::year(dummy_date)),
+                           end_year = as.character(lubridate::year(latest_date)),
                            fill_all_years = TRUE)
   ),
   

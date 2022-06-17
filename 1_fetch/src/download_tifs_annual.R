@@ -30,6 +30,9 @@ download_tifs <- function(sb_id, filename, download_path, overwrite_file = TRUE,
   
   # Unzip downloaded zip to subfolder
   unzip(zipfile = path_to_downloaded_file, exdir = unzip_folder_path)
+  
+  #delete the zipped file
+  unlink(path_to_downloaded_file, recursive = FALSE)
 
   # Find and delete years that are not needed - negate enables inverse matching
   if(!is.null(year)){
