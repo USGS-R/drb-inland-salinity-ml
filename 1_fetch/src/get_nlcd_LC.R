@@ -88,7 +88,11 @@ unzip_NHD_data <- function(downloaded_data_folder_path,
     ## Unzip files to output path
     list_zipfiles <- list.files(data_path, pattern = ".zip$")
     lapply(list_zipfiles, function(x)
-      unzip(file.path(data_path, x), exdir = out_path)
+      {path <- file.path(data_path, x)
+      unzip(path, exdir = out_path)
+      ## Remove zipped file
+      unlink(path, recursive = FALSE)
+      }
     )
     
     list_out_paths <- append(list_out_paths, out_path)
