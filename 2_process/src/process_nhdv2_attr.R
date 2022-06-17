@@ -521,12 +521,12 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
     reach_vals <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
       select(all_of(attr_i))
     #check if any are equal to exactly 0
-    if (any(as.numeric(reach_vals) == 0)){
+    if (any(reach_vals == 0, na.rm = TRUE)){
       warning('some neighboring reaches of reach ', ind_reach[j], 
               'have a value of 0 for ', attr_i)
     }
     #check if all reaches have NA values
-    if (all(is.na(as.numeric(reach_vals)))){
+    if (all(is.na(reach_vals))){
       warning('all neighboring reaches of reach ', ind_reach[j], 
               'have a value of NA for ', attr_i, '. This reach will still be NA.')
     }
