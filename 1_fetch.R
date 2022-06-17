@@ -11,8 +11,12 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 
-# tar_cue for downloading NWIS sites and data
+# tar_cue for downloading NWIS sites and data.
+# change to 'thorough' to download, and 'never' to prevent downloading.
 NWIS_cue = 'never'
+# Change dummy date to document when NWIS SC sites and data were downloaded
+dummy_date <- "2022-06-16"
+
 
 # Note about 'local' targets:
 # The 'local' targets in this file are such b/c the respective fxn
