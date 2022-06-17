@@ -11,6 +11,13 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 
+# tar_cue for downloading NWIS sites and data.
+# change to 'thorough' to download, and 'never' to prevent downloading.
+NWIS_cue = 'never'
+# Change dummy date to document when NWIS SC sites and data were downloaded
+dummy_date <- "2022-06-16"
+
+
 # Note about 'local' targets:
 # The 'local' targets in this file are such b/c the respective fxn
 # does not return a single path and therefore targets cannot upload
@@ -26,7 +33,7 @@ p1_targets_list <- list(
     {},
     deployment = 'main',
     cue = tar_cue('always'),
-    priority = 0.99 # default priority (0.8) is set globablly in _targets.R
+    priority = 0.99 # default priority (0.8) is set globally in _targets.R
   ),
   
   # Load harmonized WQP data product for discrete samples
@@ -51,7 +58,7 @@ p1_targets_list <- list(
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
     deployment = 'main',
-    cue = tar_cue(mode = 'never')
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Subset daily NWIS sites
@@ -60,19 +67,21 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "dv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites), 
-      end_date > earliest_date, begin_date < dummy_date) %>%
+      end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
-    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,
-                        start_date=earliest_date,end_date=dummy_date),
+    get_daily_nwis_data(p1_nwis_sites_daily, parameter, stat_cd_select,
+                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -81,16 +90,17 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "uv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites), 
-      end_date > earliest_date, begin_date < dummy_date) %>%
+      end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,
+    find_sites_multipleTS(p1_nwis_sites, earliest_date, latest_date, omit_nwis_sites,
                           "3_visualize/log/summary_multiple_inst_ts.csv"),
     format = "file",
     deployment = 'main'
@@ -100,9 +110,10 @@ p1_targets_list <- list(
   tar_target(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,
-                       start_date=earliest_date,end_date=dummy_date),
+                       start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
 
   tar_target(
