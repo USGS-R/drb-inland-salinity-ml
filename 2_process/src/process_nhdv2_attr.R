@@ -41,7 +41,7 @@ calc_monthly_avg_ppt <- function(ppt_data){
   #'
   
   #Replace -9999 with NA
-  if(any(ppt_data == -9999)){
+  if(any(ppt_data == -9999, na.rm = T)){
     ppt_data[ppt_data == -9999] <- NA_real_
   }
   
@@ -136,6 +136,7 @@ process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   #' cumulative upstream watershed.
   #' 
 
+  message(file_path)
   # Read in downloaded data 
   # only specify col_type for COMID since cols will differ for each downloaded data file
   dat <- read_csv(file_path, col_types = cols(COMID = "c"), show_col_types = FALSE)
@@ -195,6 +196,7 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   #' for each variable and PRMS segment.
   #' 
   
+  message(file_path)
   # 1. Parse dataset name from file_path
   data_name <- str_split(basename(file_path),".[[:alnum:]]+$")[[1]][1]
   
@@ -389,11 +391,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   
   #STRM_DENS
   #Compute stream density from the NHD catchment reach length and area
-  #only for the 5 NA PRMS segments. These have 1 or 2 NHD catchments.
-  # other PRMS segments with some NA stream densities cover areas <3% of total area.
   #Gather the PRMS areas for these reaches
-  ind_areas <- filter(nhdv2_attr_refined, is.na(CAT_STRM_DENS_area_wtd)) %>%
-    select(PRMS_segid, CAT_BASIN_AREA_sum)
+  ind_areas <- select(nhdv2_attr_refined, PRMS_segid, CAT_BASIN_AREA_sum)
   #Gather the sum of NHD reach lengths in km
   ind_areas$length_km <- 0
   for (i in 1:nrow(ind_areas)){
@@ -504,32 +503,57 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
     ind_reach <- filter(nhdv2_attr, is.na(get(attr_i))) %>%
       pull(PRMS_segid)
   }
-  #find the from and to segments for this reach
-  seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach) %>%
-    select(from_segs, to_seg) %>%
-    unique() %>%
-    mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
-    select(-from_segs, -to_seg) %>%
-    unlist()
   
-  #add _1 and _2 to match PRMS seg ID
-  seg_match <- case_when(seg_match == '3_1' ~ '3_1',
-                         seg_match == '3_2' ~ '3_2',
-                         seg_match == '8_1' ~ '8_1',
-                         seg_match == '8_2' ~ '8_2',
-                         seg_match == '51_1' ~ '51_1',
-                         seg_match == '51_2' ~ '51_2',
-                         TRUE ~ paste0(seg_match, '_1'))
-  #get the average of the attributes for the matched reaches
-  fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
-    select(all_of(attr_i)) %>%
-    colMeans() %>%
-    as.numeric()
+  for (j in 1:length(ind_reach)){
+    #find the from and to segments for this reach
+    seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach[j]) %>%
+      select(from_segs, to_seg) %>%
+      unique() %>%
+      mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+      select(-from_segs, -to_seg) %>%
+      unlist()
+    
+    #add _1 and _2 to match PRMS seg ID
+    seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                           seg_match == '3_2' ~ '3_2',
+                           seg_match == '8_1' ~ '8_1',
+                           seg_match == '8_2' ~ '8_2',
+                           seg_match == '51_1' ~ '51_1',
+                           seg_match == '51_2' ~ '51_2',
+                           TRUE ~ paste0(seg_match, '_1'))
+    
+    #get the average of the attributes for the matched reaches
+    reach_vals <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
+      select(all_of(attr_i))
+    #check if any are equal to exactly 0
+    if (any(reach_vals == 0, na.rm = TRUE)){
+      warning('some neighboring reaches of reach ', ind_reach[j], 
+              'have a value of 0 for ', attr_i)
+    }
+    #check if all reaches have NA values
+    if (all(is.na(reach_vals))){
+      warning('all neighboring reaches of reach ', ind_reach[j], 
+              'have a value of NA for ', attr_i, '. This reach will still be NA.')
+    }
+    fill_val <- colMeans(reach_vals, na.rm = TRUE) %>%
+      as.numeric()
+    
+    #assign to attribute table
+    if (j == 1){
+      nhdv2_attr <- mutate(nhdv2_attr, 
+                           attr = case_when(PRMS_segid == ind_reach[j] ~ fill_val,
+                                            TRUE ~ get(attr_i))
+      )
+    }else{
+      nhdv2_attr <- mutate(nhdv2_attr, 
+                           attr = case_when(PRMS_segid == ind_reach[j] ~ fill_val,
+                                            TRUE ~ attr)
+      )
+    }
+  }
+  
   #assign to attribute table
-  nhdv2_attr_refined <- mutate(nhdv2_attr,
-                               attr = case_when(PRMS_segid == ind_reach ~ fill_val,
-                                                              TRUE ~ get(attr_i))
-                               ) %>%
-    pull(attr)
+  nhdv2_attr_refined <- pull(nhdv2_attr, attr)
+  
   return(nhdv2_attr_refined)
 }

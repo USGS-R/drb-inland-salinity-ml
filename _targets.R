@@ -89,11 +89,9 @@ GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/940073e
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
 
-# Define earliest startDate for NWIS data retrievals
+# Define earliest startDate and latest endDate for NWIS data retrievals
 earliest_date <- "1979-10-01"
-
-# Change dummy date to force re-build of NWIS SC sites and data download
-dummy_date <- "2021-12-31"
+latest_date <- "2021-12-31"
 
 # Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'
@@ -136,5 +134,3 @@ FORESCE_years <- c('1940', '1950', '1960', '1970', '1980', '1990', '2000')
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list)
-
-
