@@ -1,5 +1,5 @@
 add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
-                                     baseflow, CAT_Land, TOT_Land){
+                                     baseflow, CAT_Land, TOT_Land, gridMET){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
   #' @param attrs table of static attributes (columns) for each reach (rows)
@@ -370,9 +370,16 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   }
   
   #gridMET data
-  #several variables to grab
+  #Reformat columns
+  gridMET <- filter(gridMET, time <= end_date, time >= start_date) %>%
+    #format for new variable is NAME_lag, lag = 0 for these variables
+    rename(Date = time, tmmx_0 = tmmx, tmmn_0 = tmmn, pr_0 = pr, srad_0 = srad, 
+           vs_0 = vs, rmax_0 = rmax, rmin_0 = rmin, sph_0 = sph)
   
+  #Join to df
+  df <- left_join(df, gridMET, by = c('seg' = 'PRMS_segid', "Date"))
   
+  #Commented out for now because some reaches do not have baseflow data
   # #Assign monthly baseflow data
   # #Add year and month columns (to be dropped after joining)
   # df$Year <- year(df$Date)
@@ -401,15 +408,91 @@ get_four_digit_year <- function(two_digit_yr){
   return(four_digit_yr)
 }
 
-compute_lagged_attrs <- function(attrs, lags, lag_fxn){
+get_dynamic_HDENS <- function(attrs, lags, lag_unit, lag_fxn){
+  #' @description computes dynamic housing density from the provided tbl
+  #' 
+  #' @param two_digit_yr vector of two digit years, YY
+  #' 
+  #' @return four digit year, YYYY
+  
+  #format for new variable is NAME_lag
+  CAT_colnames <- paste0('CAT_HDENS_', lags, lag_unit)
+  TOT_colnames <- paste0('TOT_HDENS_', lags, lag_unit)
+  attrs[CAT_colnames] <- NA_real_
+  attrs[TOT_colnames] <- NA_real_
+  
+  #Loop over all of the lags
+  for (lag in lags){
+    #Create a temporary date column containing the lagged date to use
+    attrs$lagged_Date <- attrs$Date %m-% period(paste(lags[lag], lag_unit))
+    
+    #Join data to all segs by date range
+    # Note: using this method instead of a case_when because
+    # case_when was very slow
+    date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'), by = '10 years')
+    for (i in 1:(length(date_ranges)+1)){
+      if (i == 1){
+        attrs[attrs$lagged_Date <= date_ranges[i], 
+              c(paste0('CAT_HDENS_', lags[lag]), paste0('TOT_HDENS_', lags[lag]))] <- 
+          left_join(attrs %>% 
+                      filter(lagged_Date <= date_ranges[i]) %>% 
+                      select(seg), 
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_1960_area_wtd, TOT_1960),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_1960_area_wtd, TOT_1960)
+      }else if (i == (length(date_ranges)+1)){
+        attrs[attrs$lagged_Date > date_ranges[i-1], 
+              c(paste0('CAT_HDENS_', lags[lag]), paste0('TOT_HDENS_', lags[lag]))] <- 
+          left_join(attrs %>% 
+                      filter(lagged_Date > date_ranges[i-1]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, CAT_2010_area_wtd, TOT_2010),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(CAT_2010_area_wtd, TOT_2010)
+      }else{
+        #Get the year corresponding to the date range
+        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
+        #Get the column names to be selected
+        tmp_colnames <- c(paste0('CAT_', tmp_yr, '_area_wtd'),
+                          paste0('TOT_', tmp_yr))
+        
+        attrs[attrs$lagged_Date > date_ranges[i-1] & attrs$lagged_Date <= date_ranges[i],
+              c(paste0('CAT_HDENS_', lags[lag]), paste0('TOT_HDENS_', lags[lag]))] <- 
+          left_join(attrs %>% 
+                      filter(lagged_Date > date_ranges[i-1], 
+                             lagged_Date <= date_ranges[i]) %>% 
+                      select(seg),
+                    tmp_attrs %>% 
+                      select(PRMS_segid, all_of(tmp_colnames)),
+                    by = c('seg' = 'PRMS_segid')) %>%
+          select(all_of(tmp_colnames))
+      }
+    }
+  }
+
+  return(attrs)
+}
+
+
+compute_lagged_attrs <- function(attrs, lags, lag_unit, lag_fxn){
   #' @description computes lagged predictor variables from the provided features
   #' 
-  #' @param 
-  #' @param lags vector stating how many days to lag. A column will be added for each element.
+  #' @param attrs tbl containing "Date" and the PRMS "seg",
+  #' followed by only the columns for which to compute lagged information 
+  #' @param lags vector stating how many lag_units to lag. 
+  #' A column will be added for each element.
+  #' @param lag_unit unit for the lag. accepts days, months, or years
   #' @param lag_fxn function used to compute the lagged information. 
-  #' Example: mean for mean over the last lag days. NULL = exact value.
+  #' Example: mean for mean over the last lag days. NULL = exact value on that day.
   #' 
   #' @return tbl with the added lagged features.
+  
+  #may have the case that the available attrs span a larger range than the 
+  #available data. need a way to specify that
+  
+  #Trim the date range so that the earliest date = old date + lag
   
   #Add a column for each of the elements in lags
   

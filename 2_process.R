@@ -476,10 +476,11 @@ p2_targets_list <- list(
                              dyn_cols = c('HDENS', 'MAJOR', 'NDAMS', 'NORM', 
                                           'NID'),
                              start_date = earliest_date,
-                             end_date = dummy_date,
+                             end_date = latest_date,
                              baseflow = p2_natural_baseflow,
                              CAT_Land = p2_all_lulc_data_cat,
-                             TOT_Land = p2_all_lulc_data_tot)
+                             TOT_Land = p2_all_lulc_data_tot,
+                             gridMET = p1_gridmet)
   ),
   
   #Remove static attributes that were made into dynamic attributes
