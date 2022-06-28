@@ -79,12 +79,12 @@ mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1
                             "376_1","351_1","344_1","346_1","333_1")
 
 # Define the url for the NHGFv1 to NHDv2 crosswalk 
-# see https://github.com/USGS-R/drb-network-prep/commit/c45f469098dfb245a2d686b807a58afa00b9d0b2
-GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/c45f469098dfb245a2d686b807a58afa00b9d0b2/2_process/out/GFv1_NHDv2_xwalk.csv"
+# see https://github.com/USGS-R/drb-network-prep/commit/3637931f5a17469a4234eaed3d20ed44ba45958d
+GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/3637931f5a17469a4234eaed3d20ed44ba45958d/2_process/out/GFv1_NHDv2_xwalk_omit_zero_area.csv"
 
 # Define the url for the edited HRU polygons
-# see https://github.com/USGS-R/drb-network-prep/commit/940073e8d77c911b6fb9dc4e3657aeab1162a158
-GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/940073e8d77c911b6fb9dc4e3657aeab1162a158/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
+# see https://github.com/USGS-R/drb-network-prep/commit/3637931f5a17469a4234eaed3d20ed44ba45958d
+GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/3637931f5a17469a4234eaed3d20ed44ba45958d/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
