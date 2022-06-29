@@ -1,5 +1,6 @@
 add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
-                                     baseflow, CAT_Land, TOT_Land, gridMET){
+                                     baseflow, CAT_Land, TOT_Land, gridMET,
+                                     lags, lag_unit){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
   #' @param attrs table of static attributes (columns) for each reach (rows)
@@ -40,51 +41,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     colnames(tmp_attrs) <- tmp_colnames
     rm(tmp_colnames, col_years)
     
-    #format for new variable is NAME_lag, lag = 0 for these variables
-    df$CAT_HDENS_0 <- NA_real_
-    df$TOT_HDENS_0 <- NA_real_
-    
-    #Join data to all segs by date range
-    # Note: using this method instead of a case_when because
-    # case_when was very slow
-    date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'), by = '10 years')
-    for (i in 1:(length(date_ranges)+1)){
-      if (i == 1){
-        df[df$Date <= date_ranges[i], c('CAT_HDENS_0', 'TOT_HDENS_0')] <- 
-          left_join(df %>% 
-                      filter(Date <= date_ranges[i]) %>% 
-                      select(seg), 
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_1960_area_wtd, TOT_1960),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_1960_area_wtd, TOT_1960)
-      }else if (i == (length(date_ranges)+1)){
-        df[df$Date > date_ranges[i-1], c('CAT_HDENS_0', 'TOT_HDENS_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_2010_area_wtd, TOT_2010),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_2010_area_wtd, TOT_2010)
-      }else{
-        #Get the year corresponding to the date range
-        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
-        #Get the column names to be selected
-        tmp_colnames <- c(paste0('CAT_', tmp_yr, '_area_wtd'),
-                          paste0('TOT_', tmp_yr))
-        
-        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-           c('CAT_HDENS_0', 'TOT_HDENS_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, all_of(tmp_colnames)),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(all_of(tmp_colnames))
-      }
-    }
+    df <- get_dynamic_HDENS(dyn_df = df, attrs = tmp_attrs, 
+                            lags = lags, lag_unit = lag_unit)
   }
   
   if ('MAJOR' %in% dyn_cols){
@@ -408,23 +366,39 @@ get_four_digit_year <- function(two_digit_yr){
   return(four_digit_yr)
 }
 
-get_dynamic_HDENS <- function(attrs, lags, lag_unit, lag_fxn){
+get_dynamic_HDENS <- function(dyn_df, attrs, lags, lag_unit){
   #' @description computes dynamic housing density from the provided tbl
   #' 
-  #' @param two_digit_yr vector of two digit years, YY
+  #' @param dyn_df tbl containing "Date" and the PRMS "seg" 
+  #' @param attrs tbl containing the "PRMS_segid" and the HDENS attribute columns
+  #' for CAT_YYYY_area_wtd and TOT_YYYY
+  #' @param lags vector stating how many lag_units to lag. 
+  #' A column will be added for each element for each attrs column.
+  #' @param lag_unit character vector containing the unit to use for each lag in lags. 
+  #' Accepts any of the lubridate options (e.g., days, months, years). If all
+  #' units are the same, can provide a one element vector with that unit.
   #' 
   #' @return four digit year, YYYY
+  
+  #Make the length of the lag_unit match the length of lags
+  if ((length(lag_unit) == 1) & (length(lags) > 1)){
+    lag_unit <- rep(lag_unit, length(lags))
+  }
   
   #format for new variable is NAME_lag
   CAT_colnames <- paste0('CAT_HDENS_', lags, lag_unit)
   TOT_colnames <- paste0('TOT_HDENS_', lags, lag_unit)
-  attrs[CAT_colnames] <- NA_real_
-  attrs[TOT_colnames] <- NA_real_
+  dyn_df[CAT_colnames] <- NA_real_
+  dyn_df[TOT_colnames] <- NA_real_
   
   #Loop over all of the lags
-  for (lag in lags){
+  for (lag in 1:length(lags)){
     #Create a temporary date column containing the lagged date to use
-    attrs$lagged_Date <- attrs$Date %m-% period(paste(lags[lag], lag_unit))
+    if(lags[lag] != 0){
+      dyn_df$lagged_Date <- dyn_df$Date %m-% period(paste(lags[lag], lag_unit[lag]))
+    }else{
+      dyn_df$lagged_Date <- dyn_df$Date
+    }
     
     #Join data to all segs by date range
     # Note: using this method instead of a case_when because
@@ -432,22 +406,24 @@ get_dynamic_HDENS <- function(attrs, lags, lag_unit, lag_fxn){
     date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'), by = '10 years')
     for (i in 1:(length(date_ranges)+1)){
       if (i == 1){
-        attrs[attrs$lagged_Date <= date_ranges[i], 
-              c(paste0('CAT_HDENS_', lags[lag]), paste0('TOT_HDENS_', lags[lag]))] <- 
-          left_join(attrs %>% 
+        dyn_df[dyn_df$lagged_Date <= date_ranges[i], 
+              c(paste0('CAT_HDENS_', lags[lag], lag_unit[lag]), 
+                paste0('TOT_HDENS_', lags[lag], lag_unit[lag]))] <- 
+          left_join(dyn_df %>% 
                       filter(lagged_Date <= date_ranges[i]) %>% 
                       select(seg), 
-                    tmp_attrs %>% 
+                    attrs %>% 
                       select(PRMS_segid, CAT_1960_area_wtd, TOT_1960),
                     by = c('seg' = 'PRMS_segid')) %>%
           select(CAT_1960_area_wtd, TOT_1960)
       }else if (i == (length(date_ranges)+1)){
-        attrs[attrs$lagged_Date > date_ranges[i-1], 
-              c(paste0('CAT_HDENS_', lags[lag]), paste0('TOT_HDENS_', lags[lag]))] <- 
-          left_join(attrs %>% 
+        dyn_df[dyn_df$lagged_Date > date_ranges[i-1], 
+              c(paste0('CAT_HDENS_', lags[lag], lag_unit[lag]), 
+                paste0('TOT_HDENS_', lags[lag], lag_unit[lag]))] <- 
+          left_join(dyn_df %>% 
                       filter(lagged_Date > date_ranges[i-1]) %>% 
                       select(seg),
-                    tmp_attrs %>% 
+                    attrs %>% 
                       select(PRMS_segid, CAT_2010_area_wtd, TOT_2010),
                     by = c('seg' = 'PRMS_segid')) %>%
           select(CAT_2010_area_wtd, TOT_2010)
@@ -458,21 +434,24 @@ get_dynamic_HDENS <- function(attrs, lags, lag_unit, lag_fxn){
         tmp_colnames <- c(paste0('CAT_', tmp_yr, '_area_wtd'),
                           paste0('TOT_', tmp_yr))
         
-        attrs[attrs$lagged_Date > date_ranges[i-1] & attrs$lagged_Date <= date_ranges[i],
-              c(paste0('CAT_HDENS_', lags[lag]), paste0('TOT_HDENS_', lags[lag]))] <- 
-          left_join(attrs %>% 
+        dyn_df[dyn_df$lagged_Date > date_ranges[i-1] & dyn_df$lagged_Date <= date_ranges[i],
+              c(paste0('CAT_HDENS_', lags[lag], lag_unit[lag]), 
+                paste0('TOT_HDENS_', lags[lag], lag_unit[lag]))] <- 
+          left_join(dyn_df %>% 
                       filter(lagged_Date > date_ranges[i-1], 
                              lagged_Date <= date_ranges[i]) %>% 
                       select(seg),
-                    tmp_attrs %>% 
+                    attrs %>% 
                       select(PRMS_segid, all_of(tmp_colnames)),
                     by = c('seg' = 'PRMS_segid')) %>%
           select(all_of(tmp_colnames))
       }
     }
   }
+  #Remove the lagged_Date column
+  dyn_df <- select(dyn_df, -lagged_Date)
 
-  return(attrs)
+  return(dyn_df)
 }
 
 
@@ -482,12 +461,19 @@ compute_lagged_attrs <- function(attrs, lags, lag_unit, lag_fxn){
   #' @param attrs tbl containing "Date" and the PRMS "seg",
   #' followed by only the columns for which to compute lagged information 
   #' @param lags vector stating how many lag_units to lag. 
-  #' A column will be added for each element.
-  #' @param lag_unit unit for the lag. accepts days, months, or years
+  #' A column will be added for each element for each attrs column.
+  #' @param lag_unit character vector containing the unit to use for each lag in lags. 
+  #' Accepts any of the lubridate options (e.g., days, months, years). If all
+  #' units are the same, can provide a one element vector with that unit.
   #' @param lag_fxn function used to compute the lagged information. 
   #' Example: mean for mean over the last lag days. NULL = exact value on that day.
   #' 
   #' @return tbl with the added lagged features.
+  
+  #Make the length of the lag_unit match the length of lags
+  if ((length(lag_unit) == 1) & (length(lags) > 1)){
+    lag_unit <- rep(lag_unit, length(lags))
+  }
   
   #may have the case that the available attrs span a larger range than the 
   #available data. need a way to specify that
