@@ -2,7 +2,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                      baseflow = NULL, 
                                      CAT_Land = NULL, Upstream_Land = NULL, 
                                      gridMET = NULL,
-                                     attr_prefix,
+                                     attr_prefix, Upstream_Land_prefix = NULL,
                                      lag_table){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
@@ -17,6 +17,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   #' @param gridMET table of gridment data. Row length = dates x PRMS reach
   #' @param attr_prefix character vector of prefixes for the attributes 
   #' (e.g., CAT, TOT)
+  #' @param Upstream_Land_prefix character vector of prefixes for the upstream 
+  #' land cover attributes (e.g., TOT, ACC)
   #' @param lag_table table with 3 attributes: attributes, lags, and lag_unit.
   #' This is used to compute the lagged attributes
   #' 
@@ -56,7 +58,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'),
                            '10 years')
     tmp_years <- tmp_attrs %>% 
-      select(starts_with('CAT')) %>% 
+      select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
       sort() %>% 
       str_split(pattern = '_', simplify = TRUE) %>% 
@@ -67,11 +69,11 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                   date_ranges = tmp_date_ranges,
                                   attr_years = tmp_years,
                                   attr_name = 'HDENS', 
-                                  attr_prefix = c('CAT', 'TOT'))
+                                  attr_prefix = attr_prefix)
     
     #add lagged dynamic information
     #Create df that starts at the earliest date - largest lag
-    #Assign the exact value of HDENS on those dates to the df
+    
     #Use the lag function to compute the desired attributes
     #should have an if statement here because if the lag function only has 
     #exact, then do not need to pass to this function.
@@ -94,7 +96,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
                            '10 years')
     tmp_years <- tmp_attrs %>% 
-      select(starts_with('CAT')) %>% 
+      select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
       sort() %>% 
       str_split(pattern = '_', simplify = TRUE) %>% 
@@ -105,7 +107,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                   date_ranges = tmp_date_ranges,
                                   attr_years = tmp_years,
                                   attr_name = 'MAJOR', 
-                                  attr_prefix = c('CAT', 'TOT'))
+                                  attr_prefix = attr_prefix)
   }
   
   if ('NDAMS' %in% dyn_cols){
@@ -125,7 +127,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
                            '10 years')
     tmp_years <- tmp_attrs %>% 
-      select(starts_with('CAT')) %>% 
+      select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
       sort() %>% 
       str_split(pattern = '_', simplify = TRUE) %>% 
@@ -136,7 +138,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                   date_ranges = tmp_date_ranges,
                                   attr_years = tmp_years,
                                   attr_name = 'NDAMS', 
-                                  attr_prefix = c('CAT', 'TOT'))
+                                  attr_prefix = attr_prefix)
   }
 
   if ('NORM' %in% dyn_cols){
@@ -156,7 +158,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
                            '10 years')
     tmp_years <- tmp_attrs %>% 
-      select(starts_with('CAT')) %>% 
+      select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
       sort() %>% 
       str_split(pattern = '_', simplify = TRUE) %>% 
@@ -167,7 +169,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                   date_ranges = tmp_date_ranges,
                                   attr_years = tmp_years,
                                   attr_name = 'NORM_STORAGE', 
-                                  attr_prefix = c('CAT', 'TOT'))
+                                  attr_prefix = attr_prefix)
   }
   
   if ('NID' %in% dyn_cols){
@@ -187,7 +189,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
                            '10 years')
     tmp_years <- tmp_attrs %>% 
-      select(starts_with('CAT')) %>% 
+      select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
       sort() %>% 
       str_split(pattern = '_', simplify = TRUE) %>% 
@@ -198,7 +200,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                   date_ranges = tmp_date_ranges,
                                   attr_years = tmp_years,
                                   attr_name = 'NID_STORAGE', 
-                                  attr_prefix = c('CAT', 'TOT'))
+                                  attr_prefix = attr_prefix)
   }
   
   #Land Cover
@@ -232,7 +234,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                     date_ranges = tmp_date_ranges,
                                     attr_years = tmp_years,
                                     attr_name = paste0('LC', lc), 
-                                    attr_prefix = c('CAT'))
+                                    attr_prefix = 'CAT')
     }
   }
   if (!is.null(Upstream_Land)){
@@ -240,7 +242,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_attrs <- pivot_wider(Upstream_Land %>% 
                                select(-PRMS_area_km2), 
                              names_from = Year, 
-                             values_from = starts_with('TOT'))
+                             values_from = starts_with(Upstream_Land_prefix))
     
     #date ranges and dataset years
     tmp_date_ranges <- c(seq(as.Date('1945-09-30'), as.Date('1995-09-30'), by = '10 years'),
@@ -265,7 +267,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                     date_ranges = tmp_date_ranges,
                                     attr_years = tmp_years,
                                     attr_name = paste0('LC', lc), 
-                                    attr_prefix = c('TOT'))
+                                    attr_prefix = Upstream_Land_prefix)
     }
   }
   
