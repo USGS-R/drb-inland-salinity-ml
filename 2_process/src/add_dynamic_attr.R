@@ -1,5 +1,5 @@
 add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
-                                     baseflow, CAT_Land, TOT_Land, gridMET,
+                                     baseflow, CAT_Land, Upstream_Land, gridMET,
                                      lags, lag_unit){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
@@ -10,7 +10,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   #' @param end_date last date to compute attributes
   #' @param baseflow table of monthly baseflow estimates for each reach
   #' @param CAT_Land table of catchment land cover class proportions
-  #' @param TOT_Land table of total upstream land cover class proportions
+  #' @param Upstream_Land table of total upstream land cover class proportions
   #' 
   #' @return tbl with the added features.
   
@@ -36,294 +36,227 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_colnames <- colnames(tmp_attrs)
     for(i in 2:length(tmp_colnames)){
       tmp_colnames[i] <- gsub(x = tmp_colnames[i], pattern = 'HDENS+[0-9]+[0-9]', 
-                              replacement = col_years[i-1])
+                              replacement = col_years[i-1]) %>%
+        #Format column names to match requirements for the function
+        gsub(pattern = '_area_wtd', replacement = '')
     }
     colnames(tmp_attrs) <- tmp_colnames
     rm(tmp_colnames, col_years)
     
-    df <- get_dynamic_HDENS(dyn_df = df, attrs = tmp_attrs, 
-                            lags = lags, lag_unit = lag_unit)
+    #HDENS data date ranges and dataset years
+    tmp_date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'),
+                           '10 years')
+    tmp_years <- tmp_attrs %>% 
+      select(starts_with('CAT')) %>% 
+      colnames() %>% 
+      sort() %>% 
+      str_split(pattern = '_', simplify = TRUE) %>% 
+      .[,2]
+    
+    df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs, 
+                                  lags = 0, lag_unit = '',
+                                  date_ranges = tmp_date_ranges,
+                                  attr_years = tmp_years,
+                                  attr_name = 'HDENS', 
+                                  attr_prefix = c('CAT', 'TOT'))
+    
+    #add in lagged dynamic information
+    #Create df that starts at the earliest date - largest lag
+    #Assign the exact value of HDENS on those dates to the df
+    #Use the lag function to compute the desired attributes
+    #should have an if statement here because if the lag function only has 
+    #exact, then do not need to pass to this function.
   }
   
   if ('MAJOR' %in% dyn_cols){
     #major dams has the format MAJORYYYY
     tmp_attrs <- select(attrs, PRMS_segid, contains('MAJOR'))
-    
-    #format for new variable is NAME_lag, lag = 0 for these variables
-    df$CAT_MAJOR_0 <- NA_real_
-    df$TOT_MAJOR_0 <- NA_real_
-    
-    #Join data to all segs by date range
-    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
-    for (i in 1:(length(date_ranges)+1)){
-      if (i == 1){
-        df[df$Date <= date_ranges[i], c('CAT_MAJOR_0', 'TOT_MAJOR_0')] <- 
-          left_join(df %>% 
-                      filter(Date <= date_ranges[i]) %>% 
-                      select(seg), 
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_MAJOR1970_sum, TOT_MAJOR1970),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_MAJOR1970_sum, TOT_MAJOR1970)
-      }else if (i == (length(date_ranges)+1)){
-        df[df$Date > date_ranges[i-1], c('CAT_MAJOR_0', 'TOT_MAJOR_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_MAJOR2010_sum, TOT_MAJOR2010),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_MAJOR2010_sum, TOT_MAJOR2010)
-      }else{
-        #Get the year corresponding to the date range
-        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
-        #Get the column names to be selected
-        tmp_colnames <- c(paste0('CAT_MAJOR', tmp_yr, '_sum'),
-                          paste0('TOT_MAJOR', tmp_yr))
-        
-        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-           c('CAT_MAJOR_0', 'TOT_MAJOR_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, all_of(tmp_colnames)),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(all_of(tmp_colnames))
-      }
+    tmp_colnames <- colnames(tmp_attrs)
+    for(i in 2:length(tmp_colnames)){
+      tmp_colnames[i] <- gsub(x = tmp_colnames[i], pattern = '_sum', 
+                              replacement = '') %>%
+        gsub(pattern = 'MAJOR', 
+             replacement = '')
     }
+    colnames(tmp_attrs) <- tmp_colnames
+    rm(tmp_colnames)
+    
+    #date ranges and dataset years
+    tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
+                           '10 years')
+    tmp_years <- tmp_attrs %>% 
+      select(starts_with('CAT')) %>% 
+      colnames() %>% 
+      sort() %>% 
+      str_split(pattern = '_', simplify = TRUE) %>% 
+      .[,2]
+    
+    df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs, 
+                                  lags = 0, lag_unit = '',
+                                  date_ranges = tmp_date_ranges,
+                                  attr_years = tmp_years,
+                                  attr_name = 'MAJOR', 
+                                  attr_prefix = c('CAT', 'TOT'))
   }
   
   if ('NDAMS' %in% dyn_cols){
     #number of dams has the format NDMASYYYY
     tmp_attrs <- select(attrs, PRMS_segid, contains('NDAMS'))
-    
-    #format for new variable is NAME_lag, lag = 0 for these variables
-    df$CAT_NDAMS_0 <- NA_real_
-    df$TOT_NDAMS_0 <- NA_real_
-    
-    #Join data to all segs by date range
-    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
-    for (i in 1:(length(date_ranges)+1)){
-      if (i == 1){
-        df[df$Date <= date_ranges[i], c('CAT_NDAMS_0', 'TOT_NDAMS_0')] <- 
-          left_join(df %>% 
-                      filter(Date <= date_ranges[i]) %>% 
-                      select(seg), 
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_NDAMS1970_sum, TOT_NDAMS1970),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_NDAMS1970_sum, TOT_NDAMS1970)
-      }else if (i == (length(date_ranges)+1)){
-        df[df$Date > date_ranges[i-1], c('CAT_NDAMS_0', 'TOT_NDAMS_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_NDAMS2010_sum, TOT_NDAMS2010),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_NDAMS2010_sum, TOT_NDAMS2010)
-      }else{
-        #Get the year corresponding to the date range
-        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
-        #Get the column names to be selected
-        tmp_colnames <- c(paste0('CAT_NDAMS', tmp_yr, '_sum'),
-                          paste0('TOT_NDAMS', tmp_yr))
-        
-        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-           c('CAT_NDAMS_0', 'TOT_NDAMS_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, all_of(tmp_colnames)),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(all_of(tmp_colnames))
-      }
+    tmp_colnames <- colnames(tmp_attrs)
+    for(i in 2:length(tmp_colnames)){
+      tmp_colnames[i] <- gsub(x = tmp_colnames[i], pattern = '_sum', 
+                              replacement = '') %>%
+        gsub(pattern = 'NDAMS', 
+             replacement = '')
     }
+    colnames(tmp_attrs) <- tmp_colnames
+    rm(tmp_colnames)
+    
+    #date ranges and dataset years
+    tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
+                           '10 years')
+    tmp_years <- tmp_attrs %>% 
+      select(starts_with('CAT')) %>% 
+      colnames() %>% 
+      sort() %>% 
+      str_split(pattern = '_', simplify = TRUE) %>% 
+      .[,2]
+    
+    df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs, 
+                                  lags = 0, lag_unit = '',
+                                  date_ranges = tmp_date_ranges,
+                                  attr_years = tmp_years,
+                                  attr_name = 'NDAMS', 
+                                  attr_prefix = c('CAT', 'TOT'))
   }
 
   if ('NORM' %in% dyn_cols){
-    #dam storage has the formate STORAGEYYYY
+    #dam storage has the format STORAGEYYYY
     tmp_attrs <- select(attrs, PRMS_segid, contains('NORM'))
-    
-    #format for new variable is NAME_lag, lag = 0 for these variables
-    df$CAT_NORM_0 <- NA_real_
-    df$TOT_NORM_0 <- NA_real_
-    
-    #Join data to all segs by date range
-    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
-    for (i in 1:(length(date_ranges)+1)){
-      if (i == 1){
-        df[df$Date <= date_ranges[i], c('CAT_NORM_0', 'TOT_NORM_0')] <- 
-          left_join(df %>% 
-                      filter(Date <= date_ranges[i]) %>% 
-                      select(seg), 
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_NORM_STORAGE1970_sum, TOT_NORM_STORAGE1970),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_NORM_STORAGE1970_sum, TOT_NORM_STORAGE1970)
-      }else if (i == (length(date_ranges)+1)){
-        df[df$Date > date_ranges[i-1], c('CAT_NORM_0', 'TOT_NORM_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_NORM_STORAGE2010_sum, TOT_NORM_STORAGE2010),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_NORM_STORAGE2010_sum, TOT_NORM_STORAGE2010)
-      }else{
-        #Get the year corresponding to the date range
-        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
-        #Get the column names to be selected
-        tmp_colnames <- c(paste0('CAT_NORM_STORAGE', tmp_yr, '_sum'),
-                          paste0('TOT_NORM_STORAGE', tmp_yr))
-        
-        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-           c('CAT_NORM_0', 'TOT_NORM_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, all_of(tmp_colnames)),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(all_of(tmp_colnames))
-      }
+    tmp_colnames <- colnames(tmp_attrs)
+    for(i in 2:length(tmp_colnames)){
+      tmp_colnames[i] <- gsub(x = tmp_colnames[i], pattern = '_sum', 
+                              replacement = '') %>%
+        gsub(pattern = 'NORM_STORAGE', 
+             replacement = '')
     }
+    colnames(tmp_attrs) <- tmp_colnames
+    rm(tmp_colnames)
+    
+    #date ranges and dataset years
+    tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
+                           '10 years')
+    tmp_years <- tmp_attrs %>% 
+      select(starts_with('CAT')) %>% 
+      colnames() %>% 
+      sort() %>% 
+      str_split(pattern = '_', simplify = TRUE) %>% 
+      .[,2]
+    
+    df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs, 
+                                  lags = 0, lag_unit = '',
+                                  date_ranges = tmp_date_ranges,
+                                  attr_years = tmp_years,
+                                  attr_name = 'NORM_STORAGE', 
+                                  attr_prefix = c('CAT', 'TOT'))
   }
   
   if ('NID' %in% dyn_cols){
-    #dam storage has the formate STORAGEYYYY
+    #dam storage has the format STORAGEYYYY
     tmp_attrs <- select(attrs, PRMS_segid, contains('NID'))
-    
-    #format for new variable is NAME_lag, lag = 0 for these variables
-    df$CAT_NID_0 <- NA_real_
-    df$TOT_NID_0 <- NA_real_
-    
-    #Join data to all segs by date range
-    date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'), by = '10 years')
-    for (i in 1:(length(date_ranges)+1)){
-      if (i == 1){
-        df[df$Date <= date_ranges[i], c('CAT_NID_0', 'TOT_NID_0')] <- 
-          left_join(df %>% 
-                      filter(Date <= date_ranges[i]) %>% 
-                      select(seg), 
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_NID_STORAGE1970_sum, TOT_NID_STORAGE1970),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_NID_STORAGE1970_sum, TOT_NID_STORAGE1970)
-      }else if (i == (length(date_ranges)+1)){
-        df[df$Date > date_ranges[i-1], c('CAT_NID_0', 'TOT_NID_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, CAT_NID_STORAGE2010_sum, TOT_NID_STORAGE2010),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_NID_STORAGE2010_sum, TOT_NID_STORAGE2010)
-      }else{
-        #Get the year corresponding to the date range
-        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
-        #Get the column names to be selected
-        tmp_colnames <- c(paste0('CAT_NID_STORAGE', tmp_yr, '_sum'),
-                          paste0('TOT_NID_STORAGE', tmp_yr))
-        
-        df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-           c('CAT_NID_0', 'TOT_NID_0')] <- 
-          left_join(df %>% 
-                      filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                      select(seg),
-                    tmp_attrs %>% 
-                      select(PRMS_segid, all_of(tmp_colnames)),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(all_of(tmp_colnames))
-      }
+    tmp_colnames <- colnames(tmp_attrs)
+    for(i in 2:length(tmp_colnames)){
+      tmp_colnames[i] <- gsub(x = tmp_colnames[i], pattern = '_sum', 
+                              replacement = '') %>%
+        gsub(pattern = 'NID_STORAGE', 
+             replacement = '')
     }
+    colnames(tmp_attrs) <- tmp_colnames
+    rm(tmp_colnames)
+    
+    #date ranges and dataset years
+    tmp_date_ranges <- seq(as.Date('1975-09-30'), as.Date('2005-09-30'),
+                           '10 years')
+    tmp_years <- tmp_attrs %>% 
+      select(starts_with('CAT')) %>% 
+      colnames() %>% 
+      sort() %>% 
+      str_split(pattern = '_', simplify = TRUE) %>% 
+      .[,2]
+    
+    df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs, 
+                                  lags = 0, lag_unit = '',
+                                  date_ranges = tmp_date_ranges,
+                                  attr_years = tmp_years,
+                                  attr_name = 'NID_STORAGE', 
+                                  attr_prefix = c('CAT', 'TOT'))
   }
   
   #Land Cover
-  #format for new variable is NAME_lag, lag = 0 for these variables
-  df$CAT_LC9_0 <- df$CAT_LC8_0 <- df$CAT_LC7_0 <- df$CAT_LC6_0 <- 
-     df$CAT_LC5_0 <- df$CAT_LC4_0 <- df$CAT_LC3_0 <- df$CAT_LC2_0 <- 
-     df$CAT_LC1_0 <- NA_real_
-  df$TOT_LC9_0 <- df$TOT_LC8_0 <- df$TOT_LC7_0 <- df$TOT_LC6_0 <- 
-    df$TOT_LC5_0 <- df$TOT_LC4_0 <- df$TOT_LC3_0 <- df$TOT_LC2_0 <- 
-    df$TOT_LC1_0 <- NA_real_
-  
-  #Join data to all segs by date range
-  date_ranges <- c(seq(as.Date('1945-09-30'), as.Date('1995-09-30'), by = '10 years'),
-                   '2001-03-31', '2003-03-31', '2005-09-30', '2007-09-30', 
-                   '2010-03-31', '2012-09-30', '2015-03-31', '2018-03-31')
-  for (i in 1:(length(date_ranges)+1)){
-    if (i == 1){
-      df[df$Date <= date_ranges[i], grep(colnames(df), 
-                                         pattern = 'CAT_LC', fixed = TRUE)] <- 
-        left_join(df %>% 
-                    filter(Date <= date_ranges[i]) %>% 
-                    select(seg), 
-                  CAT_Land %>%
-                    filter(Year == 1940) %>%
-                    select(PRMS_segid, starts_with('CAT')),
-                  by = c('seg' = 'PRMS_segid')) %>%
-        select(starts_with('CAT'))
-      #TOT
-      df[df$Date <= date_ranges[i], grep(colnames(df), 
-                                         pattern = 'TOT_LC', fixed = TRUE)] <- 
-        left_join(df %>% 
-                    filter(Date <= date_ranges[i]) %>% 
-                    select(seg), 
-                  TOT_Land %>%
-                    filter(Year == 1940) %>% 
-                    select(PRMS_segid, starts_with('TOT')),
-                  by = c('seg' = 'PRMS_segid')) %>%
-        select(starts_with('TOT'))
-    }else if (i == (length(date_ranges)+1)){
-      df[df$Date > date_ranges[i-1], grep(colnames(df), 
-                                          pattern = 'CAT_LC', fixed = TRUE)] <- 
-        left_join(df %>% 
-                    filter(Date > date_ranges[i-1]) %>% 
-                    select(seg),
-                  CAT_Land %>%
-                    filter(Year == 2019) %>% 
-                    select(PRMS_segid, starts_with('CAT')),
-                  by = c('seg' = 'PRMS_segid')) %>%
-        select(starts_with('CAT'))
-      #TOT
-      df[df$Date > date_ranges[i-1], grep(colnames(df), 
-                                          pattern = 'TOT_LC', fixed = TRUE)] <- 
-        left_join(df %>% 
-                    filter(Date > date_ranges[i-1]) %>% 
-                    select(seg),
-                  TOT_Land %>%
-                    filter(Year == 2019) %>% 
-                    select(PRMS_segid, starts_with('TOT')),
-                  by = c('seg' = 'PRMS_segid')) %>%
-        select(starts_with('TOT'))
-    }else{
-      #Get the land cover year corresponding to the ith date range
-      tmp_yr <- sort(unique(CAT_Land$Year))[i]
+  if (!is.null(CAT_Land)){
+    #Get data table into format needed for function
+    tmp_attrs <- pivot_wider(CAT_Land %>% 
+                               select(-PRMS_area_km2), 
+                             names_from = Year, 
+                             values_from = starts_with('CAT'))
+    
+    #date ranges and dataset years
+    tmp_date_ranges <- c(seq(as.Date('1945-09-30'), as.Date('1995-09-30'), by = '10 years'),
+                         '2001-03-31', '2003-03-31', '2005-09-30', '2007-09-30',
+                         '2010-03-31', '2012-09-30', '2015-03-31', '2018-03-31')
+    tmp_years <- sort(unique(CAT_Land$Year))
+    
+    #Loop over all land cover classes to assign attributes
+    for (lc in 1:9){
+      tmp_attrs_lc <- select(tmp_attrs, PRMS_segid, contains(paste0('_',lc,'_')))
+      tmp_colnames <- colnames(tmp_attrs_lc)
+      for(i in 2:length(tmp_colnames)){
+        tmp_colnames[i] <- gsub(x = tmp_colnames[i], 
+                                pattern = paste0('_prop_lcClass_', lc), 
+                                replacement = '')
+      }
+      colnames(tmp_attrs_lc) <- tmp_colnames
+      rm(tmp_colnames)
       
-      df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-         grep(colnames(df), pattern = 'CAT_LC', fixed = TRUE)] <- 
-        left_join(df %>% 
-                    filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                    select(seg),
-                  CAT_Land %>%
-                    filter(Year == tmp_yr) %>% 
-                    select(PRMS_segid, starts_with('CAT')),
-                  by = c('seg' = 'PRMS_segid')) %>%
-        select(starts_with('CAT'))
-      #TOT
-      df[df$Date > date_ranges[i-1] & df$Date <= date_ranges[i], 
-         grep(colnames(df), pattern = 'TOT_LC', fixed = TRUE)] <- 
-        left_join(df %>% 
-                    filter(Date > date_ranges[i-1], Date <= date_ranges[i]) %>% 
-                    select(seg),
-                  TOT_Land %>%
-                    filter(Year == tmp_yr) %>% 
-                    select(PRMS_segid, starts_with('TOT')),
-                  by = c('seg' = 'PRMS_segid')) %>%
-        select(starts_with('TOT'))
+      df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs_lc, 
+                                    lags = 0, lag_unit = '',
+                                    date_ranges = tmp_date_ranges,
+                                    attr_years = tmp_years,
+                                    attr_name = paste0('LC', lc), 
+                                    attr_prefix = c('CAT'))
+    }
+  }
+  if (!is.null(Upstream_Land)){
+    #Get data table into format needed for function
+    tmp_attrs <- pivot_wider(Upstream_Land %>% 
+                               select(-PRMS_area_km2), 
+                             names_from = Year, 
+                             values_from = starts_with('TOT'))
+    
+    #date ranges and dataset years
+    tmp_date_ranges <- c(seq(as.Date('1945-09-30'), as.Date('1995-09-30'), by = '10 years'),
+                         '2001-03-31', '2003-03-31', '2005-09-30', '2007-09-30',
+                         '2010-03-31', '2012-09-30', '2015-03-31', '2018-03-31')
+    tmp_years <- sort(unique(Upstream_Land$Year))
+    
+    #Loop over all land cover classes to assign attributes
+    for (lc in 1:9){
+      tmp_attrs_lc <- select(tmp_attrs, PRMS_segid, contains(paste0('_',lc,'_')))
+      tmp_colnames <- colnames(tmp_attrs_lc)
+      for(i in 2:length(tmp_colnames)){
+        tmp_colnames[i] <- gsub(x = tmp_colnames[i], 
+                                pattern = paste0('_prop_lcClass_', lc), 
+                                replacement = '')
+      }
+      colnames(tmp_attrs_lc) <- tmp_colnames
+      rm(tmp_colnames)
+      
+      df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs_lc, 
+                                    lags = 0, lag_unit = '',
+                                    date_ranges = tmp_date_ranges,
+                                    attr_years = tmp_years,
+                                    attr_name = paste0('LC', lc), 
+                                    attr_prefix = c('TOT'))
     }
   }
   
@@ -337,17 +270,16 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   #Join to df
   df <- left_join(df, gridMET, by = c('seg' = 'PRMS_segid', "Date"))
   
-  #Commented out for now because some reaches do not have baseflow data
-  # #Assign monthly baseflow data
-  # #Add year and month columns (to be dropped after joining)
-  # df$Year <- year(df$Date)
-  # df$Month <- month(df$Date)
-  # #Remove the leading 0 for Month in baseflow
-  # baseflow$Month <- as.numeric(baseflow$Month)
-  # 
-  # #Join data to all segs by year and month
-  # df <- left_join(df, baseflow, by = c('seg' = 'PRMS_segid', 'Year', 'Month')) %>%
-  #   select(-Year, -Month)
+  #Assign monthly baseflow data
+  #Add year and month columns (to be dropped after joining)
+  df$Year <- year(df$Date)
+  df$Month <- month(df$Date)
+  #Remove the leading 0 for Month in baseflow
+  baseflow$Month <- as.numeric(baseflow$Month)
+
+  #Join data to all segs by year and month
+  df <- left_join(df, baseflow, by = c('seg' = 'PRMS_segid', 'Year', 'Month')) %>%
+    select(-Year, -Month)
   
 
   return(df)
@@ -366,19 +298,35 @@ get_four_digit_year <- function(two_digit_yr){
   return(four_digit_yr)
 }
 
-get_dynamic_HDENS <- function(dyn_df, attrs, lags, lag_unit){
-  #' @description computes dynamic housing density from the provided tbl
+get_dynamic_from_static <- function(dyn_df, attrs, lags, lag_unit, 
+                                    attr_years, date_ranges,
+                                    attr_name, attr_prefix){
+  #' @description computes dynamic attribute from the provided tbl of static
+  #' attributes.
   #' 
-  #' @param dyn_df tbl containing "Date" and the PRMS "seg" 
-  #' @param attrs tbl containing the "PRMS_segid" and the HDENS attribute columns
-  #' for CAT_YYYY_area_wtd and TOT_YYYY
-  #' @param lags vector stating how many lag_units to lag. 
-  #' A column will be added for each element for each attrs column.
+  #' @param dyn_df tbl containing "Date" and the PRMS "seg". Should have all
+  #' dates that you want to use in modeling. 
+  #' @param attrs tbl containing the "PRMS_segid" and attribute columns
+  #' in the format CAT_YYYY and TOT_YYYY
+  #' @param lags numeric vector stating how many lag_units to lag. 
+  #' A column will be added for each element for each attrs column. A lag of 0
+  #' can be used to extract the value on the Date in the dyn_df tbl.
   #' @param lag_unit character vector containing the unit to use for each lag in lags. 
   #' Accepts any of the lubridate options (e.g., days, months, years). If all
   #' units are the same, can provide a one element vector with that unit.
+  #' @param attr_years ordered character vector of the years available for this 
+  #' dataset. Should be in ascending order.
+  #' In attrs, there should be one CAT and one TOT column for each year.
+  #' @param date_ranges Date vector that specifies the transition dates from one
+  #' year to another year. Dates in dyn_df less than the first date 
+  #' will be assigned to the first year in attr_years. Dates in dyn_df greater 
+  #' than the last date will be assigned to the last year in attr_years.
+  #' @param attr_name name to use for this attribute. Format of the new name will
+  #' be paste0(attr_prefix, '_', attr_name, '_', lags, lag_unit)
+  #' @param attr_prefix character vector of prefixes for the attributes 
+  #' (e.g., CAT, TOT)
   #' 
-  #' @return four digit year, YYYY
+  #' @return dyn_df with the new dynamic attribute columns.
   
   #Make the length of the lag_unit match the length of lags
   if ((length(lag_unit) == 1) & (length(lags) > 1)){
@@ -386,10 +334,11 @@ get_dynamic_HDENS <- function(dyn_df, attrs, lags, lag_unit){
   }
   
   #format for new variable is NAME_lag
-  CAT_colnames <- paste0('CAT_HDENS_', lags, lag_unit)
-  TOT_colnames <- paste0('TOT_HDENS_', lags, lag_unit)
-  dyn_df[CAT_colnames] <- NA_real_
-  dyn_df[TOT_colnames] <- NA_real_
+  for (j in 1:length(attr_prefix)){
+    tmp_colnames <- paste0(attr_prefix[j], '_', attr_name, '_', lags, lag_unit)
+    dyn_df[tmp_colnames] <- NA_real_
+  }
+  rm(j, tmp_colnames)
   
   #Loop over all of the lags
   for (lag in 1:length(lags)){
@@ -403,48 +352,45 @@ get_dynamic_HDENS <- function(dyn_df, attrs, lags, lag_unit){
     #Join data to all segs by date range
     # Note: using this method instead of a case_when because
     # case_when was very slow
-    date_ranges <- seq(as.Date('1965-09-30'), as.Date('2005-09-30'), by = '10 years')
     for (i in 1:(length(date_ranges)+1)){
-      if (i == 1){
-        dyn_df[dyn_df$lagged_Date <= date_ranges[i], 
-              c(paste0('CAT_HDENS_', lags[lag], lag_unit[lag]), 
-                paste0('TOT_HDENS_', lags[lag], lag_unit[lag]))] <- 
-          left_join(dyn_df %>% 
-                      filter(lagged_Date <= date_ranges[i]) %>% 
-                      select(seg), 
-                    attrs %>% 
-                      select(PRMS_segid, CAT_1960_area_wtd, TOT_1960),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_1960_area_wtd, TOT_1960)
-      }else if (i == (length(date_ranges)+1)){
-        dyn_df[dyn_df$lagged_Date > date_ranges[i-1], 
-              c(paste0('CAT_HDENS_', lags[lag], lag_unit[lag]), 
-                paste0('TOT_HDENS_', lags[lag], lag_unit[lag]))] <- 
-          left_join(dyn_df %>% 
-                      filter(lagged_Date > date_ranges[i-1]) %>% 
-                      select(seg),
-                    attrs %>% 
-                      select(PRMS_segid, CAT_2010_area_wtd, TOT_2010),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(CAT_2010_area_wtd, TOT_2010)
-      }else{
-        #Get the year corresponding to the date range
-        tmp_yr <- year(mean(c(date_ranges[i], date_ranges[i-1])))
-        #Get the column names to be selected
-        tmp_colnames <- c(paste0('CAT_', tmp_yr, '_area_wtd'),
-                          paste0('TOT_', tmp_yr))
-        
-        dyn_df[dyn_df$lagged_Date > date_ranges[i-1] & dyn_df$lagged_Date <= date_ranges[i],
-              c(paste0('CAT_HDENS_', lags[lag], lag_unit[lag]), 
-                paste0('TOT_HDENS_', lags[lag], lag_unit[lag]))] <- 
-          left_join(dyn_df %>% 
-                      filter(lagged_Date > date_ranges[i-1], 
-                             lagged_Date <= date_ranges[i]) %>% 
-                      select(seg),
-                    attrs %>% 
-                      select(PRMS_segid, all_of(tmp_colnames)),
-                    by = c('seg' = 'PRMS_segid')) %>%
-          select(all_of(tmp_colnames))
+      for (j in 1:length(attr_prefix)){
+        if (i == 1){
+          dyn_df[dyn_df$lagged_Date <= date_ranges[i], 
+                 c(paste0(attr_prefix[j], '_', attr_name,
+                          '_', lags[lag], lag_unit[lag]))] <- 
+            left_join(dyn_df %>% 
+                        filter(lagged_Date <= date_ranges[i]) %>% 
+                        select(seg), 
+                      attrs %>% 
+                        select(PRMS_segid, 
+                               paste0(attr_prefix[j], '_', attr_years[i])),
+                      by = c('seg' = 'PRMS_segid')) %>%
+            select(paste0(attr_prefix[j], '_', attr_years[i]))
+        }else if (i == (length(date_ranges)+1)){
+          dyn_df[dyn_df$lagged_Date > date_ranges[i-1], 
+                 c(paste0(attr_prefix[j], '_', attr_name,
+                          '_', lags[lag], lag_unit[lag]))] <- 
+            left_join(dyn_df %>% 
+                        filter(lagged_Date > date_ranges[i-1]) %>% 
+                        select(seg),
+                      attrs %>% 
+                        select(PRMS_segid, 
+                               paste0(attr_prefix[j], '_', attr_years[i])),
+                      by = c('seg' = 'PRMS_segid')) %>%
+            select(paste0(attr_prefix[j], '_', attr_years[i]))
+        }else{
+          dyn_df[dyn_df$lagged_Date > date_ranges[i-1] & dyn_df$lagged_Date <= date_ranges[i],
+                 c(paste0(attr_prefix[j], '_', attr_name, '_', lags[lag], lag_unit[lag]))] <- 
+            left_join(dyn_df %>% 
+                        filter(lagged_Date > date_ranges[i-1], 
+                               lagged_Date <= date_ranges[i]) %>% 
+                        select(seg),
+                      attrs %>% 
+                        select(PRMS_segid, 
+                               paste0(attr_prefix[j], '_', attr_years[i])),
+                      by = c('seg' = 'PRMS_segid')) %>%
+            select(paste0(attr_prefix[j], '_', attr_years[i]))
+        }
       }
     }
   }
