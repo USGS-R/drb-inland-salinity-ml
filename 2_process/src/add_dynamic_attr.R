@@ -1,6 +1,9 @@
 add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
-                                     baseflow, CAT_Land, Upstream_Land, gridMET,
-                                     lags, lag_unit){
+                                     baseflow = NULL, 
+                                     CAT_Land = NULL, Upstream_Land = NULL, 
+                                     gridMET = NULL,
+                                     attr_prefix,
+                                     lag_table){
   #' @description computes dynamic attributes for each reach based on the provided dates
   #' 
   #' @param attrs table of static attributes (columns) for each reach (rows)
@@ -11,6 +14,11 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   #' @param baseflow table of monthly baseflow estimates for each reach
   #' @param CAT_Land table of catchment land cover class proportions
   #' @param Upstream_Land table of total upstream land cover class proportions
+  #' @param gridMET table of gridment data. Row length = dates x PRMS reach
+  #' @param attr_prefix character vector of prefixes for the attributes 
+  #' (e.g., CAT, TOT)
+  #' @param lag_table table with 3 attributes: attributes, lags, and lag_unit.
+  #' This is used to compute the lagged attributes
   #' 
   #' @return tbl with the added features.
   
@@ -30,7 +38,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_attrs <- select(attrs, PRMS_segid, contains('HDENS'))
     
     #Convert the column names to 4-digit years
-    col_years <- str_split(colnames(tmp_attrs)[-1], pattern = '_', simplify = T)[,2] %>%
+    col_years <- str_split(colnames(tmp_attrs)[-1], 
+                           pattern = '_', simplify = TRUE)[,2] %>%
       substr(start = 6, stop = 7) %>%
       get_four_digit_year()
     tmp_colnames <- colnames(tmp_attrs)
@@ -60,7 +69,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                   attr_name = 'HDENS', 
                                   attr_prefix = c('CAT', 'TOT'))
     
-    #add in lagged dynamic information
+    #add lagged dynamic information
     #Create df that starts at the earliest date - largest lag
     #Assign the exact value of HDENS on those dates to the df
     #Use the lag function to compute the desired attributes
@@ -261,26 +270,29 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   }
   
   #gridMET data
-  #Reformat columns
-  gridMET <- filter(gridMET, time <= end_date, time >= start_date) %>%
-    #format for new variable is NAME_lag, lag = 0 for these variables
-    rename(Date = time, tmmx_0 = tmmx, tmmn_0 = tmmn, pr_0 = pr, srad_0 = srad, 
-           vs_0 = vs, rmax_0 = rmax, rmin_0 = rmin, sph_0 = sph)
+  if (!is.null(gridMET)){
+    #Reformat columns
+    gridMET <- filter(gridMET, time <= end_date, time >= start_date) %>%
+      #format for new variable is NAME_lag, lag = 0 for these variables
+      rename(Date = time, tmmx_0 = tmmx, tmmn_0 = tmmn, pr_0 = pr, srad_0 = srad, 
+             vs_0 = vs, rmax_0 = rmax, rmin_0 = rmin, sph_0 = sph)
+    
+    #Join to df
+    df <- left_join(df, gridMET, by = c('seg' = 'PRMS_segid', "Date"))
+  }
   
-  #Join to df
-  df <- left_join(df, gridMET, by = c('seg' = 'PRMS_segid', "Date"))
-  
-  #Assign monthly baseflow data
-  #Add year and month columns (to be dropped after joining)
-  df$Year <- year(df$Date)
-  df$Month <- month(df$Date)
-  #Remove the leading 0 for Month in baseflow
-  baseflow$Month <- as.numeric(baseflow$Month)
-
-  #Join data to all segs by year and month
-  df <- left_join(df, baseflow, by = c('seg' = 'PRMS_segid', 'Year', 'Month')) %>%
-    select(-Year, -Month)
-  
+  #Monthly baseflow data
+  if (!is.null(baseflow)){
+    #Add year and month columns (to be dropped after joining)
+    df$Year <- year(df$Date)
+    df$Month <- month(df$Date)
+    #Remove the leading 0 for Month in baseflow
+    baseflow$Month <- as.numeric(baseflow$Month)
+    
+    #Join data to all segs by year and month
+    df <- left_join(df, baseflow, by = c('seg' = 'PRMS_segid', 'Year', 'Month')) %>%
+      select(-Year, -Month)
+  }
 
   return(df)
 }
@@ -307,16 +319,16 @@ get_dynamic_from_static <- function(dyn_df, attrs, lags, lag_unit,
   #' @param dyn_df tbl containing "Date" and the PRMS "seg". Should have all
   #' dates that you want to use in modeling. 
   #' @param attrs tbl containing the "PRMS_segid" and attribute columns
-  #' in the format CAT_YYYY and TOT_YYYY
+  #' in the format <attr_prefix>_YYYY
   #' @param lags numeric vector stating how many lag_units to lag. 
-  #' A column will be added for each element for each attrs column. A lag of 0
-  #' can be used to extract the value on the Date in the dyn_df tbl.
+  #' A column will be added for each element in lags for each attrs column. 
+  #' A lag of 0 can be used to extract the value on the Date in the dyn_df tbl.
   #' @param lag_unit character vector containing the unit to use for each lag in lags. 
   #' Accepts any of the lubridate options (e.g., days, months, years). If all
   #' units are the same, can provide a one element vector with that unit.
   #' @param attr_years ordered character vector of the years available for this 
   #' dataset. Should be in ascending order.
-  #' In attrs, there should be one CAT and one TOT column for each year.
+  #' In attrs, for each attr_prefix, there should be one column for each year.
   #' @param date_ranges Date vector that specifies the transition dates from one
   #' year to another year. Dates in dyn_df less than the first date 
   #' will be assigned to the first year in attr_years. Dates in dyn_df greater 
