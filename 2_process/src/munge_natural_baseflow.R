@@ -1,4 +1,5 @@
-munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mean","med","p10","p90"),start_year,end_year,fill_all_years=TRUE){
+munge_natural_baseflow <- function(baseflow_pred_files, segs_w_comids, vars=c("mean","med","p10","p90"),
+                                   start_year, end_year, fill_all_years=TRUE){
   #' 
   #' @description This function reads in the DRB monthly baseflow tables from Miller et al. 2021 (https://doi.org/10.5066/P9FZG7GZ)
   #' and outputs a data frame containing monthly baseflow estimates for each PRMS segment. The Miller et al. dataset spans
@@ -28,17 +29,30 @@ munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mea
       # reformat column names to include month
       rename_with(.cols = p10.Pred:mean.Pred, function(y){paste0(y,"_", month)}) %>%
       # subset dates
-      filter(Year >= start_year, Year <= end_year) %>%
-      # retain only desired COMIDs
-      filter(COMID %in% segs_w_comids$COMID) %>%
-      # add PRMS segment IDs
-      left_join(.,segs_w_comids,by="COMID") %>%
-      # order by year
+      filter(Year >= start_year, Year <= end_year)
+    
+    # Set up monthly tables for all PRMS_segid's
+    latest_year_w_data <- max(data$Year)
+    
+    segs_w_comids_complete <- segs_w_comids %>%
+      split(.,.$PRMS_segid) %>%
+      lapply(.,function(segid){
+        segs_w_comids_and_months <- tibble(
+          Year = seq(start_year, latest_year_w_data, by = 1),
+          PRMS_segid = rep(segid$PRMS_segid, length(Year)),
+          COMID = rep(segid$COMID, length(Year))) 
+      }) %>%
+      bind_rows()
+    
+    # Filter monthly baseflow tables for desired COMIDs and arrange by year
+    data_w_segids <- data %>%
+      right_join(y = segs_w_comids_complete, by = c("COMID","Year")) %>%
       arrange(Year)
     
   })
   
-  # Combine monthly data frames into one table (join by shared cols, "PRMS_segid", "COMID" and "Year")    
+  # Combine monthly data frames into one table and join by shared cols
+  # "PRMS_segid", "COMID" and "Year"    
   monthly_baseflow <- Reduce(inner_join, monthly_baseflow_ls) %>%
     suppressMessages() %>%
     select(c(PRMS_segid,COMID,Year,contains(vars))) %>%
@@ -54,26 +68,28 @@ munge_natural_baseflow <- function(baseflow_pred_files,segs_w_comids,vars=c("mea
   
   # For each COMID, calculate average monthly natural flow for years {start_year} to {end_year}
   monthly_baseflow_avg <- monthly_baseflow %>%
-    group_by(PRMS_segid,COMID,Month) %>%
+    group_by(PRMS_segid, COMID, Month) %>%
     summarize(across(contains(vars),mean),
-              .groups="drop")
+              .groups = "drop")
   
-  # If {fill_all_years} = TRUE and {end_year} > last year in monthly baseflow table, fill in missing years using long-term monthly averages
-  if(fill_all_years == "TRUE"){
+  # If {fill_all_years} = TRUE and {end_year} > last year in monthly baseflow table, 
+  # fill in missing years using long-term monthly averages
+  if(fill_all_years){
     
-    years_to_fill <- seq(start_year,end_year)[which(seq(start_year,end_year) %in% unique(monthly_baseflow$Year) == "FALSE")]
+    years <- seq(start_year, end_year, 1)
+    years_to_fill <- years[which(years %in% unique(monthly_baseflow$Year) == "FALSE")]
     
-    if(length(years_to_fill)>0){
+    if(length(years_to_fill) > 0){
       monthly_baseflow_fill <- years_to_fill %>%
         lapply(.,function(x){
           monthly_baseflow_avg$Year <- x
           return(monthly_baseflow_avg)
           }) %>%
         bind_rows() %>%
-        relocate("Year",.after="COMID")
+        relocate("Year",.after = "COMID")
       
       # Bind dynamic monthly natural baseflow with long-term monthly averages to fill missing years
-      monthly_baseflow_out <- bind_rows(monthly_baseflow,monthly_baseflow_fill) %>%
+      monthly_baseflow_out <- bind_rows(monthly_baseflow, monthly_baseflow_fill) %>%
         select(-COMID)
       } else {
         monthly_baseflow_out <- monthly_baseflow %>%
