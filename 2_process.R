@@ -11,6 +11,7 @@ source("2_process/src/recursive_fun.R")
 source("2_process/src/aggregate_observations.R")
 source('2_process/src/area_diff_fix.R')
 source('2_process/src/clean_lulc_data_for_merge.R')
+source('2_process/src/add_dynamic_attr.R')
 
 
 p2_targets_list <- list(
@@ -469,6 +470,30 @@ p2_targets_list <- list(
                     drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))    
   ),
   
+  #Lags to compute for dynamic attributes
+  tar_target(
+    p2_dyn_attr_lags,
+    data.frame(attribute = c('HDENS', 'MAJOR', 'NDAMS', 'NORM', 'NID', 
+                             'Land', 
+                             'Met', 
+                             'Baseflow'), 
+               lags = I(list(c(10,20), c(10,20), c(10,20), c(10,20), c(10,20), 
+                             c(5,10,15,20), 
+                             c(1,3,7,15,30,90,180,1), 
+                             c(1,3,6,1))), 
+               lag_unit = I(list('years', 'years', 'years', 'years', 'years',
+                                 'years', 
+                                 c(rep('days', 7), 'years'), 
+                                 c(rep('months', 3), 'years'))),
+               lag_fxns = I(list(c('exact','mean'), c('exact','mean'), 
+                                 c('exact','mean'), c('exact','mean'), 
+                                 c('exact','mean'), 
+                                 c('exact','mean'), 
+                                 c('mean'),
+                                 c('mean')))
+    )
+  ),
+  
   #Dataframe of dynamic attributes
   tar_target(
     p2_dyn_attr,
@@ -480,7 +505,10 @@ p2_targets_list <- list(
                              baseflow = p2_natural_baseflow,
                              CAT_Land = p2_all_lulc_data_cat,
                              TOT_Land = p2_all_lulc_data_tot,
-                             gridMET = p1_gridmet)
+                             gridMET = p1_gridmet,
+                             attr_prefix = c('CAT', 'TOT'), 
+                             Upstream_Land_prefix = 'TOT',
+                             lag_table = p2_dyn_attr_lags)
   ),
   
   #Remove static attributes that were made into dynamic attributes
