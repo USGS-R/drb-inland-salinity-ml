@@ -473,7 +473,15 @@ p2_targets_list <- list(
   #Lags to compute for dynamic attributes
   tar_target(
     p2_dyn_attr_lags,
-    data.frame(attribute = c('HDENS', 'MAJOR', 'NDAMS', 'NORM', 'NID', 
+    #' @param attribute short attribute name used to select columns containing
+    #' that name, or 'Land', 'Met', 'Baseflow' as keywords to process those columns. 
+    #' @param lags numeric vector stating how many lag_units to lag. 
+    #' A column will be added for each element in lags for each attrs column. 
+    #' A lag of 0 can be used to extract the value on the Date in the dyn_df tbl.
+    #' @param lag_unit character vector containing the unit to use for each lag in lags. 
+    #' Accepts any of the lubridate options (e.g., days, months, years). If all
+    #' units are the same, can provide a one element vector with that unit.
+    data.frame(attribute = c('HDENS', 'MAJOR', 'NDAMS', 'NORM_STORAGE', 'NID_STORAGE', 
                              'Land', 
                              'Met', 
                              'Baseflow'), 
@@ -504,7 +512,7 @@ p2_targets_list <- list(
                              end_date = latest_date,
                              baseflow = p2_natural_baseflow,
                              CAT_Land = p2_all_lulc_data_cat,
-                             TOT_Land = p2_all_lulc_data_tot,
+                             Upstream_Land = p2_all_lulc_data_tot,
                              gridMET = p1_gridmet,
                              attr_prefix = c('CAT', 'TOT'), 
                              Upstream_Land_prefix = 'TOT',
