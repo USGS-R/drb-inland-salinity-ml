@@ -291,14 +291,24 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                       attr_prefix = attr_prefix)
     
     #Use the lag function to compute the desired attributes
-    df <- cbind(df, compute_lagged_attrs(dyn_df = df_lag, attrs = tmp_attrs, 
-                               lag_table = lag_table, 
-                               lag_attr_name = 'NID_STORAGE', attr_name = 'NID_STORAGE',
-                               date_ranges = tmp_date_ranges, 
-                               attr_years = tmp_years, attr_prefix = attr_prefix,
-                               start_date = start_date) %>%
+    df <- cbind(df, compute_lagged_attrs(dyn_df = df_lag, 
+                                         lag_table = lag_table, 
+                                         lag_attr_name = 'NID_STORAGE', 
+                                         attr_name = 'NID_STORAGE',
+                                         start_date = start_date) %>%
                   select(-Date, -seg)
-                )
+    )
+    
+    #Keeping this outside of the compute lagged attrs function because it's
+    #faster to compute this way.
+    if ('exact' %in% lag_table[lag_table$attribute == 'NID_STORAGE',]$lag_fxns[[1]]){
+      df <- get_dynamic_from_static(dyn_df = df, attrs = tmp_attrs, 
+                                    lag_table = lag_table,
+                                    date_ranges = tmp_date_ranges,
+                                    attr_years = tmp_years,
+                                    attr_name = 'NID_STORAGE', 
+                                    attr_prefix = attr_prefix)
+    }
   }
   
   #Land Cover
@@ -379,12 +389,12 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     #Reformat columns
     gridMET <- filter(gridMET, time <= end_date, time >= start_date) %>%
       #format for new variable is NAME_lag, lag = 0 for these variables
-      rename(Date = time, PRMS_segid = seg, tmmx_0 = tmmx, tmmn_0 = tmmn, 
+      rename(Date = time, seg = PRMS_segid, tmmx_0 = tmmx, tmmn_0 = tmmn, 
              pr_0 = pr, srad_0 = srad, 
              vs_0 = vs, rmax_0 = rmax, rmin_0 = rmin, sph_0 = sph)
     
     #add lagged dynamic information
-    gridmet <- compute_lagged_attrs_from_dynamic(dyn_df = gridmet, 
+    gridMET <- compute_lagged_attrs_from_dynamic(dyn_df = gridMET, 
                                                  lag_table = lag_table, 
                                                  lag_attr_name = 'Met',
                                                  start_date = start_date)
@@ -400,7 +410,12 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     df$Month <- month(df$Date)
     #Remove the leading 0 for Month in baseflow
     baseflow$Month <- as.numeric(baseflow$Month)
-    
+    #format for new variable is NAME_lag, lag = 0 for these variables
+    rename(baseflow, 
+           mean_natl_baseflow_cfs_0 = mean_natl_baseflow_cfs,
+           med_natl_baseflow_cfs_0 = med_natl_baseflow_cfs,
+           p10_natl_baseflow_cfs_0 = p10_natl_baseflow_cfs,
+           p90_natl_baseflow_cfs_0 = p90_natl_baseflow_cfs)
     #Join data to all segs by year and month
     df <- left_join(df, baseflow, by = c('seg' = 'PRMS_segid', 'Year', 'Month')) %>%
       select(-Year, -Month)
@@ -727,12 +742,12 @@ compute_lagged_attrs_from_dynamic <- function(dyn_df, lag_table, lag_attr_name,
             dyn_df <- cbind(dyn_df, 
                             dyn_df %>% 
                               group_by(seg) %>% 
-                              summarise(across(.cols = ends_with(paste0(attr_name, '_0')), 
+                              summarise(across(.cols = ends_with('_0'), 
                                                .fns = stats::filter, 
                                                filter = rep(1/as.numeric(days_lag), days_lag), 
                                                sides = 1, 
                                                .names = paste0("{.col}_", tmp_lags[lag], 
-                                                               tmp_lag_unit[lag], "_{.fn}")), 
+                                                               tmp_lag_unit[lag], "_mean")), 
                                         .groups = 'drop') %>%
                               select(-seg) %>%
                               #need to shift the results by 1 day because filter 
@@ -747,14 +762,6 @@ compute_lagged_attrs_from_dynamic <- function(dyn_df, lag_table, lag_attr_name,
         }
       }
     }
-  }
-  
-  #Remove the dates before the start_date
-  dyn_df <- dyn_df %>% 
-    filter(Date >= start_date)
-  
-  if ('exact' %in% tmp_lag_fxns){
-    dyn_df <- 1
   }
   
   return(dyn_df)
