@@ -411,7 +411,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     #Remove the leading 0 for Month in baseflow
     baseflow$Month <- as.numeric(baseflow$Month)
     #format for new variable is NAME_lag, lag = 0 for these variables
-    rename(baseflow, 
+    baseflow <- rename(baseflow, 
            mean_natl_baseflow_cfs_0 = mean_natl_baseflow_cfs,
            med_natl_baseflow_cfs_0 = med_natl_baseflow_cfs,
            p10_natl_baseflow_cfs_0 = p10_natl_baseflow_cfs,
@@ -424,14 +424,17 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     #for baseflow, the start_date is the earliest available date, so this is 
     #the df_lag.
     df_lag <- df %>% 
-      select(Date, seg, contains(baseflow))
+      select(Date, seg, contains('baseflow'))
+    
+    #Columns to remove before joining because they're already in df
+    col_select <- colnames(df_lag %>% select(contains('baseflow')))
     
     #Use the lag function to compute the desired attributes
     df <- cbind(df, compute_lagged_attrs_from_dynamic(dyn_df = df_lag, 
                                                       lag_table = lag_table, 
                                                       lag_attr_name = 'Baseflow',
                                                       start_date = start_date) %>%
-                  select(-Date, -seg)
+                  select(-Date, -seg, -all_of(col_select))
     )
   }
 
