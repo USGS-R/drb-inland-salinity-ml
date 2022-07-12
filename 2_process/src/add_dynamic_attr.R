@@ -317,7 +317,6 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_date_ranges <- c(seq(as.Date('1945-09-30'), as.Date('1995-09-30'), by = '10 years'),
                          '2001-03-31', '2003-03-31', '2005-09-30', '2007-09-30',
                          '2010-03-31', '2012-09-30', '2015-03-31', '2018-03-31')
-    tmp_years <- sort(unique(CAT_Land$Year))
     
     #Create df that starts at the (earliest date - largest lag) and goes to
     # earliest date
@@ -344,6 +343,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     #Loop over all land cover classes to assign attributes
     for (lc in 1:9){
       if (!is.null(CAT_Land)){
+        tmp_years <- sort(unique(CAT_Land$Year))
+        
         tmp_attrs_cat_lc <- get_attrs(attrs = tmp_attrs_cat, 
                                       attr_name = paste0('_',lc,'_'), 
                                       replace_pattern = paste0('_prop_lcClass_', lc))
@@ -358,6 +359,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                                           attr_prefix = 'CAT')
       }
       if (!is.null(Upstream_Land)){
+        tmp_years <- sort(unique(Upstream_Land$Year))
+        
         tmp_attrs_up_lc <- get_attrs(attrs = tmp_attrs_up, 
                                      attr_name = paste0('_',lc,'_'), 
                                      replace_pattern = paste0('_prop_lcClass_', lc))
@@ -791,22 +794,3 @@ get_attrs <- function(attrs, attr_name, replace_pattern){
   
   return(tmp_attrs)
 }
-
-#' plot_dynamic_attrs <- function(dyn_attrs, sites, out_dir){
-#'   #' @description plots timeseries of dynamic features for the provided sites
-#'   #' 
-#'   #' @param 
-#'   #' @param lags vector stating how many days to lag. A column will be added for each element.
-#'   #' 
-#'   #' @return filepaths to the resulting plots
-#'   
-#'   # plot(df_lag$Date[df_lag$seg == '157_1'], df_lag$CAT_HDENS_0[df_lag$seg == '157_1'], ylim = c(40,80), type = 'l')
-#'   # par(new = T)
-#'   # plot(df_lag$Date[df_lag$seg == '157_1'], df_lag$CAT_HDENS_0_10years[df_lag$seg == '157_1'], type = 'l', col = 'red', ylim = c(40,80))
-#'   # par(new = T)
-#'   # plot(df_lag$Date[df_lag$seg == '157_1'], df_lag$CAT_HDENS_0_20years[df_lag$seg == '157_1'], type = 'l', col = 'blue', ylim = c(40,80))
-#'   
-#'   fileout
-#'   
-#'   return(fileout)
-#' }
