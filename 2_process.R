@@ -185,13 +185,13 @@ p2_targets_list <- list(
     dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
                                           PRMS_comid_df = p2_drb_comids_all_tribs,
                                           prms_reaches_sf = p1_reaches_sf)
-    ),
+  ),
   
   ## Filtered PRMS catchments gpkg for the PRMS segid not require dnew nhd-based catchment   
   tar_target(
     p2_filtered_catchments_edited_sf,
     p1_catchments_edited_sf %>% filter(!PRMS_segid %in% p2_PRMS_segid_special_handling_list)
-    ),
+  ),
 
   # ----
   # FORESCE:Extract historical LC data raster values within catchments polygon + prop calc - general function raster_to_catchment_polygons
@@ -416,7 +416,10 @@ p2_targets_list <- list(
                              rename('COMID' = 'comid_down'),
                            start_year = as.character(lubridate::year(earliest_date)),
                            end_year = as.character(lubridate::year(latest_date)),
-                           fill_all_years = TRUE)
+                           fill_all_years = TRUE) %>%
+      #Fill in NA reach from neighbors
+      refine_dynamic_from_neighbors(attr_i = 'mean_natl_baseflow_cfs',
+                                    prms_reach_attr = p2_prms_attribute_df)
   ),
   
   # Process NHDv2 attributes referenced to cumulative upstream area;
@@ -523,7 +526,7 @@ p2_targets_list <- list(
   tar_target(
     p2_nhdv2_attr_refined_rm_dyn,
     select(p2_nhdv2_attr_refined, -contains('HDENS'), -contains('MAJOR'), 
-           -contains('NDAMS'), -contains('NORM'), -contains('NID'))
+           -contains('NDAMS'), -contains('NORM'), -contains('NID'), -hru_segment)
   ),
   
   #Join static attributes to dynamic dataframe
@@ -535,9 +538,6 @@ p2_targets_list <- list(
   #Join attributes to SC observations and retain only the days with SC observations
   tar_target(
     p2_all_attr_SC_obs,
-    #need function to match by segment and by date. 
-    #Maybe loop over segments and join by date
-    #left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid')
-    {}
+    left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid', 'Date'))
   )
 )
