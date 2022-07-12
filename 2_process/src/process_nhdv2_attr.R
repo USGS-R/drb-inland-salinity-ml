@@ -557,3 +557,68 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
   
   return(nhdv2_attr_refined)
 }
+
+refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr
+){
+  #' 
+  #' @description Function to fill in a reach's attribute value with values 
+  #' from neighboring reaches (from_segs and to_seg). This function assumes that
+  #' all dates are NA for the reaches to be filled in.
+  #'
+  #' @param dyn_attr attribute tbl with columns for "Year", "Month", and "PRMS_segid",
+  #' followed by only the columns for which fill in should be made.
+  #' @param attr_i the attribute name of one of the columns.
+  #' @param prms_reach_attr the PRMS reach attribute tbl with rows for each 
+  #' from_segs as discovered from the recursive function 
+  #' (output of p2_prms_attribute_df target)
+  #'
+  #' @value Returns dyn_attr with filled in values for the attr_i column.
+  
+  #search for NAs
+  ind_reach <- filter(dyn_attr, is.na(get(attr_i))) %>%
+    pull(PRMS_segid) %>%
+    unique()
+  
+  for (j in 1:length(ind_reach)){
+    #find the from and to segments for this reach
+    seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach[j]) %>%
+      select(from_segs, to_seg) %>%
+      unique() %>%
+      mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+      select(-from_segs, -to_seg) %>%
+      unlist()
+    
+    #add _1 and _2 to match PRMS seg ID
+    seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                           seg_match == '3_2' ~ '3_2',
+                           seg_match == '8_1' ~ '8_1',
+                           seg_match == '8_2' ~ '8_2',
+                           seg_match == '51_1' ~ '51_1',
+                           seg_match == '51_2' ~ '51_2',
+                           TRUE ~ paste0(seg_match, '_1'))
+    
+    #get the average of the attributes for the matched reaches
+    reach_vals <- filter(dyn_attr, PRMS_segid %in% seg_match)
+    #check if any are equal to exactly 0
+    if (any(reach_vals == 0, na.rm = TRUE)){
+      warning('some neighboring reaches of reach ', ind_reach[j], 
+              'have a value of 0 for ', attr_i)
+    }
+    #check if all reaches have NA values
+    if (all(is.na(reach_vals))){
+      warning('all neighboring reaches of reach ', ind_reach[j], 
+              'have a value of NA for ', attr_i, '. This reach will still be NA.')
+    }
+    #need to group by date and compute the mean
+    fill_val <- summarize(reach_vals %>% group_by(Year, Month), 
+                          across(.cols = -PRMS_segid, .fns = mean), 
+                          .groups = 'drop') %>%
+      select(-Year, -Month)
+    
+    #assign to attribute table by date
+    dyn_attr[dyn_attr$PRMS_segid == ind_reach, 
+             -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] <- fill_val
+  }
+  
+  return(dyn_attr)
+}
