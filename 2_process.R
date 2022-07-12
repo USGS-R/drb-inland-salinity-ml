@@ -419,7 +419,9 @@ p2_targets_list <- list(
                            fill_all_years = TRUE) %>%
       #Fill in NA reach from neighbors
       refine_dynamic_from_neighbors(attr_i = 'mean_natl_baseflow_cfs',
-                                    prms_reach_attr = p2_prms_attribute_df)
+                                    prms_reach_attr = p2_prms_attribute_df,
+                                    drainage_area = p2_nhdv2_attr_refined %>% 
+                                      select(PRMS_segid, TOT_BASIN_AREA))
   ),
   
   # Process NHDv2 attributes referenced to cumulative upstream area;

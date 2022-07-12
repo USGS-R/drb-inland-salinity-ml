@@ -558,9 +558,8 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
   return(nhdv2_attr_refined)
 }
 
-refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr
-){
-  #' 
+refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr,
+                                          drainage_area = NULL){
   #' @description Function to fill in a reach's attribute value with values 
   #' from neighboring reaches (from_segs and to_seg). This function assumes that
   #' all dates are NA for the reaches to be filled in.
@@ -571,6 +570,8 @@ refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr
   #' @param prms_reach_attr the PRMS reach attribute tbl with rows for each 
   #' from_segs as discovered from the recursive function 
   #' (output of p2_prms_attribute_df target)
+  #' @param drainage_area a tbl with columns for "PRMS_segid" and "TOT_BASIN_AREA"
+  #' If not NULL, computes a weighted average by drainage area.
   #'
   #' @value Returns dyn_attr with filled in values for the attr_i column.
   
@@ -609,11 +610,24 @@ refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr
       warning('all neighboring reaches of reach ', ind_reach[j], 
               'have a value of NA for ', attr_i, '. This reach will still be NA.')
     }
-    #need to group by date and compute the mean
+    
+    #need to group by date and compute the mean/total drainage area
+    if(!is.null(drainage_area)){
+      for(r in 1:length(seg_match)){
+        reach_vals[reach_vals$PRMS_segid == seg_match[r], 
+                   -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] <- 
+          reach_vals[reach_vals$PRMS_segid == seg_match[r], 
+                     -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] / 
+          drainage_area$TOT_BASIN_AREA[drainage_area$PRMS_segid == seg_match[r]]
+      }
+    }
     fill_val <- summarize(reach_vals %>% group_by(Year, Month), 
                           across(.cols = -PRMS_segid, .fns = mean), 
                           .groups = 'drop') %>%
       select(-Year, -Month)
+    if(!is.null(drainage_area)){
+      fill_val <- fill_val * drainage_area$TOT_BASIN_AREA[drainage_area$PRMS_segid == ind_reach[j]]
+    }
     
     #assign to attribute table by date
     dyn_attr[dyn_attr$PRMS_segid == ind_reach, 
