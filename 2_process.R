@@ -534,7 +534,8 @@ p2_targets_list <- list(
   #Join static attributes to dynamic dataframe
   tar_target(
     p2_all_attr,
-    left_join(p2_dyn_attr, p2_nhdv2_attr_refined_rm_dyn, by = 'PRMS_segid')
+    left_join(p2_dyn_attr, p2_nhdv2_attr_refined_rm_dyn, by = c('seg' = 'PRMS_segid')) %>%
+      rename(PRMS_segid = seg)
   ),
   
   #Join attributes to SC observations and retain only the days with SC observations
