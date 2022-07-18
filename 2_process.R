@@ -542,6 +542,7 @@ p2_targets_list <- list(
   tar_target(
     p2_all_attr_SC_obs,
     left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid', 'Date')) %>%
-      rename(PRMS_segid = subsegid)
+      rename(PRMS_segid = subsegid) %>%
+      filter(Date >= earliest_date)
   )
 )
