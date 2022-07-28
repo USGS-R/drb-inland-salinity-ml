@@ -611,8 +611,8 @@ refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr,
               'have a value of NA for ', attr_i, '. This reach will still be NA.')
     }
     
-    #need to group by date and compute the mean/total drainage area
     if(!is.null(drainage_area)){
+      #compute the value/total drainage area
       for(r in 1:length(seg_match)){
         reach_vals[reach_vals$PRMS_segid == seg_match[r], 
                    -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] <- 

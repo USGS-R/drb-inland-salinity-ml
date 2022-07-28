@@ -27,12 +27,9 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
   #make a dynamic features dataframe
   dates <- seq(as.Date(start_date), as.Date(end_date), 1)
   segs <- sort(unique(attrs$PRMS_segid))
-  df <- tibble(Date = dates, seg = segs[1])
-  for(i in 2:length(segs)){
-    df_tmp <- tibble(Date = dates, seg = segs[i])
-    df <- rbind(df, df_tmp)
-  }
-  rm(df_tmp, dates, i)
+  df <- do.call(rbind, lapply(1:length(segs), 
+    function(i) tibble(Date = dates, seg = segs[i])))
+  rm(dates)
   
   #Special handling for each variable
   if ('HDENS' %in% dyn_cols){
@@ -40,9 +37,7 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_attrs <- select(attrs, PRMS_segid, contains('HDENS'))
     
     #Convert the column names to 4-digit years
-    col_years <- str_split(colnames(tmp_attrs)[-1], 
-                           pattern = '_', simplify = TRUE)[,2] %>%
-      substr(start = 6, stop = 7) %>%
+    col_years <- stringr::str_extract(names(tmp_attrs)[-1], "[[:digit:]]+") %>%
       get_four_digit_year()
     tmp_colnames <- colnames(tmp_attrs)
     for(i in 2:length(tmp_colnames)){
@@ -59,10 +54,9 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
                            '10 years')
     tmp_years <- tmp_attrs %>% 
       select(starts_with(attr_prefix[1])) %>% 
-      colnames() %>% 
-      sort() %>% 
-      str_split(pattern = '_', simplify = TRUE) %>% 
-      .[,2]
+      colnames() %>%	  
+      stringr::str_extract("[[:digit:]]+") %>% 
+      sort()
     
     #add lagged dynamic information. Method includes value at lag of 0 days
     #Create df that starts at the (earliest date - largest lag) and goes to
@@ -112,9 +106,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_years <- tmp_attrs %>% 
       select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
-      sort() %>% 
-      str_split(pattern = '_', simplify = TRUE) %>% 
-      .[,2]
+      stringr::str_extract("[[:digit:]]+") %>% 
+      sort()
     
     #add lagged dynamic information. Method includes value at lag of 0 days
     #Create df that starts at the (earliest date - largest lag) and goes to
@@ -164,9 +157,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_years <- tmp_attrs %>% 
       select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
-      sort() %>% 
-      str_split(pattern = '_', simplify = TRUE) %>% 
-      .[,2]
+      stringr::str_extract("[[:digit:]]+") %>% 
+      sort()
     
     #add lagged dynamic information. Method includes value at lag of 0 days
     #Create df that starts at the (earliest date - largest lag) and goes to
@@ -216,9 +208,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_years <- tmp_attrs %>% 
       select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
-      sort() %>% 
-      str_split(pattern = '_', simplify = TRUE) %>% 
-      .[,2]
+      stringr::str_extract("[[:digit:]]+") %>% 
+      sort()
     
     #add lagged dynamic information. Method includes value at lag of 0 days
     #Create df that starts at the (earliest date - largest lag) and goes to
@@ -269,9 +260,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     tmp_years <- tmp_attrs %>% 
       select(starts_with(attr_prefix[1])) %>% 
       colnames() %>% 
-      sort() %>% 
-      str_split(pattern = '_', simplify = TRUE) %>% 
-      .[,2]
+      stringr::str_extract("[[:digit:]]+") %>% 
+      sort()
     
     #add lagged dynamic information. Method includes value at lag of 0 days
     #Create df that starts at the (earliest date - largest lag) and goes to
@@ -326,22 +316,37 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     df_lag <- rbind(df_lag, df %>% select(Date, seg)) %>%
       arrange(seg, Date)
     
+    #For storing the land cover class values
+    lc_names <- NULL
+    
     #Get data table into format needed for function
     if (!is.null(CAT_Land)){
       tmp_attrs_cat <- pivot_wider(CAT_Land %>% 
                                      select(-PRMS_area_km2), 
                                    names_from = Year,
                                    values_from = starts_with('CAT'))
+      
+      #Get the land cover class numbers. Assumes the classes are numbers
+      lc_names <- stringr::str_extract(names(tmp_attrs_cat %>% 
+                                               select(starts_with('CAT'))), 
+                                             "[[:digit:]]+")
     }
     if (!is.null(Upstream_Land)){
       tmp_attrs_up <- pivot_wider(Upstream_Land %>% 
                                     select(-PRMS_area_km2), 
                                   names_from = Year, 
                                   values_from = starts_with(Upstream_Land_prefix))
+      
+      #Get land cover class names if not already gathered from CAT
+      if(is.null(lc_names)){
+        lc_names <- stringr::str_extract(names(tmp_attrs_up %>% 
+                                                 select(starts_with(Upstream_Land_prefix))),
+                                         "[[:digit:]]+")
+      }
     }
     
     #Loop over all land cover classes to assign attributes
-    for (lc in 1:9){
+    for (lc in lc_names){
       if (!is.null(CAT_Land)){
         tmp_years <- sort(unique(CAT_Land$Year))
         
@@ -397,10 +402,11 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
              vs_0 = vs, rmax_0 = rmax, rmin_0 = rmin, sph_0 = sph)
     
     #add lagged dynamic information
-    gridMET <- compute_lagged_attrs_from_dynamic(dyn_df = gridMET, 
-                                                 lag_table = lag_table, 
-                                                 lag_attr_name = 'Met',
-                                                 start_date = start_date)
+    gridMET <- compute_lagged_attrs(dyn_df = gridMET,
+                                    lag_table = lag_table, 
+                                    lag_attr_name = 'Met',
+                                    attr_name = '',
+                                    start_date = start_date)
     
     #Join to df
     df <- left_join(df, gridMET, by = c('seg', 'Date'))
@@ -433,10 +439,11 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
     col_select <- colnames(df_lag %>% select(contains('baseflow')))
     
     #Use the lag function to compute the desired attributes
-    df <- cbind(df, compute_lagged_attrs_from_dynamic(dyn_df = df_lag, 
-                                                      lag_table = lag_table, 
-                                                      lag_attr_name = 'Baseflow',
-                                                      start_date = start_date) %>%
+    df <- cbind(df, compute_lagged_attrs(dyn_df = df_lag,
+                                         lag_table = lag_table,
+                                         lag_attr_name = 'Baseflow',
+                                         attr_name = '', 
+                                         start_date = start_date) %>%
                   select(-Date, -seg, -all_of(col_select))
     )
   }
@@ -445,7 +452,8 @@ add_dyn_attrs_to_reaches <- function(attrs, dyn_cols, start_date, end_date,
 }
 
 get_four_digit_year <- function(two_digit_yr){
-  #' @description computes the 4 digit year from two digit year
+  #' @description computes the 4 digit year from two digit year.
+  #' Assumes that years < 40 correspond to 20YY and greater than 40 to 19YY.
   #' 
   #' @param two_digit_yr vector of two digit years, YY
   #' 
@@ -469,9 +477,11 @@ get_dynamic_from_static <- function(dyn_df, attrs, lag_table,
   #' in the format <attr_prefix>_YYYY
   #' @param lag_table table with 3 columns: attributes, lags, and lag_unit.
   #' This is used to compute the lagged attributes. Can set to NULL to use a 
-  #' lag of 0.
+  #' lag of 0. When lag_table is specified, then attributes are computed for 
+  #' each of the lags. Within that table, one of the lags could be 0.
   #' @param attr_years ordered character vector of the years available for this 
-  #' dataset. Should be in ascending order.
+  #' dataset. Should be in ascending order. The length of this vector should be
+  #' one more than the length of date_ranges.
   #' In attrs, for each attr_prefix, there should be one column for each year.
   #' @param date_ranges Date vector that specifies the transition dates from one
   #' year to another year. Dates in dyn_df less than the first date 
@@ -522,6 +532,10 @@ get_dynamic_from_static <- function(dyn_df, attrs, lag_table,
     #Join data to all segs by date range
     # Note: using this method instead of a case_when because
     # case_when was very slow
+    # because the date_ranges specify transition dates between 
+    # static attribute years, the date_ranges vector is 1 element 
+    # shorter than the total number of static attribute years.
+    # so +1 is used to also assign the last year.
     for (i in 1:(length(date_ranges)+1)){
       for (j in 1:length(attr_prefix)){
         if (i == 1){
@@ -631,8 +645,7 @@ compute_lagged_attrs <- function(dyn_df, lag_table, lag_attr_name,
   #' @param lag_table table with 3 columns: attributes, lags, and lag_unit.
   #' This is used to compute the lagged attributes
   #' @param lag_attr_name name in the attribute column of lag_table to use
-  #' @param attr_name name to use for this attribute. Format of the new name will
-  #' be paste0(attr_prefix, '_', attr_name, '_', lags, lag_unit)
+  #' @param attr_name name to use for this attribute in ends_with(paste0(attr_name, '_0')
   #' @param start_date first date to compute attributes
   #' 
   #' @return tbl with the added lagged features. Date begins at the start_date
@@ -654,40 +667,40 @@ compute_lagged_attrs <- function(dyn_df, lag_table, lag_attr_name,
   tmp_lag_fxns <- lag_table %>% 
     filter(attribute == lag_attr_name) %>%
     pull(lag_fxns) %>%
-    unlist()
+    unlist() %>%
+    #exact is handled outside of this function
+    grep(pattern = 'exact', value = TRUE, invert = TRUE)
   
   if (length(tmp_lag_fxns) > 0){
-    #Loop over all functions except exact
+    #Loop over all functions
     for (f in 1:length(tmp_lag_fxns)){
-      if (tmp_lag_fxns[f] != 'exact'){
-        #Loop over all lags
-        for (lag in 1:length(tmp_lags)){
-          #get the number of days to lag
-          days_lag <- as.Date(start_date) - 
-            (as.Date(start_date) - period(tmp_lags[lag], tmp_lag_unit[lag]))
-          
-          #Compute the lagged values
-          if (tmp_lag_fxns[f] == 'mean'){
-            dyn_df <- cbind(dyn_df, 
-                            dyn_df %>% 
-                              group_by(seg) %>% 
-                              summarise(across(.cols = ends_with(paste0(attr_name, '_0')), 
-                                               .fns = stats::filter, 
-                                               filter = rep(1/as.numeric(days_lag), days_lag), 
-                                               sides = 1, 
-                                               .names = paste0("{.col}_", tmp_lags[lag], 
-                                                               tmp_lag_unit[lag], "_mean")), 
-                                        .groups = 'drop') %>%
-                              select(-seg) %>%
-                              #need to shift the results by 1 day because filter 
-                              #includes the current day in the lag
-                              add_row(.before = 1) %>%
-                              slice(-nrow(.))
-            )
-          }else{
-            stop(print('Error: the function', tmp_lag_fxns[f], 
-                       'is not one of the available functions for lags.'))
-          }
+      #Loop over all lags
+      for (lag in 1:length(tmp_lags)){
+        #get the number of days to lag
+        days_lag <- as.Date(start_date) - 
+          (as.Date(start_date) - period(tmp_lags[lag], tmp_lag_unit[lag]))
+        
+        #Compute the lagged values
+        if (tmp_lag_fxns[f] == 'mean'){
+          dyn_df <- cbind(dyn_df, 
+                          dyn_df %>% 
+                            group_by(seg) %>% 
+                            summarise(across(.cols = ends_with(paste0(attr_name, '_0')), 
+                                             .fns = stats::filter, 
+                                             filter = rep(1/as.numeric(days_lag), days_lag), 
+                                             sides = 1, 
+                                             .names = paste0("{.col}_", tmp_lags[lag], 
+                                                             tmp_lag_unit[lag], "_mean")), 
+                                      .groups = 'drop') %>%
+                            select(-seg) %>%
+                            #need to shift the results by 1 day because filter 
+                            #includes the current day in the lag
+                            add_row(.before = 1) %>%
+                            slice(-nrow(.))
+          )
+        }else{
+          stop(print('Error: the function', tmp_lag_fxns[f], 
+                     'is not one of the available functions for lags.'))
         }
       }
     }
@@ -700,78 +713,6 @@ compute_lagged_attrs <- function(dyn_df, lag_table, lag_attr_name,
   return(dyn_df)
 }
 
-
-compute_lagged_attrs_from_dynamic <- function(dyn_df, lag_table, lag_attr_name,
-                                              start_date){
-  #' @description computes lagged predictor variables from the provided features
-  #' 
-  #' @param dyn_df tbl containing "Date" and the PRMS "seg". Should have all
-  #' dates that you want to use for lagged computations.
-  #' @param lag_table table with 3 columns: attributes, lags, and lag_unit.
-  #' This is used to compute the lagged attributes
-  #' @param lag_attr_name name in the attribute column of lag_table to use
-  #' @param start_date first date to compute attributes
-  #' 
-  #' @return tbl with the added lagged features. Date begins at the start_date
-  #' and ends at the latest provided date in dyn_df.
-  
-  #Get the lag information and lag functions to be used
-  tmp_lags <- lag_table %>% 
-    filter(attribute == lag_attr_name) %>%
-    pull(lags) %>%
-    unlist()
-  tmp_lag_unit <- lag_table %>% 
-    filter(attribute == lag_attr_name) %>%
-    pull(lag_unit) %>%
-    unlist()
-  #Make the length of the lag_unit match the length of lags
-  if ((length(tmp_lag_unit) == 1) & (length(tmp_lags) > 1)){
-    tmp_lag_unit <- rep(tmp_lag_unit, length(tmp_lags))
-  }
-  tmp_lag_fxns <- lag_table %>% 
-    filter(attribute == lag_attr_name) %>%
-    pull(lag_fxns) %>%
-    unlist()
-  
-  if (length(tmp_lag_fxns) > 0){
-    #Loop over all functions except exact
-    for (f in 1:length(tmp_lag_fxns)){
-      if (tmp_lag_fxns[f] != 'exact'){
-        #Loop over all lags
-        for (lag in 1:length(tmp_lags)){
-          #get the number of days to lag
-          days_lag <- as.Date(start_date) - 
-            (as.Date(start_date) - period(tmp_lags[lag], tmp_lag_unit[lag]))
-          
-          #Compute the lagged values
-          if (tmp_lag_fxns[f] == 'mean'){
-            dyn_df <- cbind(dyn_df, 
-                            dyn_df %>% 
-                              group_by(seg) %>% 
-                              summarise(across(.cols = ends_with('_0'), 
-                                               .fns = stats::filter, 
-                                               filter = rep(1/as.numeric(days_lag), days_lag), 
-                                               sides = 1, 
-                                               .names = paste0("{.col}_", tmp_lags[lag], 
-                                                               tmp_lag_unit[lag], "_mean")), 
-                                        .groups = 'drop') %>%
-                              select(-seg) %>%
-                              #need to shift the results by 1 day because filter 
-                              #includes the current day in the lag
-                              add_row(.before = 1) %>%
-                              slice(-nrow(.))
-            )
-          }else{
-            stop(print('Error: the function', tmp_lag_fxns[f], 
-                       'is not one of the available functions for lags.'))
-          }
-        }
-      }
-    }
-  }
-  
-  return(dyn_df)
-}
 
 get_attrs <- function(attrs, attr_name, replace_pattern){
   #' @description selects the attr_name attributes and creates column names that are
