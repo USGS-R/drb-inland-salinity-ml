@@ -11,6 +11,7 @@ source("2_process/src/recursive_fun.R")
 source("2_process/src/aggregate_observations.R")
 source('2_process/src/area_diff_fix.R')
 source('2_process/src/clean_lulc_data_for_merge.R')
+source('2_process/src/add_dynamic_attr.R')
 
 
 p2_targets_list <- list(
@@ -50,7 +51,7 @@ p2_targets_list <- list(
                             output_tz="America/New_York")
   ),
   
-  # Combine 1) daily DO data and 2) instantaneous DO data that has been aggregated to daily 
+  # Combine 1) daily SC data and 2) instantaneous SC data that has been aggregated to daily 
   tar_target(
     p2_daily_combined,
     bind_rows(p1_daily_data, p2_inst_data_daily)
@@ -184,13 +185,13 @@ p2_targets_list <- list(
     dissolve_nhd_catchments_to_PRMS_segid(selected_PRMS_list = p2_PRMS_segid_special_handling_list,
                                           PRMS_comid_df = p2_drb_comids_all_tribs,
                                           prms_reaches_sf = p1_reaches_sf)
-    ),
+  ),
   
   ## Filtered PRMS catchments gpkg for the PRMS segid not require dnew nhd-based catchment   
   tar_target(
     p2_filtered_catchments_edited_sf,
     p1_catchments_edited_sf %>% filter(!PRMS_segid %in% p2_PRMS_segid_special_handling_list)
-    ),
+  ),
 
   # ----
   # FORESCE:Extract historical LC data raster values within catchments polygon + prop calc - general function raster_to_catchment_polygons
@@ -415,7 +416,12 @@ p2_targets_list <- list(
                              rename('COMID' = 'comid_down'),
                            start_year = as.character(lubridate::year(earliest_date)),
                            end_year = as.character(lubridate::year(latest_date)),
-                           fill_all_years = TRUE)
+                           fill_all_years = TRUE) %>%
+      #Fill in NA reach from neighbors
+      refine_dynamic_from_neighbors(attr_i = 'mean_natl_baseflow_cfs',
+                                    prms_reach_attr = p2_prms_attribute_df,
+                                    drainage_area = p2_nhdv2_attr_refined %>% 
+                                      select(PRMS_segid, TOT_BASIN_AREA))
   ),
   
   # Process NHDv2 attributes referenced to cumulative upstream area;
@@ -448,7 +454,11 @@ p2_targets_list <- list(
   # Create combined NHDv2 attribute data frame that includes both the cumulative upstream and catchment-scale values
   tar_target(
     p2_nhdv2_attr,
-    create_nhdv2_attr_table(p2_nhdv2_attr_upstream, p2_nhdv2_attr_catchment)
+    create_nhdv2_attr_table(p2_nhdv2_attr_upstream, p2_nhdv2_attr_catchment) %>%
+      #add CAT road salt to static attributes
+      left_join(p2_rdsalt_per_catchment_allyrs %>% 
+                  select(PRMS_segid, rd_salt_all_years_prop_drb) %>%
+                  rename(CAT_rdsalt_prop = rd_salt_all_years_prop_drb), by = 'PRMS_segid')
   ),
   
   #Refine the attributes that are used for modeling
@@ -463,5 +473,76 @@ p2_targets_list <- list(
                     #RUN7100 seems like it is by HUC02 instead of reach.
                     #RFACT is perfectly correlated with RF7100
                     drop_columns = c("PHYSIO_AREA", "RUN7100", "RFACT"))    
+  ),
+  
+  #Lags to compute for dynamic attributes
+  tar_target(
+    p2_dyn_attr_lags,
+    #' @param attribute short attribute name used to select columns containing
+    #' that name, or 'Land', 'Met', 'Baseflow' as keywords to process those columns. 
+    #' @param lags numeric vector stating how many lag_units to lag. 
+    #' A column will be added for each element in lags for each attrs column. 
+    #' A lag of 0 can be used to extract the value on the Date in the dyn_df tbl.
+    #' @param lag_unit character vector containing the unit to use for each lag in lags. 
+    #' Accepts any of the lubridate options (e.g., days, months, years). If all
+    #' units are the same, can provide a one element vector with that unit.
+    data.frame(attribute = c('HDENS', 'MAJOR', 'NDAMS', 'NORM_STORAGE', 'NID_STORAGE', 
+                             'Land', 
+                             'Met', 
+                             'Baseflow'), 
+               lags = I(list(c(10,20), c(10,20), c(10,20), c(10,20), c(10,20), 
+                             c(5,10,15,20), 
+                             c(1,3,7,15,30,90,180,1,5), 
+                             c(1,3,6,1,5))), 
+               lag_unit = I(list('years', 'years', 'years', 'years', 'years',
+                                 'years', 
+                                 c(rep('days', 7), 'years', 'years'), 
+                                 c(rep('months', 3), 'years', 'years'))),
+               lag_fxns = I(list(c('exact','mean'), c('exact','mean'), 
+                                 c('exact','mean'), c('exact','mean'), 
+                                 c('exact','mean'), 
+                                 c('exact','mean'), 
+                                 c('mean'),
+                                 c('mean')))
+    )
+  ),
+  
+  #Dataframe of dynamic attributes
+  tar_target(
+    p2_dyn_attr,
+    add_dyn_attrs_to_reaches(attrs = p2_nhdv2_attr_refined,
+                             dyn_cols = c('HDENS', 'MAJOR', 'NDAMS', 'NORM', 
+                                          'NID'),
+                             start_date = earliest_date,
+                             end_date = latest_date,
+                             baseflow = p2_natural_baseflow,
+                             CAT_Land = p2_all_lulc_data_cat,
+                             Upstream_Land = p2_all_lulc_data_tot,
+                             gridMET = p1_gridmet,
+                             attr_prefix = c('CAT', 'TOT'), 
+                             Upstream_Land_prefix = 'TOT',
+                             lag_table = p2_dyn_attr_lags)
+  ),
+  
+  #Remove static attributes that were made into dynamic attributes
+  tar_target(
+    p2_nhdv2_attr_refined_rm_dyn,
+    select(p2_nhdv2_attr_refined, -contains('HDENS'), -contains('MAJOR'), 
+           -contains('NDAMS'), -contains('NORM'), -contains('NID'), -hru_segment)
+  ),
+  
+  #Join static attributes to dynamic dataframe
+  tar_target(
+    p2_all_attr,
+    left_join(p2_dyn_attr, p2_nhdv2_attr_refined_rm_dyn, by = c('seg' = 'PRMS_segid')) %>%
+      rename(PRMS_segid = seg)
+  ),
+  
+  #Join attributes to SC observations and retain only the days with SC observations
+  tar_target(
+    p2_all_attr_SC_obs,
+    left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid', 'Date')) %>%
+      rename(PRMS_segid = subsegid) %>%
+      filter(Date >= earliest_date)
   )
 )
