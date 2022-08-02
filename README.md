@@ -14,7 +14,7 @@ Docker, however, does not use the host file system and therefore the credentials
 `Sys.setenv(AWS_SHARED_CREDENTIALS_FILE = "./credentials")`
 
 # Building locally
-Most of the time you shouldn't have to build the pipeline with locally stored targets - you usually will be building it with S3 as the repository (see above). If for some reason local builds are needed for a particular target, you can add `repository = 'local'` to that `tar_target()`'s argument. To build the full pipeline locally, you can change the `repository` option in `tar_objects_set` in the `_targets.R` file. WARNING - this will trigger a rebuild of all targets. 
+Most of the time you shouldn't have to build the pipeline with locally stored targets - you usually will be building it with S3 as the repository (see above). If for some reason local builds are needed for a particular target, you can add `repository = 'local'` to that `tar_target()`'s argument. To build the full pipeline locally, you can change the `repository` option in `tar_objects_set` in the `_targets.R` file. Note: you will still need to log in with aws credentials to build the pipeline because some download targets are set to never rebuild and instead pull the existing targets from S3. WARNING - using a global `repository = 'local'` will trigger a rebuild of all targets (except those that are set to pull from S3).
 
 
 # References
