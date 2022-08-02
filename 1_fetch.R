@@ -58,7 +58,8 @@ p1_targets_list <- list(
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = 'aws'
   ),
   
   # Subset daily NWIS sites
@@ -71,7 +72,8 @@ p1_targets_list <- list(
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = 'aws'
   ),
   
   # Download NWIS daily data
@@ -81,7 +83,8 @@ p1_targets_list <- list(
                         start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = 'aws'
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -94,7 +97,8 @@ p1_targets_list <- list(
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = 'aws'
   ),
   
   # Create log file to track sites with multiple time series
@@ -113,7 +117,8 @@ p1_targets_list <- list(
                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = 'aws'
   ),
 
   tar_target(
