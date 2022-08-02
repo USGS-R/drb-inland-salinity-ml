@@ -41,7 +41,7 @@ calc_monthly_avg_ppt <- function(ppt_data){
   #'
   
   #Replace -9999 with NA
-  if(any(ppt_data == -9999)){
+  if(any(ppt_data == -9999, na.rm = T)){
     ppt_data[ppt_data == -9999] <- NA_real_
   }
   
@@ -136,6 +136,7 @@ process_cumulative_nhdv2_attr <- function(file_path,segs_w_comids,cols){
   #' cumulative upstream watershed.
   #' 
 
+  message(file_path)
   # Read in downloaded data 
   # only specify col_type for COMID since cols will differ for each downloaded data file
   dat <- read_csv(file_path, col_types = cols(COMID = "c"), show_col_types = FALSE)
@@ -195,6 +196,7 @@ process_catchment_nhdv2_attr <- function(file_path,vars_table,segs_w_comids,nhd_
   #' for each variable and PRMS segment.
   #' 
   
+  message(file_path)
   # 1. Parse dataset name from file_path
   data_name <- str_split(basename(file_path),".[[:alnum:]]+$")[[1]][1]
   
@@ -350,7 +352,7 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   #' It fills in 0 area PRMS areas with NHD areas.
   #' It fills in NA values from immediately neighboring reaches
   #' It computes stream density from the NHD catchments in the PRMS HRU
-  #' It computes TOT from CAT variables for 4 attributes.
+  #' It computes TOT from CAT variables for 5 attributes.
   #'
   #' @param nhdv2_attr the tbl of static attributes (columns) for each PRMS reach (rows)
   #' @param prms_nhdv2_xwalk the crosswalk tbl from NHD reaches to PRMS reaches
@@ -389,11 +391,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   
   #STRM_DENS
   #Compute stream density from the NHD catchment reach length and area
-  #only for the 5 NA PRMS segments. These have 1 or 2 NHD catchments.
-  # other PRMS segments with some NA stream densities cover areas <3% of total area.
   #Gather the PRMS areas for these reaches
-  ind_areas <- filter(nhdv2_attr_refined, is.na(CAT_STRM_DENS_area_wtd)) %>%
-    select(PRMS_segid, CAT_BASIN_AREA_sum)
+  ind_areas <- select(nhdv2_attr_refined, PRMS_segid, CAT_BASIN_AREA_sum)
   #Gather the sum of NHD reach lengths in km
   ind_areas$length_km <- 0
   for (i in 1:nrow(ind_areas)){
@@ -425,6 +424,7 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
   # These 3 variables have some segments with 0s that are clearly incorrect:
   # CWD, TAV7100, TMIN7100 
   # and TOT for STRM_DENS should be recomputed due to the edits to CAT variables
+  # Also compute TOT road salt
   #Add hru segment identifier to match with the recursive function output ID
   nhdv2_attr_refined$hru_segment <- apply(str_split(nhdv2_attr_refined$PRMS_segid, 
                                                     pattern = '_', simplify = T), 
@@ -440,7 +440,8 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
                                  TRUE ~ hru_segment))
   
   TOT_frmCAT_cols <- c('TOT_CWD_frmCAT', 'TOT_TAV7100_ANN_frmCAT', 
-                       'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT')
+                       'TOT_TMIN7100_frmCAT', 'TOT_STRM_DENS_frmCAT',
+                       'TOT_rdsalt_prop_frmCAT')
   nhdv2_attr_refined[TOT_frmCAT_cols] <- NA
   #loop over all segments
   for(i in 1:length(unique(nhdv2_attr_refined$hru_segment))){
@@ -461,16 +462,19 @@ refine_features <- function(nhdv2_attr, prms_nhdv2_xwalk,
       pull(CAT_TMIN7100_area_wtd)
     STR_DENS_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
       pull(CAT_STRM_DENS_area_wtd)
+    RDSALT_segs <- filter(nhdv2_attr_refined, hru_segment %in% ind_segs) %>% 
+      pull(CAT_rdsalt_prop)
     
     #Compute TOT values
-    #need special handling for PRMS segments with _2
     ind_replace <- which(nhdv2_attr_refined$hru_segment == subseg)
     nhdv2_attr_refined$TOT_CWD_frmCAT[ind_replace] <- weighted.mean(CWD_segs,areas_segs)
     nhdv2_attr_refined$TOT_TAV7100_ANN_frmCAT[ind_replace] <- weighted.mean(TAV_segs,areas_segs)
     nhdv2_attr_refined$TOT_TMIN7100_frmCAT[ind_replace] <- weighted.mean(TMN_segs,areas_segs)
     nhdv2_attr_refined$TOT_STRM_DENS_frmCAT[ind_replace] <- weighted.mean(STR_DENS_segs,areas_segs)
+    nhdv2_attr_refined$TOT_rdsalt_prop_frmCAT[ind_replace] <- sum(RDSALT_segs)
   }
   #Remove original TOT columns
+  #Note: road salt does not have a column to remove.
   nhdv2_attr_refined <- select(nhdv2_attr_refined, -c(TOT_CWD, TOT_TAV7100_ANN, TOT_TMIN7100, TOT_STRM_DENS))
   
   return(nhdv2_attr_refined)
@@ -499,32 +503,136 @@ refine_from_neighbors <- function(nhdv2_attr, attr_i, prms_reach_attr
     ind_reach <- filter(nhdv2_attr, is.na(get(attr_i))) %>%
       pull(PRMS_segid)
   }
-  #find the from and to segments for this reach
-  seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach) %>%
-    select(from_segs, to_seg) %>%
-    unique() %>%
-    mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
-    select(-from_segs, -to_seg) %>%
-    unlist()
   
-  #add _1 and _2 to match PRMS seg ID
-  seg_match <- case_when(seg_match == '3_1' ~ '3_1',
-                         seg_match == '3_2' ~ '3_2',
-                         seg_match == '8_1' ~ '8_1',
-                         seg_match == '8_2' ~ '8_2',
-                         seg_match == '51_1' ~ '51_1',
-                         seg_match == '51_2' ~ '51_2',
-                         TRUE ~ paste0(seg_match, '_1'))
-  #get the average of the attributes for the matched reaches
-  fill_val <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
-    select(all_of(attr_i)) %>%
-    colMeans() %>%
-    as.numeric()
+  for (j in 1:length(ind_reach)){
+    #find the from and to segments for this reach
+    seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach[j]) %>%
+      select(from_segs, to_seg) %>%
+      unique() %>%
+      mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+      select(-from_segs, -to_seg) %>%
+      unlist()
+    
+    #add _1 and _2 to match PRMS seg ID
+    seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                           seg_match == '3_2' ~ '3_2',
+                           seg_match == '8_1' ~ '8_1',
+                           seg_match == '8_2' ~ '8_2',
+                           seg_match == '51_1' ~ '51_1',
+                           seg_match == '51_2' ~ '51_2',
+                           TRUE ~ paste0(seg_match, '_1'))
+    
+    #get the average of the attributes for the matched reaches
+    reach_vals <- filter(nhdv2_attr, PRMS_segid %in% seg_match) %>%
+      select(all_of(attr_i))
+    #check if any are equal to exactly 0
+    if (any(reach_vals == 0, na.rm = TRUE)){
+      warning('some neighboring reaches of reach ', ind_reach[j], 
+              'have a value of 0 for ', attr_i)
+    }
+    #check if all reaches have NA values
+    if (all(is.na(reach_vals))){
+      warning('all neighboring reaches of reach ', ind_reach[j], 
+              'have a value of NA for ', attr_i, '. This reach will still be NA.')
+    }
+    fill_val <- colMeans(reach_vals, na.rm = TRUE) %>%
+      as.numeric()
+    
+    #assign to attribute table
+    if (j == 1){
+      nhdv2_attr <- mutate(nhdv2_attr, 
+                           attr = case_when(PRMS_segid == ind_reach[j] ~ fill_val,
+                                            TRUE ~ get(attr_i))
+      )
+    }else{
+      nhdv2_attr <- mutate(nhdv2_attr, 
+                           attr = case_when(PRMS_segid == ind_reach[j] ~ fill_val,
+                                            TRUE ~ attr)
+      )
+    }
+  }
+  
   #assign to attribute table
-  nhdv2_attr_refined <- mutate(nhdv2_attr,
-                               attr = case_when(PRMS_segid == ind_reach ~ fill_val,
-                                                              TRUE ~ get(attr_i))
-                               ) %>%
-    pull(attr)
+  nhdv2_attr_refined <- pull(nhdv2_attr, attr)
+  
   return(nhdv2_attr_refined)
+}
+
+refine_dynamic_from_neighbors <- function(dyn_attr, attr_i, prms_reach_attr,
+                                          drainage_area = NULL){
+  #' @description Function to fill in a reach's attribute value with values 
+  #' from neighboring reaches (from_segs and to_seg). This function assumes that
+  #' all dates are NA for the reaches to be filled in.
+  #'
+  #' @param dyn_attr attribute tbl with columns for "Year", "Month", and "PRMS_segid",
+  #' followed by only the columns for which fill in should be made.
+  #' @param attr_i the attribute name of one of the columns.
+  #' @param prms_reach_attr the PRMS reach attribute tbl with rows for each 
+  #' from_segs as discovered from the recursive function 
+  #' (output of p2_prms_attribute_df target)
+  #' @param drainage_area a tbl with columns for "PRMS_segid" and "TOT_BASIN_AREA"
+  #' If not NULL, computes a weighted average by drainage area.
+  #'
+  #' @value Returns dyn_attr with filled in values for the attr_i column.
+  
+  #search for NAs
+  ind_reach <- filter(dyn_attr, is.na(get(attr_i))) %>%
+    pull(PRMS_segid) %>%
+    unique()
+  
+  for (j in 1:length(ind_reach)){
+    #find the from and to segments for this reach
+    seg_match <- filter(prms_reach_attr, PRMS_segid_main == ind_reach[j]) %>%
+      select(from_segs, to_seg) %>%
+      unique() %>%
+      mutate(segs = list(c(from_segs[[1]], to_seg))) %>%
+      select(-from_segs, -to_seg) %>%
+      unlist()
+    
+    #add _1 and _2 to match PRMS seg ID
+    seg_match <- case_when(seg_match == '3_1' ~ '3_1',
+                           seg_match == '3_2' ~ '3_2',
+                           seg_match == '8_1' ~ '8_1',
+                           seg_match == '8_2' ~ '8_2',
+                           seg_match == '51_1' ~ '51_1',
+                           seg_match == '51_2' ~ '51_2',
+                           TRUE ~ paste0(seg_match, '_1'))
+    
+    #get the average of the attributes for the matched reaches
+    reach_vals <- filter(dyn_attr, PRMS_segid %in% seg_match)
+    #check if any are equal to exactly 0
+    if (any(reach_vals == 0, na.rm = TRUE)){
+      warning('some neighboring reaches of reach ', ind_reach[j], 
+              'have a value of 0 for ', attr_i)
+    }
+    #check if all reaches have NA values
+    if (all(is.na(reach_vals))){
+      warning('all neighboring reaches of reach ', ind_reach[j], 
+              'have a value of NA for ', attr_i, '. This reach will still be NA.')
+    }
+    
+    if(!is.null(drainage_area)){
+      #compute the value/total drainage area
+      for(r in 1:length(seg_match)){
+        reach_vals[reach_vals$PRMS_segid == seg_match[r], 
+                   -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] <- 
+          reach_vals[reach_vals$PRMS_segid == seg_match[r], 
+                     -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] / 
+          drainage_area$TOT_BASIN_AREA[drainage_area$PRMS_segid == seg_match[r]]
+      }
+    }
+    fill_val <- summarize(reach_vals %>% group_by(Year, Month), 
+                          across(.cols = -PRMS_segid, .fns = mean), 
+                          .groups = 'drop') %>%
+      select(-Year, -Month)
+    if(!is.null(drainage_area)){
+      fill_val <- fill_val * drainage_area$TOT_BASIN_AREA[drainage_area$PRMS_segid == ind_reach[j]]
+    }
+    
+    #assign to attribute table by date
+    dyn_attr[dyn_attr$PRMS_segid == ind_reach, 
+             -which(colnames(dyn_attr) %in% c('Year', 'Month', 'PRMS_segid'))] <- fill_val
+  }
+  
+  return(dyn_attr)
 }

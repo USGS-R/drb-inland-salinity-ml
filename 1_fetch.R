@@ -11,12 +11,42 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 
+# tar_cue for downloading NWIS sites and data.
+# change to 'thorough' to download, and 'never' to prevent downloading.
+NWIS_cue = 'never'
+# Change dummy date to document when NWIS SC sites and data were downloaded
+dummy_date <- "2022-06-16"
+
+
+# Note about 'local' targets:
+# The 'local' targets in this file are such b/c the respective fxn
+# does not return a single path and therefore targets cannot upload
+# to S3 and throws an error.
+# See https://github.com/USGS-R/drb-inland-salinity-ml/issues/152
+
 p1_targets_list <- list(
+  
+  # dummy target with high priority. This is here so that no consequential 
+  # targets are rebuilt if we forget to renew AWS credentials. 
+  tar_target(
+    p1_dummy,
+    {},
+    deployment = 'main',
+    cue = tar_cue('always'),
+    priority = 0.99 # default priority (0.8) is set globally in _targets.R
+  ),
   
   # Load harmonized WQP data product for discrete samples
   tar_target(
+    p1_wqp_data_rds,
+    "1_fetch/in/DRB.WQdata.rds",
+    format = 'file',
+    repository = 'local',
+    deployment = 'main'
+  ),
+  tar_target(
     p1_wqp_data,
-    readRDS(file = "1_fetch/in/DRB.WQdata.rds"),
+    readRDS(file = p1_wqp_data_rds),
     deployment = 'main'
   ),
   
@@ -27,7 +57,8 @@ p1_targets_list <- list(
       dummy <- dummy_date
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Subset daily NWIS sites
@@ -36,19 +67,21 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "dv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="dv",!(site_no %in% omit_nwis_sites), 
-      end_date > earliest_date, begin_date < dummy_date) %>%
+      end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Download NWIS daily data
   tar_target(
     p1_daily_data,
-    get_daily_nwis_data(p1_nwis_sites_daily,parameter,stat_cd_select,
-                        start_date=earliest_date,end_date=dummy_date),
+    get_daily_nwis_data(p1_nwis_sites_daily, parameter, stat_cd_select,
+                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -57,16 +90,17 @@ p1_targets_list <- list(
     p1_nwis_sites %>%
       # retain "uv" sites that contain data records after user-specified {earliest_date}
       filter(data_type_cd=="uv",!(site_no %in% omit_nwis_sites), 
-      end_date > earliest_date, begin_date < dummy_date) %>%
+      end_date > earliest_date, begin_date < latest_date) %>%
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
   
   # Create log file to track sites with multiple time series
   tar_target(
     p1_nwis_sites_inst_multipleTS_csv,
-    find_sites_multipleTS(p1_nwis_sites,earliest_date,dummy_date,omit_nwis_sites,
+    find_sites_multipleTS(p1_nwis_sites, earliest_date, latest_date, omit_nwis_sites,
                           "3_visualize/log/summary_multiple_inst_ts.csv"),
     format = "file",
     deployment = 'main'
@@ -76,9 +110,10 @@ p1_targets_list <- list(
   tar_target(
     p1_inst_data,
     get_inst_nwis_data(p1_nwis_sites_inst,parameter,
-                       start_date=earliest_date,end_date=dummy_date),
+                       start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
-    deployment = 'main'
+    deployment = 'main',
+    cue = tar_cue(mode = NWIS_cue)
   ),
 
   tar_target(
@@ -91,6 +126,7 @@ p1_targets_list <- list(
     # just include in the repo and have it loosely referenced to the sb item ^
     "1_fetch/in/study_stream_reaches.zip",
     format = "file",
+    repository = 'local',
     deployment = 'main'
   ),
 
@@ -150,6 +186,7 @@ p1_targets_list <- list(
   
   # Download DRB network attributes
   # Retrieved from: https://www.sciencebase.gov/catalog/item/5f6a289982ce38aaa2449135
+  # see note at top of file about 'local' targets
   tar_target(
     p1_prms_reach_attr_csvs,
     download_sb_file(sb_id = "5f6a289982ce38aaa2449135",
@@ -158,7 +195,8 @@ p1_targets_list <- list(
                                    "sntemp_inputs_outputs_drb.zip"),
                      out_dir="1_fetch/out"),
     format="file",
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   # Read DRB reach attributes with all _1 segments for _2 reaches
@@ -197,24 +235,23 @@ p1_targets_list <- list(
                         Comid_col = 'COMID', NLCD_type = NULL)
   ),
     
-  # Download other NLCD 2011 datasets 
+  # Download and unzip other NLCD 2011 datasets 
+  ## Note - this returns a string or vector of strings of data path to unzipped datasets
+  # see note at top of file about 'local' targets
   tar_target(
-    p1_NLCD2011_data_zipped, 
-    download_NHD_data(sb_id = sb_ids_NLCD2011,
+    p1_NLCD2011_data_unzipped, 
+    {zip_files <- download_NHD_data(sb_id = sb_ids_NLCD2011,
                       out_path = '1_fetch/out',
                       downloaded_data_folder_name = NLCD2011_folders,
-                      output_data_parent_folder = 'NLCD_LC_2011_Data'),
+                      output_data_parent_folder = 'NLCD_LC_2011_Data')
+    unzipped_files <- unzip_NHD_data(downloaded_data_folder_path = zip_files,
+                                     create_unzip_subfolder = TRUE)
+    rm(zip_files)
+    unzipped_files
+    },
     format = 'file',
-    deployment = 'main'
-  ),
-  
-  # Unzip all NLCD downloaded datasets 
-  ## Note - this returns a string or vector of strings of data path to unzipped datasets 
-  tar_target(
-    p1_NLCD2011_data_unzipped,
-    unzip_NHD_data(downloaded_data_folder_path = p1_NLCD2011_data_zipped,
-                   create_unzip_subfolder = T),
-    format = 'file'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   # Read in NLCD datasets and subset by comid in DRB
@@ -230,6 +267,7 @@ p1_targets_list <- list(
   # Downlaod FORE-SCE backcasted LC tif files and subset to years we want
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/605c987fd34ec5fa65eb6a74
   ## Note - only file #1 DRB_Historical_Reconstruction_1680-2010.zip will be extracted
+  # see note at top of file about 'local' targets
   tar_target(
     p1_FORESCE_backcasted_LC, 
     download_tifs(sb_id = '605c987fd34ec5fa65eb6a74',
@@ -241,7 +279,8 @@ p1_targets_list <- list(
                   overwrite_file = TRUE,
                   name = FORESCE_years), 
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
   
   #Targets for the land cover reclassification .csv files
@@ -249,12 +288,14 @@ p1_targets_list <- list(
     p1_NLCD_reclass_table_csv, 
     '1_fetch/in/Legend_NLCD_Land_Cover.csv',
     format = 'file',
+    repository = 'local',
     deployment = 'main'
   ),
   tar_target(
     p1_FORESCE_reclass_table_csv, 
     '1_fetch/in/Legend_FORESCE_Land_Cover.csv',
     format = 'file',
+    repository = 'local',
     deployment = 'main'
   ),
   tar_target(
@@ -271,6 +312,7 @@ p1_targets_list <- list(
   # Downlaod Road Salt accumulation data for the drb
   ## Retrieved from: https://www.sciencebase.gov/catalog/item/5b15a50ce4b092d9651e22b9
   ## Note - only zip file named 1992_2015.zip will be extracted
+  # see note at top of file about 'local' targets
   tar_target(
     p1_rdsalt, 
     download_tifs(sb_id = '5b15a50ce4b092d9651e22b9',
@@ -281,7 +323,8 @@ p1_targets_list <- list(
                   year = NULL,
                   name_unzip_folder = 'rd_salt'),
     format = 'file',
-    deployment = 'main'
+    deployment = 'main',
+    repository = 'local'
   ),
 
   # Csv of variables from the Wieczorek dataset that are of interest 
@@ -289,6 +332,7 @@ p1_targets_list <- list(
     p1_vars_of_interest_csv,
     '1_fetch/in/NHDVarsOfInterest.csv',
     format = 'file',
+    repository = 'local',
     deployment = 'main'
   ),
 
@@ -319,27 +363,41 @@ p1_targets_list <- list(
     deployment = 'main'
   ),
   
-  # Download monthly natural baseflow for the DRB
+  # Download and unzip monthly natural baseflow for the DRB
   # from Miller et al. 2021: https://www.sciencebase.gov/catalog/item/6023e628d34e31ed20c874e4
-  tar_target(
-    p1_natural_baseflow_zip,
-    download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
-                     file_name = "baseflow_partial_model_pred_XX.zip",
-                     out_dir="1_fetch/out"),
-    format = "file",
-    deployment = 'main'
-  ),
-  
-  # Unzip monthly natural baseflow file
+  # see note at top of file about 'local' targets
   tar_target(
     p1_natural_baseflow_csv,
-    {unzip(zipfile=p1_natural_baseflow_zip,
-           exdir = dirname(p1_natural_baseflow_zip),overwrite=TRUE)
-     file.path(dirname(p1_natural_baseflow_zip), 
-               list.files(path = dirname(p1_natural_baseflow_zip),
-                          pattern = "*baseflow.*.csv"))
-      },
-    format = "file"
+    {zip_file <- download_sb_file(sb_id = "6023e628d34e31ed20c874e4",
+                     file_name = "baseflow_partial_model_pred_XX.zip",
+                     out_dir="1_fetch/out")
+    unzip(zipfile = zip_file,
+          exdir = dirname(zip_file), overwrite = TRUE)
+    unzipped_files <- file.path(dirname(zip_file), 
+                                list.files(path = dirname(zip_file),
+                                           pattern = "*baseflow.*.csv"))
+    unlink(zip_file, recursive = FALSE)
+    rm(zip_file)
+    unzipped_files
+    },
+    format = "file",
+    repository = 'local',
+    deployment = 'main'
+  ),
+
+  # CSV file of gridmet drivers aggregated to PRMS segments
+  tar_target(
+    p1_gridmet_csv,
+    "1_fetch/in/drb_climate_2022_04_06_segments.csv",
+    format = "file",
+    repository = "local"
+  ),
+    
+  # Read gridmet csv into tibble
+  tar_target(
+    p1_gridmet,
+    read_csv(p1_gridmet_csv, show_col_types = FALSE)
   )
+
 )
   

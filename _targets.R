@@ -1,5 +1,10 @@
 library(targets)
 
+Sys.setenv(
+    AWS_PROFILE = "dev",
+    AWS_REGION = 'us-east-1'
+)
+
 options(tidyverse.quiet = TRUE,
         #Use multiprocess on Windows, multicore in container (Linux).
         clustermq.scheduler = "multicore")
@@ -11,7 +16,13 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                             "purrr", "sbtools", "terra",
                             "patchwork", "glue", "nhdplusTools",
                             "Boruta", "ranger", "vip", "tidymodels",
-                            "doParallel"))
+                            "doParallel"),
+               resources = tar_resources(
+                 aws = tar_resources_aws(bucket = "drb-inland-salinity")),
+               repository = "aws",
+               format = "rds",
+               priority = 0.8
+               )
 
 source("1_fetch.R")
 source("2_process.R")
@@ -76,21 +87,19 @@ mainstem_reaches_tidal <- c("2771_1","2769_1","2768_1","2767_1","2764_1","2762_1
                             "376_1","351_1","344_1","346_1","333_1")
 
 # Define the url for the NHGFv1 to NHDv2 crosswalk 
-# see https://github.com/USGS-R/drb-network-prep/commit/c45f469098dfb245a2d686b807a58afa00b9d0b2
-GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/c45f469098dfb245a2d686b807a58afa00b9d0b2/2_process/out/GFv1_NHDv2_xwalk.csv"
+# see https://github.com/USGS-R/drb-network-prep/commit/3637931f5a17469a4234eaed3d20ed44ba45958d
+GFv1_NHDv2_xwalk_url <- "https://raw.githubusercontent.com/USGS-R/drb-network-prep/3637931f5a17469a4234eaed3d20ed44ba45958d/2_process/out/GFv1_NHDv2_xwalk_omit_zero_area.csv"
 
 # Define the url for the edited HRU polygons
-# see https://github.com/USGS-R/drb-network-prep/commit/940073e8d77c911b6fb9dc4e3657aeab1162a158
-GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/940073e8d77c911b6fb9dc4e3657aeab1162a158/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
+# see https://github.com/USGS-R/drb-network-prep/commit/3637931f5a17469a4234eaed3d20ed44ba45958d
+GFv1_HRUs_edited_url <- "https://github.com/USGS-R/drb-network-prep/blob/3637931f5a17469a4234eaed3d20ed44ba45958d/2_process/out/GFv1_catchments_edited.gpkg?raw=true"
 
 # Define USGS stat codes for continuous sites that only report daily statistics (https://help.waterdata.usgs.gov/stat_code) 
 stat_cd_select <- c("00001","00003")
 
-# Define earliest startDate for NWIS data retrievals
+# Define earliest startDate and latest endDate for NWIS data retrievals
 earliest_date <- "1979-10-01"
-
-# Change dummy date to force re-build of NWIS SC sites and data download
-dummy_date <- "2021-12-31"
+latest_date <- "2021-12-31"
 
 # Define dataset of interest for the national geospatial fabric (used to fetch PRMS catchment polygons):
 gf_data_select <- 'GeospatialFabricFeatures_02.zip'
@@ -144,5 +153,3 @@ cv_folds <- 5
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list)
-
-
