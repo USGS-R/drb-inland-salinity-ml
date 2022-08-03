@@ -14,6 +14,7 @@ source("1_fetch/src/munge_reach_attr_tbl.R")
 # tar_cue for downloading NWIS sites and data.
 # change to 'thorough' to download, and 'never' to prevent downloading.
 NWIS_cue = 'never'
+NWIS_repository = 'aws'
 # Change dummy date to document when NWIS SC sites and data were downloaded
 dummy_date <- "2022-06-16"
 
@@ -59,7 +60,7 @@ p1_targets_list <- list(
     },
     deployment = 'main',
     cue = tar_cue(mode = NWIS_cue),
-    repository = 'aws'
+    repository = NWIS_repository
   ),
   
   # Subset daily NWIS sites
@@ -73,7 +74,7 @@ p1_targets_list <- list(
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
     cue = tar_cue(mode = NWIS_cue),
-    repository = 'aws'
+    repository = NWIS_repository
   ),
   
   # Download NWIS daily data
@@ -84,7 +85,7 @@ p1_targets_list <- list(
     pattern = map(p1_nwis_sites_daily),
     deployment = 'main',
     cue = tar_cue(mode = NWIS_cue),
-    repository = 'aws'
+    repository = NWIS_repository
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -98,7 +99,7 @@ p1_targets_list <- list(
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
     cue = tar_cue(mode = NWIS_cue),
-    repository = 'aws'
+    repository = NWIS_repository
   ),
   
   # Create log file to track sites with multiple time series
@@ -118,7 +119,7 @@ p1_targets_list <- list(
     pattern = map(p1_nwis_sites_inst),
     deployment = 'main',
     cue = tar_cue(mode = NWIS_cue),
-    repository = 'aws'
+    repository = NWIS_repository
   ),
 
   tar_target(
