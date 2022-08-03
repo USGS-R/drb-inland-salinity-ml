@@ -36,14 +36,29 @@ p1_targets_list <- list(
     priority = 0.99 # default priority (0.8) is set globally in _targets.R
   ),
   
-  # Load harmonized WQP data product for discrete samples
+  # Load harmonized WQP data product for discrete samples from ScienceBase:
+  # https://www.sciencebase.gov/catalog/item/5d6fa631e4b0c4f70cf92e9e
   tar_target(
-    p1_wqp_data_rds,
-    "1_fetch/in/DRB.WQdata.rds",
+    p1_wqp_data_zip,
+    download_sb_file(sb_id = "5e010424e4b0b207aa033d8c",
+                     file_name = "Water-Quality Data.zip",
+                     out_dir="1_fetch/out"),
     format = 'file',
     repository = 'local',
     deployment = 'main'
   ),
+  # Unzip zipped file
+  tar_target(
+    p1_wqp_data_rds,
+    {wq_dir = "1_fetch/out/Water_Quality_Data"
+    # `shp_files` is a vector of all files ('dbf', 'prj', 'shp', 'shx')
+    wq_files <- unzip(p1_wqp_data_zip, exdir = wq_dir)
+    # return just the .shp file
+    grep(".rds", wq_files, value = TRUE)},
+    format = "file",
+    deployment = 'main'
+  ),
+  # Read in harmonized WQP data product
   tar_target(
     p1_wqp_data,
     readRDS(file = p1_wqp_data_rds),
