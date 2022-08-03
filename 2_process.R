@@ -18,7 +18,7 @@ p2_targets_list <- list(
   
   # Filter harmonized WQP data for salinity data
   tar_target(
-    p2_filtered_wqp_data,
+    p2_wqp_salinity_data,
     filter_wqp_salinity_data(p1_wqp_data,major_ion_names,wqp_vars_select,omit_wqp_events)
   ),
   
@@ -27,14 +27,16 @@ p2_targets_list <- list(
   # see https://github.com/USGS-R/drb-inland-salinity-ml/issues/153
   tar_target(
     p2_wqp_SC_data,
-    subset_wqp_SC_data(p2_filtered_wqp_data, omit_dups = TRUE),
+    subset_wqp_SC_data(p2_wqp_salinity_data, omit_dups = TRUE),
     repository = 'local'
   ),
   
-  # Subset duplicated discrete SC observations from the harmonized WQP dataset
+  # Subset duplicated discrete SC observations from the harmonized WQP dataset;
+  # this target provides a record of the duplicate records that were omitted in
+  # p2_wqp_SC_data, but is not currently used elsewhere in the pipeline.
   tar_target(
     p2_wqp_SC_dups,
-    subset_wqp_SC_dups(p2_filtered_wqp_data)
+    subset_wqp_SC_dups(p2_wqp_salinity_data)
   ),
   
   # Aggregate instantaneous SC data to hourly averages
