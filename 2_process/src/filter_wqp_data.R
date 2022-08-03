@@ -15,14 +15,16 @@ filter_wqp_salinity_data <- function(data,major_ion_names,wqp_vars_select,omit_w
   #' filter_wqp_data(data = DRB_WQdata,params_select=c("Dissolved oxygen"),wqp_vars_select=c("MonitoringLocationIdentifier","MonitoringLocationName"),
   #' omit_wqp_events=c("Volcanic action"),fileout="./data/out/filtered_wqp_data.csv")
   
-  data_subset <- filter(data,(param_group=="Salinity"|param %in% major_ion_names),
+  data_subset <- filter(data,(param_group == "Salinity" | param %in% major_ion_names),
                         # Filter out any sediment samples, samples representing hydrologic events that are not of interest, and samples from LocationType = ditch:
-                        ActivityMediaName!="Sediment",!(HydrologicEvent %in% omit_wqp_events),MonitoringLocationTypeName != "Stream: Ditch",
+                        ActivityMediaName != "Sediment",
+                        !(HydrologicEvent %in% omit_wqp_events),
+                        MonitoringLocationTypeName != "Stream: Ditch",
                         # Keep QA/QC'ed data deemed reliable:
                         final=="retain") %>%
     # Filter out any tidal samples if exclude_tidal = TRUE:
     {if(exclude_tidal==TRUE){
-      filter(.,!grepl("tidal", MonitoringLocationTypeName,ignore.case = TRUE))
+      filter(.,!grepl("tidal", MonitoringLocationTypeName, ignore.case = TRUE))
       } else {.}
     } %>% 
     select(all_of(wqp_vars_select))
@@ -35,6 +37,10 @@ filter_wqp_salinity_data <- function(data,major_ion_names,wqp_vars_select,omit_w
 subset_wqp_SC_data <- function(filtered_data,omit_dups = TRUE){
   #' 
   #' @description Function to subset the filtered WQP salinity dataset for specific conductance  
+  #' 
+  #' @details Duplicates exist in the discrete WQ dataset because records with different
+  #' values of "param" (i.e., 'Specific conductance' vs 'Specific conductance, field') were
+  #' not considered duplicates in the data harmonization code. 
   #'
   #' @param filtered_data a data frame containing the filtered DRB multisource surface-water-quality dataset.
   #' Filtered_data is the output from filter_wqp_salinity_data().
@@ -54,36 +60,47 @@ subset_wqp_SC_data <- function(filtered_data,omit_dups = TRUE){
   SC_data_subset <- filtered_data %>%
     # Omit samples originally entered as "conductivity" since we can't be sure these reflect 
     # temperature-corrected conductance
-    filter(param %in% SC_params,CharacteristicName!="Conductivity") %>%
+    filter(param %in% SC_params, CharacteristicName != "Conductivity") %>%
     # Fill in date-time stamp so that if sampling time is missing, assume some value (12:00:00) 
     # that we can use to look for duplicated date-times
     mutate(ActivityStartDateTime = na_if(ActivityStartDateTime, "NA")) %>%
     mutate(ActivityStartDateTime_filled = if_else(is.na(ActivityStartDateTime),
-                                           paste(ActivityStartDate,"12:00:00",sep=" "),
+                                           paste(ActivityStartDate, "12:00:00", sep=" "),
                                            ActivityStartDateTime))
   
-if(omit_dups == "TRUE"){
-  # When duplicate observations exist for a unique combination of [site name & date-time &
-  # geographic location & collecting organization], select one observation based on 
-  # the `param` attribute
-  SC_data_subset_omit_dups <- SC_data_subset %>%
-    group_by(MonitoringLocationIdentifier,
-             ActivityStartDateTime_filled, 
-             OrganizationIdentifier, 
-             LongitudeMeasure, LatitudeMeasure) %>% 
-    # Preferentially retain samples with param equals "Specific conductance, lab" first 
-    # and "Specific conductance, field, mean" last
-    arrange(match(param, c("Specific conductance, lab",
-                           "Specific conductance",
-                           "Specific conductance, field",
-                           "Specific conductance, field, mean"))) %>%
-    slice(1) %>%
-    ungroup()
+  if(omit_dups){
+    # When duplicate observations exist for a unique combination of 
+    # [site name & date-time & geographic location & collecting organization], 
+    # select one observation based on the `param` attribute
+    SC_data_subset_out <- SC_data_subset %>%
+      group_by(MonitoringLocationIdentifier,
+               ActivityStartDateTime_filled, 
+               OrganizationIdentifier, 
+               LongitudeMeasure, LatitudeMeasure) %>% 
+      # Preferentially retain samples with param equals "Specific conductance, lab" 
+      # first and "Specific conductance, field, mean" last.
+      arrange(match(param, c("Specific conductance, lab",
+                             "Specific conductance",
+                             "Specific conductance, field",
+                             "Specific conductance, field, mean"))) %>%
+      mutate(n_duplicated = n(),
+             dup_number = seq(n_duplicated),
+             flag_duplicate_drop = n_duplicated > 1 & dup_number != 1) %>% 
+      filter(flag_duplicate_drop == FALSE) %>%
+      ungroup() %>%
+      select(-c(n_duplicated, dup_number, flag_duplicate_drop)) %>%
+      # arrange all rows to maintain consistency in row order across users/machines
+      arrange(across(everything()))
   
-    return(SC_data_subset_omit_dups)
   } else {
-    return(SC_data_subset)
+    
+    # arrange all rows to maintain consistency in row order across users/machines
+    SC_data_subset_out <- SC_data_subset %>%
+      arrange(across(everything()))
+    
   }
+  
+  return(SC_data_subset_out)
   
 }
 
@@ -109,10 +126,20 @@ subset_wqp_SC_dups <- function(filtered_data){
              ActivityStartDateTime_filled, 
              OrganizationIdentifier, 
              LongitudeMeasure, LatitudeMeasure) %>% 
-    mutate(dup = n()>1) %>%
-    filter(dup == "TRUE") %>%
-    select(-dup) %>%
-    ungroup()
+    # Preferentially retain samples with param equals "Specific conductance, lab" 
+    # first and "Specific conductance, field, mean" last
+    arrange(match(param, c("Specific conductance, lab",
+                           "Specific conductance",
+                           "Specific conductance, field",
+                           "Specific conductance, field, mean"))) %>%
+    mutate(n_duplicated = n(),
+           dup_number = seq(n_duplicated),
+           flag_duplicate_drop = n_duplicated > 1 & dup_number != 1) %>% 
+    filter(flag_duplicate_drop == TRUE) %>%
+    ungroup() %>%
+    select(-c(n_duplicated, dup_number, flag_duplicate_drop)) %>%
+    # arrange all rows to maintain consistency in row order across users/machines
+    arrange(across(everything()))
   
   return(SC_data_subset_dups)
   
