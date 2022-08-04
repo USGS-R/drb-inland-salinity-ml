@@ -47,8 +47,16 @@ filter_wqp_salinity_data <- function(data,
     } %>% 
     select(all_of(wqp_vars_select))
   
-  return(data_subset)
+  if ("LongitudeMeasure" %in% wqp_vars_select){
+    #Convert from chr to dbl
+    data_subset$LongitudeMeasure <- as.numeric(data_subset$LongitudeMeasure)
+  }
+  if ("LatitudeMeasure" %in% wqp_vars_select){
+    #Convert from chr to dbl
+    data_subset$LatitudeMeasure <- as.numeric(data_subset$LatitudeMeasure)
+  }
   
+  return(data_subset)
 }
 
 
