@@ -38,8 +38,8 @@ filter_wqp_salinity_data <- function(data,
            MonitoringLocationTypeName != "Stream: Ditch",
            # Keep QA/QC'ed data deemed reliable:
            final == "retain",
-           ActivityStartDate > earliest_date, 
-           ActivityStartDate < latest_date) %>%
+           ActivityStartDate >= earliest_date, 
+           ActivityStartDate <= latest_date) %>%
     # Filter out any tidal samples if exclude_tidal = TRUE:
     {if(exclude_tidal){
       filter(.,!grepl("tidal", MonitoringLocationTypeName, ignore.case = TRUE))
