@@ -52,7 +52,7 @@ filter_wqp_salinity_data <- function(data,
 }
 
 
-subset_wqp_SC_data <- function(filtered_data, omit_dups = TRUE){
+subset_wqp_SC_data <- function(filtered_data, omit_duplicates = TRUE){
   #' 
   #' @description Function to subset the filtered WQP salinity dataset for specific conductance  
   #' 
@@ -62,7 +62,7 @@ subset_wqp_SC_data <- function(filtered_data, omit_dups = TRUE){
   #'
   #' @param filtered_data a data frame containing the filtered discrete water quality
   #' dataset. `filtered_data` is the output from filter_wqp_salinity_data().
-  #' @param omit_dups logical indicating whether to omit duplicated observations for a 
+  #' @param omit_duplicates logical indicating whether to omit duplicated observations for a 
   #' unique site/date-time/lat-lon location/collecting organization; defaults to TRUE
   #'
   #' @value A data frame containing discrete specific conductance samples from the 
@@ -83,12 +83,14 @@ subset_wqp_SC_data <- function(filtered_data, omit_dups = TRUE){
     filter(param %in% SC_params, CharacteristicName != "Conductivity") %>%
     # Fill in date-time stamp so that if sampling time is missing, assume some value (12:00:00) 
     # that we can use to look for duplicated date-times
-    mutate(ActivityStartDateTime = na_if(ActivityStartDateTime, "NA")) %>%
+    # Note that "NA" values were handled in the updated data harmonization scripts, so 
+    # commenting out this line for now.
+    #mutate(ActivityStartDateTime = na_if(ActivityStartDateTime, "NA")) %>%
     mutate(ActivityStartDateTime_filled = if_else(is.na(ActivityStartDateTime),
                                            paste(ActivityStartDate, "12:00:00", sep=" "),
-                                           ActivityStartDateTime))
+                                           as.character(ActivityStartDateTime)))
   
-  if(omit_dups){
+  if(omit_duplicates){
     # When duplicate observations exist for a unique combination of 
     # [site name & date-time & geographic location & collecting organization], 
     # select one observation based on the `param` attribute
@@ -138,7 +140,7 @@ subset_wqp_SC_dups <- function(filtered_data){
   #' @examples 
   #' subset_wqp_SC_dups(filtered_data = filtered_wqp_data)
   
-  SC_data_subset <- subset_wqp_SC_data(filtered_data, omit_dups = FALSE)
+  SC_data_subset <- subset_wqp_SC_data(filtered_data, omit_duplicates = FALSE)
   
   # Isolate the duplicated observations
   SC_data_subset_dups <- SC_data_subset %>%

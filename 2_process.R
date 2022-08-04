@@ -19,7 +19,8 @@ p2_targets_list <- list(
   # Filter harmonized WQP data for salinity data
   tar_target(
     p2_wqp_salinity_data,
-    filter_wqp_salinity_data(p1_wqp_data,major_ion_names,wqp_vars_select,omit_wqp_events)
+    filter_wqp_salinity_data(p1_wqp_data, major_ion_names, wqp_vars_select, omit_wqp_events, 
+                             earliest_date, latest_date, exclude_tidal = TRUE)
   ),
   
   # Subset discrete SC data from harmonized WQP
@@ -27,7 +28,7 @@ p2_targets_list <- list(
   # see https://github.com/USGS-R/drb-inland-salinity-ml/issues/153
   tar_target(
     p2_wqp_SC_data,
-    subset_wqp_SC_data(p2_wqp_salinity_data, omit_dups = TRUE),
+    subset_wqp_SC_data(p2_wqp_salinity_data, omit_duplicates = TRUE),
     repository = 'local'
   ),
   
