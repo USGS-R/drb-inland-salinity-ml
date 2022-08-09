@@ -84,13 +84,13 @@ subset_wqp_SC_data <- function(filtered_data, omit_duplicates = TRUE){
                   "Specific conductance, lab")
   
   SC_data_subset <- filtered_data %>%
-    # Omit samples originally entered as "conductivity" since we can't be sure these reflect 
-    # temperature-corrected conductance
+    # Omit samples originally entered as "conductivity" since we can't be sure
+    # these reflect temperature-corrected conductance
     filter(param %in% SC_params, CharacteristicName != "Conductivity") %>%
-    # Fill in date-time stamp so that if sampling time is missing, assume some value (12:00:00) 
-    # that we can use to look for duplicated date-times
-    # Note that "NA" values were handled in the updated data harmonization scripts, so 
-    # commenting out this line for now.
+    # Fill in date-time stamp so that if sampling time is missing, assume some
+    # value (12:00:00) that we can use to look for duplicated date-times
+    # Note that "NA" values were handled in the updated data harmonization scripts,
+    # so commenting out this line for now.
     #mutate(ActivityStartDateTime = na_if(ActivityStartDateTime, "NA")) %>%
     mutate(ActivityStartDateTime_filled = if_else(is.na(ActivityStartDateTime),
                                            paste(ActivityStartDate, "12:00:00", sep=" "),
@@ -127,42 +127,38 @@ subset_wqp_SC_data <- function(filtered_data, omit_duplicates = TRUE){
 
 
 
-subset_wqp_SC_dups <- function(filtered_data){
+subset_wqp_SC_dups <- function(salinity_data, SC_data){
   #' 
   #' @description Function to subset duplicate observations within the filtered 
   #' WQP salinity dataset for specific conductance  
   #'
-  #' @param filtered_data a data frame containing the filtered DRB multisource 
-  #' surface-water-quality dataset.filtered_data is the output from filter_wqp_salinity_data().
+  #' @param salinity_data data frame containing the filtered DRB multisource 
+  #' surface water quality dataset. `salinity_data` is the output from 
+  #' filter_wqp_salinity_data().
+  #' @param SC_data data frame containing the DRB multisource surface water 
+  #' quality dataset subsetted to include specific conductivity data only.
+  #' `SC_data` is the output from subset_wqp_SC_data(). 
   #'
-  #' @value A data frame containing discrete specific conductance samples from the Delaware River Basin 
-  #' @examples 
-  #' subset_wqp_SC_dups(filtered_data = filtered_wqp_data)
+  #' @value A data frame containing duplicated specific conductance records
+  #' that have previously been omitted from the specific conductance dataset.
+  #' 
   
-  SC_data_subset <- subset_wqp_SC_data(filtered_data, omit_duplicates = FALSE)
+  # Filter out specific conductance param values "min" and "max"
+  SC_params <- c("Specific conductance, field",
+                 "Specific conductance",
+                 "Specific conductance, field, mean",
+                 "Specific conductance, lab")
   
-  # Isolate the duplicated observations
-  SC_data_subset_dups <- SC_data_subset %>%
-    group_by(MonitoringLocationIdentifier,
-             ActivityStartDateTime_filled, 
-             OrganizationIdentifier, 
-             LongitudeMeasure, LatitudeMeasure) %>% 
-    # Preferentially retain samples with param equals "Specific conductance, lab" 
-    # first and "Specific conductance, field, mean" last
-    arrange(match(param, c("Specific conductance, lab",
-                           "Specific conductance",
-                           "Specific conductance, field",
-                           "Specific conductance, field, mean"))) %>%
-    mutate(n_duplicated = n(),
-           dup_number = seq(n_duplicated),
-           flag_duplicate_drop = n_duplicated > 1 & dup_number != 1) %>% 
-    filter(flag_duplicate_drop == TRUE) %>%
-    ungroup() %>%
-    select(-c(n_duplicated, dup_number, flag_duplicate_drop)) %>%
-    # arrange all rows to maintain consistency in row order across users/machines
-    arrange(across(everything()))
+  SC_data_subset <- salinity_data %>%
+    # Omit samples originally entered as "conductivity" since we can't be 
+    # sure these reflect temperature-corrected conductance
+    filter(param %in% SC_params, CharacteristicName != "Conductivity")
   
-  return(SC_data_subset_dups)
+  # Isolate the records that appear in the subsetted salinity dataset but 
+  # not the specific conductance dataset where duplicates were omitted.
+  diff <- setdiff(SC_data_subset, SC_data)
+  
+  return(diff)
   
 }
 

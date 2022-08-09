@@ -37,7 +37,7 @@ p2_targets_list <- list(
   # p2_wqp_SC_data, but is not currently used elsewhere in the pipeline.
   tar_target(
     p2_wqp_SC_dups,
-    subset_wqp_SC_dups(p2_wqp_salinity_data)
+    subset_wqp_SC_dups(p2_wqp_salinity_data, p2_wqp_SC_data)
   ),
   
   # Aggregate instantaneous SC data to hourly averages
