@@ -76,15 +76,13 @@ subset_wqp_SC_data <- function(filtered_data, omit_duplicates = TRUE){
   #' @value A data frame containing discrete specific conductance samples from the 
   #' Delaware River Basin 
   #' 
-  #' @examples 
-  #' subset_wqp_SC_data(filtered_data = filtered_wqp_data, omit_dups = TRUE)
 
   # Filter out specific conductance param values "min" and "max"
   SC_params <- c("Specific conductance, field",
                   "Specific conductance",
                   "Specific conductance, field, mean",
                   "Specific conductance, lab")
-
+  
   SC_data_subset <- filtered_data %>%
     # Omit samples originally entered as "conductivity" since we can't be sure these reflect 
     # temperature-corrected conductance
@@ -99,39 +97,32 @@ subset_wqp_SC_data <- function(filtered_data, omit_duplicates = TRUE){
                                            as.character(ActivityStartDateTime)))
   
   if(omit_duplicates){
-    # When duplicate observations exist for a unique combination of 
-    # [site name & date-time & geographic location & collecting organization], 
-    # select one observation based on the `param` attribute
+    # When duplicate observations exist, select one observation 
+    # based on the `param` attribute
     SC_data_subset_out <- SC_data_subset %>%
-      group_by(MonitoringLocationIdentifier,
-               ActivityStartDateTime_filled, 
-               OrganizationIdentifier, 
-               LongitudeMeasure, LatitudeMeasure) %>% 
-      # Preferentially retain samples with param equals "Specific conductance, lab" 
-      # first and "Specific conductance, field, mean" last.
+      group_by(OrganizationIdentifier, MonitoringLocationIdentifier,
+               LongitudeMeasure, LatitudeMeasure, ActivityStartDateTime_filled) %>% 
+      # Within each grouped set, preferentially retain samples with param equals
+      # "Specific conductance, lab" first and "Specific conductance, field, mean" last.
       arrange(match(param, c("Specific conductance, lab",
                              "Specific conductance",
                              "Specific conductance, field",
-                             "Specific conductance, field, mean"))) %>%
+                             "Specific conductance, field, mean")),
+              .by_group = TRUE) %>%
       mutate(n_duplicated = n(),
              dup_number = seq(n_duplicated),
              flag_duplicate_drop = n_duplicated > 1 & dup_number != 1) %>% 
       filter(flag_duplicate_drop == FALSE) %>%
       ungroup() %>%
-      select(-c(n_duplicated, dup_number, flag_duplicate_drop)) %>%
-      # arrange all rows to maintain consistency in row order across users/machines
-      arrange(across(everything()))
-  
+      select(-c(n_duplicated, dup_number, flag_duplicate_drop, ActivityStartDateTime_filled)) 
+    
   } else {
     
-    # arrange all rows to maintain consistency in row order across users/machines
     SC_data_subset_out <- SC_data_subset %>%
-      arrange(across(everything()))
-    
+      select(-ActivityStartDateTime_filled)
   }
   
   return(SC_data_subset_out)
-  
 }
 
 
