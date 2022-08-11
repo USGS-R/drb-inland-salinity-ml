@@ -37,10 +37,14 @@ p1_targets_list <- list(
     priority = 0.99 # default priority (0.8) is set globally in _targets.R
   ),
   
-  # Load harmonized WQP data product for discrete samples
+  # Load harmonized WQP data product for discrete samples. Note that this data
+  # frame was created from an (internal) DRB data harmonization GitLab repository:
+  # https://code.usgs.gov/wma/iws/wq-data-harmonization/-/commit/b705a2b91877d5e0bb9386250659b46149295b55
+  # The output rds file was downloaded from the inland salinity sharepoint folder
+  # and manually placed in 1_fetch/in.
   tar_target(
     p1_wqp_data_rds,
-    "1_fetch/in/DRB.WQdata.rds",
+    "1_fetch/in/20220731_DRB_WQdata.rds",
     format = 'file',
     repository = 'local',
     deployment = 'main'

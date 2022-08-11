@@ -10,7 +10,7 @@ save_target_ind_files <- function(fileout,target_names) {
   # Create indicator table
   ind_tbl <- tar_meta(all_of(target_names)) %>%
     select(tar_name = name, filepath = path, hash = data) %>%
-    mutate(filepath = unlist(filepath))
+    mutate(filepath = unlist(filepath)[1])
 
   # Save indicator table
   readr::write_csv(ind_tbl, fileout)
