@@ -14,6 +14,7 @@ source("1_fetch/src/munge_reach_attr_tbl.R")
 # tar_cue for downloading NWIS sites and data.
 # change to 'thorough' to download, and 'never' to prevent downloading.
 NWIS_cue = 'never'
+NWIS_repository = 'aws'
 # Change dummy date to document when NWIS SC sites and data were downloaded
 dummy_date <- "2022-06-16"
 
@@ -62,7 +63,8 @@ p1_targets_list <- list(
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Subset daily NWIS sites
@@ -75,7 +77,8 @@ p1_targets_list <- list(
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Download NWIS daily data
@@ -85,7 +88,8 @@ p1_targets_list <- list(
                         start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -98,7 +102,8 @@ p1_targets_list <- list(
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Create log file to track sites with multiple time series
@@ -117,7 +122,8 @@ p1_targets_list <- list(
                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
 
   tar_target(
