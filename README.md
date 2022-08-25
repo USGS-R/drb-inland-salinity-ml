@@ -8,13 +8,16 @@ The default behavior is to build the pipeline with S3 as a shared data repositor
 scp /home/jsadler/.aws/credentials jsadler@tg-dtn1.cr.usgs.gov:/home/jsadler/.aws/credentials
 ```
 
+Note: If an error is thrown when fetching a target from S3 (e.g., time out while downloading), that will cause the targets meta file to have an error in it for that target, and the target will be rebuilt the next time `tar_make()` is run. If you do not want that target to rebuild and instead want to try fetching it again, you can `git reset _targets/meta/meta` and then `tar_make()`.
+
 ## Access to credentials when using a container
 Singularity should be able to access the credentials without any extra steps because it uses the same file system as the host.
 Docker, however, does not use the host file system and therefore the credentials file would need to be mounted from the host onto the Docker file system. To do this, you can paste the `.aws/credentials` file into the mounted repository directory and add the following environment variable to the `_targets.R` script:   
 `Sys.setenv(AWS_SHARED_CREDENTIALS_FILE = "./credentials")`
 
 # Building locally
-Most of the time you shouldn't have to build the pipeline with locally stored targets - you usually will be building it with S3 as the repository (see above). If for some reason local builds are needed for a particular target, you can add `repository = 'local'` to that `tar_target()`'s argument. To build the full pipeline locally, you can change the `repository` option in `tar_objects_set` in the `_targets.R` file. WARNING - this will trigger a rebuild of all targets. 
+Most of the time you shouldn't have to build the pipeline with locally stored targets - you usually will be building it with S3 as the repository (see above). If for some reason local builds are needed for a particular target, you can add `repository = 'local'` to that `tar_target()`'s argument. To build the full pipeline locally, change the `repository` option in `tar_objects_set` in the `_targets.R` file and set `NWIS_repository` to `'local'` in `1_fetch.R`. WARNING - using a global `repository = 'local'` will trigger a rebuild of all targets. Alternatively, certain NWIS targets can be set to never rebuild, even when the global `repository = 'local'`. To prevent NWIS download targets from building when `repository = 'local'`, keep `NWIS_repository = 'aws'` in `1_fetch.R` so that these targets are pulled from S3. Note that if these targets are pulled from S3, then you will need to log in with aws credentials to build the pipeline.
+Commiting the targets meta file is not recommended after switching to 'local' because switching back to using `repository = 'aws'` will also trigger a rebuild of the targets that were locally built.
 
 
 # References

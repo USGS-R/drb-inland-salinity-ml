@@ -14,6 +14,7 @@ source("1_fetch/src/munge_reach_attr_tbl.R")
 # tar_cue for downloading NWIS sites and data.
 # change to 'thorough' to download, and 'never' to prevent downloading.
 NWIS_cue = 'never'
+NWIS_repository = 'aws'
 # Change dummy date to document when NWIS SC sites and data were downloaded
 dummy_date <- "2022-06-16"
 
@@ -36,10 +37,14 @@ p1_targets_list <- list(
     priority = 0.99 # default priority (0.8) is set globally in _targets.R
   ),
   
-  # Load harmonized WQP data product for discrete samples
+  # Load harmonized WQP data product for discrete samples. Note that this data
+  # frame was created from an (internal) DRB data harmonization GitLab repository:
+  # https://code.usgs.gov/wma/iws/wq-data-harmonization/-/commit/b705a2b91877d5e0bb9386250659b46149295b55
+  # The output rds file was downloaded from the inland salinity sharepoint folder
+  # and manually placed in 1_fetch/in.
   tar_target(
     p1_wqp_data_rds,
-    "1_fetch/in/DRB.WQdata.rds",
+    "1_fetch/in/20220731_DRB_WQdata.rds",
     format = 'file',
     repository = 'local',
     deployment = 'main'
@@ -58,7 +63,8 @@ p1_targets_list <- list(
       get_nwis_sites(drb_huc8s,pcodes_select,site_tp_select,stat_cd_select)
     },
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Subset daily NWIS sites
@@ -71,7 +77,8 @@ p1_targets_list <- list(
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Download NWIS daily data
@@ -81,7 +88,8 @@ p1_targets_list <- list(
                         start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_daily),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Subset NWIS sites with instantaneous (sub-daily) data
@@ -94,7 +102,8 @@ p1_targets_list <- list(
       # for sites with multiple time series (ts_id), retain the most recent time series for site_info
       group_by(site_no) %>% arrange(desc(end_date)) %>% slice(1),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
   
   # Create log file to track sites with multiple time series
@@ -113,7 +122,8 @@ p1_targets_list <- list(
                        start_date = earliest_date, end_date = latest_date),
     pattern = map(p1_nwis_sites_inst),
     deployment = 'main',
-    cue = tar_cue(mode = NWIS_cue)
+    cue = tar_cue(mode = NWIS_cue),
+    repository = NWIS_repository
   ),
 
   tar_target(

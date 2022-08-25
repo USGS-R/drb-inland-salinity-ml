@@ -13,7 +13,7 @@ output: html_document
 ##------------ WQP ------------##
 
 # Load filtered WQP data
-data_subset <- tar_read(p2_filtered_wqp_data)
+data_subset <- tar_read(p2_wqp_salinity_data)
 
 # Return Cl sites
 Cl_sites <- data_subset %>%
