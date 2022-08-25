@@ -546,17 +546,5 @@ p2_targets_list <- list(
     left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid', 'Date')) %>%
       rename(PRMS_segid = subsegid) %>%
       filter(Date >= earliest_date)
-  )
-  
-  #Filter out the vars that will be time-varying by site
-  # p2_natural_baseflow
-  # p2_rdsalt_per_catchment_allyrs
-  # p2_FORESCE_LC_per_catchment_reclass_cat
-  # p2_FORESCE_LC_per_catchment_reclass_tot
-  # p2_PRMS_NLCD_lc_proportions_reclass_tot
-  # p2_PRMS_NLCD_lc_proportions_reclass_cat
-  # #Can use for temperature vars, but doesn't cover full date range
-  # p1_sntemp_inputs_outputs %>% select(seg_id_nat, date)
-  #gridMET data
-  
+  )  
 )
