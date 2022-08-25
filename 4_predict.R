@@ -3,12 +3,14 @@ source("4_predict/src/plot_diagnostics.R")
 
 #Predict phase
 p4_targets_list <- list(
-  #Boruta screening
-  tar_target(p4_Boruta,
-             screen_Boruta(features = p2_nhdv2_attr_refined_merged,
-                           metrics_table = p2_SC_observations %>% 
-                             drop_na() %>%
-                             select(subsegid, mean_value),
+  #Boruta screening - 5 year lag attributes
+  tar_target(p4_Boruta_5yr,
+             screen_Boruta(input_data = p2_all_attr_SC_obs %>% 
+                             drop_na(mean_value, contains('5years')) %>%
+                             #remove unused columns
+                             select(-c("PRMS_segid","Date", "min_value", 
+                                       "max_value", "n_value", "sd_value", 
+                                       "cv_value", "site_ids")),
                            pred_var = 'mean_value',
                            ncores = Boruta_cores, 
                            brf_runs = Boruta_runs, 

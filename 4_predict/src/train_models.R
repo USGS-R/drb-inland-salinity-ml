@@ -22,14 +22,14 @@ split_data <- function(data, train_prop, time_lag = 0, by_time){
   return(list(split = split, training = training, testing = testing))
 }
 
-screen_Boruta <- function(features, metrics_table, pred_var, ncores, brf_runs, ntrees, 
+screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees, 
                           train_prop, time_lag = 0, by_time){
   #' 
   #' @description Applies Boruta screening to the features. Makes a train/test
   #' split before applying the screening.
   #'
-  #' @param features table of gages (rows) and features (columns).
-  #' @param metrics_table table of metrics computed for each gage.
+  #' @param input_data table of gages (rows) and columns with the pred_var and 
+  #' features (columns)
   #' @param pred_var column name of the variable to predict
   #' @param ncores number of cores to use
   #' @param brf_runs maximum number of RF runs
@@ -40,12 +40,6 @@ screen_Boruta <- function(features, metrics_table, pred_var, ncores, brf_runs, n
   #' 
   #' @return Returns a list of all 3 brf models, and the input dataset 
   #' (IDs, features, metric) as a list with train/test splits as the list elements.
-  
-  #Join dataframe to match the features to the metrics
-  input_data <- left_join(features, metrics_table, 
-                          by = c('PRMS_segid' = 'subsegid')) %>%
-    #remove any NA segments. These are segments with no samples
-    drop_na()
   
   #Split into training and testing datasets
   #May want to split reaches with continuous samplers separately
