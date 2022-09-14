@@ -23,7 +23,8 @@ split_data <- function(data, train_prop, time_lag = 0, by_time){
 }
 
 screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees, 
-                          train_prop, time_lag = 0, by_time){
+                          train_prop, time_lag = 0, by_time,
+                          num_data_splits){
   #' 
   #' @description Applies Boruta screening to the features. Makes a train/test
   #' split before applying the screening.
@@ -37,22 +38,46 @@ screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees,
   #' @param train_prop proportion of the data to use for training
   #' @param time_lag lag used in initial_time_split
   #' @param by_time logical indicating if the split should be temporal or not
+  #' @param num_data_splits number of splits to make to the data. Boruta screening
+  #' is applied to each split and the final set of attributes is the union of non-rejected
+  #' attributes. The individual split results are returned in a list.
   #' 
-  #' @return Returns a list of all 3 brf models, and the input dataset 
+  #' @return Returns a list of all brf models, and the input dataset 
   #' (IDs, features, metric) as a list with train/test splits as the list elements.
   
-  #Split into training and testing datasets
-  #May want to split reaches with continuous samplers separately
-  input_data_split <- split_data(input_data, train_prop = train_prop, 
-                                      time_lag = time_lag, by_time = by_time)
+  if (num_data_splits > 1){
+    #split the data into num_data_splits
+    input_data$split <- 0
+    sample_size <- floor(nrow(input_data)/num_data_splits)
+    for (i in 1:num_data_splits){
+      sample_split <- sample(x = 1:nrow(input_data[input_data$split == 0,]), 
+                             size = sample_size, 
+                             replace = FALSE)
+      input_data$split[input_data$split == 0][sample_split] <- i
+    }
+  }else{
+    input_data$split <- 1
+  }
   
-  #Apply Boruta to down-select features
-  #This is parallelized by default
-  #applying once to CAT only, then TOT only
-  brf_noTOT <- Boruta(x = input_data_split$training %>% 
-                        select(-{{pred_var}}, -starts_with('TOT_')) %>%
+  #Lists and vector to store results
+  brf_lst <- list()
+  screened_input_data_lst <- list()
+  names_unique_all_splits <- vector('character', length = 0L)
+  
+  #Loop over number of data splits
+  for (i in 1:num_data_splits){
+    #Split into training and testing datasets
+    input_data_split <- split_data(input_data[input_data$split == i,] %>%
+                                     select(-split), 
+                                   train_prop = train_prop, 
+                                   time_lag = time_lag, by_time = by_time)
+    
+    #Apply Boruta to down-select features
+    #This is parallelized by default
+    brf_All <- Boruta(x = input_data_split$training %>%
+                        select(-{{pred_var}}) %>%
                         as.data.frame(),
-                      y = input_data_split$training %>% 
+                      y = input_data_split$training %>%
                         pull({{pred_var}}),
                       pValue = 0.01,
                       mcAdj = TRUE,
@@ -63,57 +88,61 @@ screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees,
                       num.trees = ntrees,
                       oob.error = TRUE,
                       num.threads = ncores)
+    
+    brf_lst <- c(brf_lst, list(brf_All))
+    
+    #Select all features that were not rejected
+    names_unique <- names(brf_All$finalDecision[brf_All$finalDecision != 'Rejected'])
+    
+    #Create modeling dataset for this iteration
+    screened_input_data <- list(split = input_data_split$split)
+    
+    screened_input_data_lst <- c(screened_input_data_lst, list(screened_input_data))
+    
+    #vector of the unique features from all data splits
+    names_unique_all_splits <- unique(c(names_unique_all_splits, names_unique))
+  }
   
-  brf_noCAT <- Boruta(x = input_data_split$training %>% 
-                        select(-{{pred_var}}, -starts_with('CAT_')) %>%
-                        as.data.frame(),
-                      y = input_data_split$training %>% 
-                        pull({{pred_var}}),
-                      pValue = 0.01,
-                      mcAdj = TRUE,
-                      maxRuns = brf_runs,
-                      doTrace = 0,
-                      holdHistory = TRUE,
-                      getImp = getImpRfZ,
-                      num.trees = ntrees,
-                      oob.error = TRUE,
-                      num.threads = ncores)
+  save.image("post-Boruta.RData")
   
-  brf_All <- Boruta(x = input_data_split$training %>%
-                      select(-{{pred_var}}) %>%
-                      as.data.frame(),
-                    y = input_data_split$training %>%
-                      pull({{pred_var}}),
-                    pValue = 0.01,
-                    mcAdj = TRUE,
-                    maxRuns = brf_runs,
-                    doTrace = 0,
-                    holdHistory = TRUE,
-                    getImp = getImpRfZ,
-                    num.trees = ntrees,
-                    oob.error = TRUE,
-                    num.threads = ncores)
-  
-  #Select all features that were not rejected over these 3 screenings
-  names_unique = unique(c(names(brf_All$finalDecision[brf_All$finalDecision != 'Rejected']),
-                          names(brf_noACC$finalDecision[brf_noACC$finalDecision != 'Rejected']),
-                          names(brf_noCAT$finalDecision[brf_noCAT$finalDecision != 'Rejected'])
-  ))
+  #Aggregate the input data into a single dataframe for model training and testing
+  for (i in 1:num_data_splits){
+    if(i == 1){
+      screened_input_data_aggregated <- screened_input_data_lst[[i]]$split
+    }else{
+      #Relabel the training data ID
+      screened_input_data_aggregated$in_id <- c(screened_input_data_aggregated$in_id,
+                                                nrow(screened_input_data_aggregated$data) + 
+                                                  screened_input_data_lst[[i]]$split$in_id)
+      #Aggregate dataframes
+      screened_input_data_aggregated$data <- rbind(screened_input_data_aggregated$data,
+                                     screened_input_data_lst[[i]]$split$data)
+    }
+    if (i == num_data_splits){
+      if (nrow(input_data[input_data$split == 0,]) > 0){
+        #add these data to the dataset
+        screened_input_data_aggregated$data <- rbind(screened_input_data_aggregated$data,
+                                                     input_data[input_data$split == 0,])
+      }
+    }
+  }
   
   #Create modeling dataset
-  screened_input_data <- list(split = input_data_split$split,
-                              training = input_data_split$training %>% 
-                                select(all_of(names_unique), {{pred_var}}),
-                              testing = input_data_split$testing %>% 
-                                select(all_of(names_unique), {{pred_var}}))
+  screened_input_data_aggregated <- list(split = screened_input_data_aggregated,
+                              training = screened_input_data_aggregated$data[screened_input_data_aggregated$in_id,] %>% 
+                                select(all_of(names_unique_all_splits), {{pred_var}}),
+                              testing = screened_input_data_aggregated$data[-screened_input_data_aggregated$in_id,] %>% 
+                                select(all_of(names_unique_all_splits), {{pred_var}}))
   #correcting the split table separately so that the class of the split object
   #is correct.
-  screened_input_data$split$data <- screened_input_data$split$data %>% 
-    select(all_of(names_unique), {{pred_var}})
+  screened_input_data_aggregated$split$data <- screened_input_data_aggregated$split$data %>% 
+    select(all_of(names_unique_all_splits), {{pred_var}})
   
-  # metric column name all 3 brf models and the input dataset (IDs, features, metric)
-  return(list(metric = pred_var, brf_noCAT = brf_noCAT, brf_noTOT = brf_noTOT, 
-              brf_All = brf_All, input_data = screened_input_data))
+  # metric column name, all brf models, all input datasets (IDs, features, metric),
+  # selected features, and the combined input dataset
+  return(list(metric = pred_var, brf = brf_lst, input_data_lst = screened_input_data_lst,
+              selected_features = names_unique_all_splits,
+              input_data = screened_input_data_aggregated))
 }
 
 train_models_grid <- function(brf_output, v_folds, ncores){
@@ -134,13 +163,13 @@ train_models_grid <- function(brf_output, v_folds, ncores){
                            min_n = tune(), 
                            trees = tune()) %>% 
     set_engine(engine = "ranger", 
-               verbose = FALSE, importance = 'permutation', 
+               verbose = FALSE, importance = 'impurity', 
                probability = FALSE)
   
   #Set parameter ranges
   params <- parameters(list(mtry = mtry() %>% range_set(c(10,100)), 
                             min_n = min_n() %>% range_set(c(2,10)),
-                            trees = trees() %>% range_set(c(500,2000))))
+                            trees = trees() %>% range_set(c(200,2000))))
   
   #Space filled grid to search setup
   grid <- grid_max_entropy(params,

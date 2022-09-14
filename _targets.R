@@ -147,9 +147,9 @@ Boruta_runs <- 300
 #number of trees
 Boruta_trees <- 500
 #number of cores
-Boruta_cores <- 35
+Boruta_cores <- 70
 #Cross validation folds
-cv_folds <- 5
+cv_folds <- 10
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list)
