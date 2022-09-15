@@ -74,8 +74,10 @@ p4_targets_list <- list(
   tar_target(p4_Boruta_static,
              screen_Boruta(input_data = p2_all_attr_SC_obs %>% 
                              drop_na(mean_value) %>%
-                             #remove unused columns
-                             select(mean_value, all_of(p4_screened_attrs)),
+                             #attributes to retain (identifiers, predictors)
+                             select(mean_value, PRMS_segid, Date, min_value, 
+                                    max_value, n_value, sd_value, 
+                                    cv_value, site_ids, all_of(p4_screened_attrs)),
                            drop_attrs = c("PRMS_segid","Date", "min_value", 
                                           "max_value", "n_value", "sd_value", 
                                           "cv_value", "site_ids",
