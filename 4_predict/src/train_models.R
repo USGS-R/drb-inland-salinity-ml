@@ -22,8 +22,8 @@ split_data <- function(data, train_prop, time_lag = 0, by_time){
   return(list(split = split, training = training, testing = testing))
 }
 
-screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees, 
-                          train_prop, time_lag = 0, by_time,
+screen_Boruta <- function(input_data, drop_attrs = NULL, pred_var, ncores, brf_runs, 
+                          ntrees, train_prop, time_lag = 0, by_time,
                           num_data_splits){
   #' 
   #' @description Applies Boruta screening to the features. Makes a train/test
@@ -31,6 +31,8 @@ screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees,
   #'
   #' @param input_data table of gages (rows) and columns with the pred_var and 
   #' features (columns)
+  #' @param drop_attrs attributes to not use in the Boruta screening (e.g., 
+  #' the Date and PRMS segment ID)
   #' @param pred_var column name of the variable to predict
   #' @param ncores number of cores to use
   #' @param brf_runs maximum number of RF runs
@@ -75,7 +77,7 @@ screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees,
     #Apply Boruta to down-select features
     #This is parallelized by default
     brf_All <- Boruta(x = input_data_split$training %>%
-                        select(-{{pred_var}}) %>%
+                        select(-{{pred_var}}, -all_of(drop_attrs)) %>%
                         as.data.frame(),
                       y = input_data_split$training %>%
                         pull({{pred_var}}),
@@ -129,20 +131,41 @@ screen_Boruta <- function(input_data, pred_var, ncores, brf_runs, ntrees,
   
   #Create modeling dataset
   screened_input_data_aggregated <- list(split = screened_input_data_aggregated,
-                              training = screened_input_data_aggregated$data[screened_input_data_aggregated$in_id,] %>% 
-                                select(all_of(names_unique_all_splits), {{pred_var}}),
-                              testing = screened_input_data_aggregated$data[-screened_input_data_aggregated$in_id,] %>% 
-                                select(all_of(names_unique_all_splits), {{pred_var}}))
-  #correcting the split table separately so that the class of the split object
-  #is correct.
-  screened_input_data_aggregated$split$data <- screened_input_data_aggregated$split$data %>% 
-    select(all_of(names_unique_all_splits), {{pred_var}})
+                              training = screened_input_data_aggregated$data[screened_input_data_aggregated$in_id,],
+                              testing = screened_input_data_aggregated$data[-screened_input_data_aggregated$in_id,])
   
   # metric column name, all brf models, all input datasets (IDs, features, metric),
   # selected features, and the combined input dataset
   return(list(metric = pred_var, brf = brf_lst, input_data_lst = screened_input_data_lst,
               selected_features = names_unique_all_splits,
               input_data = screened_input_data_aggregated))
+}
+
+select_attrs <- function(brf_output, retain_attrs = NULL){
+  #' 
+  #' @description Applies Boruta screening to the features. Makes a train/test
+  #' split before applying the screening.
+  #'
+  #' @param brf_output output from the screen_Boruta function
+  #' @param retain_attrs character vector of additional attributes to retain
+  #' beyond those in brf_output$selected_features.
+  #' 
+  #' @return Returns a list of all brf models, and the input dataset 
+  #' (IDs, features, metric) as a list with train/test splits as the list elements.
+  #' The training and testing dataframes only contain the selected attributes.
+  
+  #vector of attributes to retain
+  retain_attrs <- unique(c(brf_output$selected_features, retain_attrs, brf_output$metric))
+  
+  #retaining those attributes in the split, training and testing datasets
+  brf_output$input_data$split$data <- brf_output$input_data$split$data %>% 
+    select(all_of(retain_attrs))
+  brf_output$input_data$training <- brf_output$input_data$training %>% 
+    select(all_of(retain_attrs))
+  brf_output$input_data$testing <- brf_output$input_data$testing %>% 
+    select(all_of(retain_attrs))
+  
+  return(brf_output)
 }
 
 train_models_grid <- function(brf_output, v_folds, ncores){

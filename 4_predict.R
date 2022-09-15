@@ -75,12 +75,15 @@ p4_targets_list <- list(
              screen_Boruta(input_data = p2_all_attr_SC_obs %>% 
                              drop_na(mean_value) %>%
                              #remove unused columns
-                             select(mean_value, all_of(p4_screened_attrs), 
-                                    -c("PRMS_segid","Date", "min_value", 
-                                       "max_value", "n_value", "sd_value", 
-                                       "cv_value", "site_ids"),
-                                    #removing dynamic attributes
-                                    -ends_with('_mean'), -ends_with('_0')),
+                             select(mean_value, all_of(p4_screened_attrs)),
+                           drop_attrs = c("PRMS_segid","Date", "min_value", 
+                                          "max_value", "n_value", "sd_value", 
+                                          "cv_value", "site_ids",
+                                          p2_all_attr_SC_obs %>%
+                                            select(all_of(p4_screened_attrs)) %>% 
+                                            select(ends_with('_mean'), 
+                                                   ends_with('_0')) %>% 
+                                            colnames()),
                            pred_var = 'mean_value',
                            ncores = Boruta_cores, 
                            brf_runs = Boruta_runs, 
@@ -91,51 +94,34 @@ p4_targets_list <- list(
              ),
              deployment = 'worker'
   ),
-  #Boruta screening - 5 year lag attributes
-  # tar_target(p4_Boruta_dynamic_5yr,
-  #            screen_Boruta(input_data = p2_all_attr_SC_obs %>% 
-  #                            drop_na(mean_value, contains('5years')) %>%
-  #                            #remove unused columns
-  #                            select(mean_value, all_of(p4_screened_attrs), 
-  #                                   -c("PRMS_segid","Date", "min_value", 
-  #                                      "max_value", "n_value", "sd_value", 
-  #                                      "cv_value", "site_ids")) %>%
-  #                            #filter a random subset of the data to use
-  #                            .[sample(1:nrow(.), size = 10000, replace = FALSE), ],
-  #                          pred_var = 'mean_value',
-  #                          ncores = Boruta_cores, 
-  #                          brf_runs = Boruta_runs, 
-  #                          ntrees = Boruta_trees,
-  #                          train_prop = 0.8,
-  #                          by_time = FALSE
-  #            ),
-  #            deployment = 'worker'
-  # ),
-  #Boruta screening - 1 year lag attributes
-  # tar_target(p4_Boruta_dynamic_1yr,
-  #            screen_Boruta(input_data = p2_all_attr_SC_obs %>% 
-  #                            drop_na(mean_value, contains('1years')) %>%
-  #                            #remove unused columns
-  #                            select(mean_value, all_of(p4_screened_attrs), 
-  #                                   -c("PRMS_segid","Date", "min_value", 
-  #                                      "max_value", "n_value", "sd_value", 
-  #                                      "cv_value", "site_ids"),
-  #                                   -(contains('_5years_'))) %>%
-  #                            #filter a random subset of the data to use
-  #                            .[sample(1:nrow(.), size = 10000, replace = FALSE), ],
-  #                          pred_var = 'mean_value',
-  #                          ncores = Boruta_cores, 
-  #                          brf_runs = Boruta_runs, 
-  #                          ntrees = Boruta_trees,
-  #                          train_prop = 0.8,
-  #                          by_time = FALSE
-  #            ),
-  #            deployment = 'worker'
-  # ),
+  
+  #Prepare attributes for RF model training
+  #only static attributes
+  tar_target(p4_selected_static_attrs,
+             select_attrs(brf_output = p4_Boruta_static)
+  ),
+  #static and dynamic
+  tar_target(p4_selected_static_dynamic_attrs,
+             select_attrs(brf_output = p4_Boruta_static,
+                          retain_attrs = p2_all_attr_SC_obs %>% 
+                            select(all_of(p4_screened_attrs)) %>%
+                            select(ends_with('_mean'), ends_with('_0'))
+             ),
+             deployment = 'worker'
+  ),
   
   #RF train
-  tar_target(p4_train_RF,
-             train_models_grid(brf_output = p4_Boruta_static,
+  #only static attributes
+  tar_target(p4_train_RF_static,
+             train_models_grid(brf_output = p4_selected_static_attrs,
+                               ncores = Boruta_cores,
+                               v_folds = cv_folds
+             ),
+             deployment = 'worker'
+  ),
+  #static and dynamic
+  tar_target(p4_train_RF_static_dynamic,
+             train_models_grid(brf_output = p4_selected_static_dynamic_attrs,
                                ncores = Boruta_cores,
                                v_folds = cv_folds
              ),
@@ -155,9 +141,17 @@ p4_targets_list <- list(
   
   # RF variable importance plot 
   #Should add error bars over X random seeds
-  tar_target(p4_vip_png,
-             plot_vip(RF_model = p4_train_RF$best_fit,
-                      model_name = 'daily_SC_RF',
+  tar_target(p4_vip_static_png,
+             plot_vip(RF_model = p4_train_RF_static$best_fit,
+                      model_name = 'daily_SC_RF_static',
+                      num_features = 20,
+                      out_dir = '6_predict/out/vip'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_vip_static_dynamic_png,
+             plot_vip(RF_model = p4_train_RF_static_dynamic$best_fit,
+                      model_name = 'daily_SC_RF_static_dynamic',
                       num_features = 20,
                       out_dir = '6_predict/out/vip'),
              deployment = 'main',
@@ -165,16 +159,32 @@ p4_targets_list <- list(
   ),
   
   # RF hyperparameter optimization
-  tar_target(p4_hypopt_png,
-             plot_hyperparam_opt_results_RF(p4_train_RF$grid_params,
-                                            model_name = 'daily_SC_RF',
+  tar_target(p4_hypopt_static_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_static$grid_params,
+                                            model_name = 'daily_SC_RF_static',
                                             out_dir = '6_predict/out/hypopt'),
              deployment = 'main',
              format = 'file'
   ),
-  tar_target(p4_hypopt_marginals_png,
-             plot_hyperparam_opt_marginals(p4_train_RF$grid_params,
-                                           model_name = 'daily_SC_RF',
+  tar_target(p4_hypopt_marginals_static_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_static$grid_params,
+                                           model_name = 'daily_SC_RF_static',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '6_predict/out/hypopt'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_hypopt_static_dynamic_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_static_dynamic$grid_params,
+                                            model_name = 'daily_SC_RF_static_dynamic',
+                                            out_dir = '6_predict/out/hypopt'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_hypopt_marginals_static_dynamic_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_static_dynamic$grid_params,
+                                           model_name = 'daily_SC_RF_static_dynamic',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
                                            out_dir = '6_predict/out/hypopt'),
@@ -184,27 +194,50 @@ p4_targets_list <- list(
   
   # RF predicted vs. observed y 
   #Should be for the mean over X random seeds
-  tar_target(p4_pred_obs_png,
-             plot_pred_obs(df_pred_obs = p4_train_RF$best_fit,
-                           model_name = 'daily_SC_RF',
+  tar_target(p4_pred_obs_static_png,
+             plot_pred_obs(df_pred_obs = p4_train_RF_static$best_fit,
+                           model_name = 'daily_SC_RF_static',
+                           out_dir = '6_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_static_dynamic_png,
+             plot_pred_obs(df_pred_obs = p4_train_RF_static_dynamic$best_fit,
+                           model_name = 'daily_SC_RF_static_dynamic',
                            out_dir = '6_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   ),
   
   #Train test barplot coverage of SC
-  tar_target(p4_train_test_boxplot_coverage_png,
-             boxplot_compare_RF(data_split = p4_train_RF$best_fit$input_data,
-                           model_name = 'daily_SC_RF',
+  tar_target(p4_train_test_boxplot_coverage_static_png,
+             boxplot_compare_RF(data_split = p4_train_RF_static$best_fit$input_data,
+                           model_name = 'daily_SC_RF_static',
                            pred_var = 'mean_value',
                            out_dir = '6_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   ),
+  tar_target(p4_train_test_boxplot_coverage_static_dynamic_png,
+             boxplot_compare_RF(data_split = p4_train_RF_static_dynamic$best_fit$input_data,
+                                model_name = 'daily_SC_RF_static_dynamic',
+                                pred_var = 'mean_value',
+                                out_dir = '6_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
   
   #Cross validation coverage
-  tar_target(p4_train_test_CV_png,
-             boxplot_compare_RF(mod = p4_train_RF$wf,
+  tar_target(p4_train_test_CV_static_png,
+             boxplot_compare_RF(mod = p4_train_RF_static$wf,
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '6_predict/out/'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_train_test_CV_static_dynamic_png,
+             boxplot_compare_RF(mod = p4_train_RF_static_dynamic$wf,
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
                                 out_dir = '6_predict/out/'),
