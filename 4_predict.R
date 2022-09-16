@@ -107,7 +107,8 @@ p4_targets_list <- list(
              select_attrs(brf_output = p4_Boruta_static,
                           retain_attrs = p2_all_attr_SC_obs %>% 
                             select(all_of(p4_screened_attrs)) %>%
-                            select(ends_with('_mean'), ends_with('_0'))
+                            select(ends_with('_mean'), ends_with('_0')) %>%
+                            colnames()
              ),
              deployment = 'worker'
   ),
