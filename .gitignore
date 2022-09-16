@@ -16,6 +16,7 @@ rstudio*
 *.out
 *.log
 credentials
+saml2aws-files/*
 
 #R files
 # History files
