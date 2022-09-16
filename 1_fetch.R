@@ -35,7 +35,8 @@ p1_targets_list <- list(
      }
      pass <- read_table('~/saml2aws-files/pass.txt', col_names = FALSE, show_col_types = FALSE) %>%
        as.character()
-     system(paste0("~/saml2aws-files/saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials' --quiet --password='", pass, "'"))
+     system(paste0("~/saml2aws-files/saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials' --quiet --password='", pass, "'")) %>%
+       suppressWarnings()
      rm(pass)
      #return 0
      0
