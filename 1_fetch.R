@@ -27,6 +27,17 @@ dummy_date <- "2022-06-16"
 
 p1_targets_list <- list(
   
+  # AWS credentials target
+  tar_target(
+    p1_aws_credentials_1,
+    {system2("saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials'")
+    #return 0
+    0
+    },
+    deployment = 'main',
+    cue = tar_cue('always'),
+    priority = 0.99 # default priority (0.8) is set globally in _targets.R
+  ),
   # dummy target with high priority. This is here so that no consequential 
   # targets are rebuilt if we forget to renew AWS credentials. 
   tar_target(
@@ -34,7 +45,7 @@ p1_targets_list <- list(
     {},
     deployment = 'main',
     cue = tar_cue('always'),
-    priority = 0.99 # default priority (0.8) is set globally in _targets.R
+    priority = 0.98 # default priority (0.8) is set globally in _targets.R
   ),
   
   # Load harmonized WQP data product for discrete samples. Note that this data
