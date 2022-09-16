@@ -30,12 +30,15 @@ p1_targets_list <- list(
   # AWS credentials target
   tar_target(
     p1_aws_credentials_1,
-    {pass <- read_table('~/saml2aws-files/pass.txt', col_names = FALSE, show_col_types = FALSE) %>%
-      as.character()
-    system(paste0("~/saml2aws-files/saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials' --quiet --password='", pass, "'"))
-    rm(pass)
-    #return 0
-    0
+    {if (!file.exists('~/saml2aws-files/pass.txt')){
+      stop('please add pass.txt file to ~/saml2aws-files. See README.')
+     }
+     pass <- read_table('~/saml2aws-files/pass.txt', col_names = FALSE, show_col_types = FALSE) %>%
+       as.character()
+     system(paste0("~/saml2aws-files/saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials' --quiet --password='", pass, "'"))
+     rm(pass)
+     #return 0
+     0
     },
     deployment = 'main',
     cue = tar_cue('always'),
