@@ -2,7 +2,8 @@ library(targets)
 
 Sys.setenv(
     AWS_PROFILE = "dev",
-    AWS_REGION = 'us-east-1'
+    AWS_REGION = 'us-east-1',
+    AWS_SHARED_CREDENTIALS_FILE = "./credentials"
 )
 
 options(tidyverse.quiet = TRUE,
