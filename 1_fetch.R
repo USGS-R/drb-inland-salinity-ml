@@ -30,7 +30,7 @@ p1_targets_list <- list(
   # AWS credentials target
   tar_target(
     p1_aws_credentials_1,
-    {system2("saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials'")
+    {system2("~/saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials' --quiet")
     #return 0
     0
     },
