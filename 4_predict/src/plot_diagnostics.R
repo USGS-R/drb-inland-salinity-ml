@@ -101,7 +101,7 @@ plot_vip <- function(RF_model, model_name, num_features, out_dir){
 
 plot_pred_obs <- function(df_pred_obs, model_name, out_dir,
                           from_predict = FALSE, model_wf = NULL, pred_data = NULL,
-                          pred_var = NULL){
+                          pred_var = NULL, count_shade = FALSE){
   #' @description returns a scatterplot comparing the predicted and observed values
   #'
   #' @param df_pred_obs df with obs and .pred columns
@@ -112,10 +112,12 @@ plot_pred_obs <- function(df_pred_obs, model_name, out_dir,
   #' @param model_wf model workflow
   #' @param pred_data new_data for predict.workflow
   #' @param pred_var the column name of the variable to be predicted
+  #' @param count_shade logical indicating whether or not to make a count shaded
+  #' density scatterplot instead of a traditional scatterplot
   #'
   #' @return filepath to the resulting plot
   
-  fileout <- file.path(out_dir, paste0('pred_obs_scatter', model_name, '.png'))
+  fileout <- file.path(out_dir, paste0('pred_obs_scatter_', model_name, '.png'))
   
   if(from_predict){
     #predict from provided workflow and data
@@ -133,6 +135,23 @@ plot_pred_obs <- function(df_pred_obs, model_name, out_dir,
        cex.main = 0.8, log = 'xy')
   lines(c(1,plt_lim), c(1,plt_lim), col = 'red')
   dev.off()
+  
+  #count shaded plot
+  if(count_shade){
+    fileout <- paste0('pred_obs_scatter_', model_name, '_density.png')
+    
+    p1 <- ggplot(df_pred_obs, aes(x=log10(obs), y=log10(.pred))) +
+      geom_bin2d(bins = 100) +
+      scale_fill_distiller(palette = 7, direction = 1) +
+      theme_bw() +
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      xlim(0,5) + ylim(0,5) +
+      xlab('Observed') + ylab('Predicted') +
+      ggtitle(paste0('Model: ', model_name)) +
+      geom_abline(slope=1, intercept=0)
+    
+    ggsave(filename = fileout, plot = p1, device = 'png', path = out_dir)
+  }
   
   return(fileout)
 }
