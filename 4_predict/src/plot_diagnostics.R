@@ -39,7 +39,8 @@ plot_hyperparam_opt_results_RF <- function(opt_result, model_name, out_dir){
     geom_line(size = 1.5, alpha = 0.6) +
     geom_point(size = 2) +
     facet_wrap(~ .metric, scales = "free", nrow = 2) +
-    scale_color_viridis_c(option = "plasma", begin = .9, end = 0)
+    scale_color_viridis_c(option = "plasma", begin = .9, end = 0) +
+    ggtitle(model_name)
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
@@ -64,7 +65,8 @@ plot_hyperparam_opt_marginals <- function(opt_result, model_name,
                                        model_name, '.png'))
   
   p1 <- tune::autoplot(object = opt_result, type = plt_type, 
-                       metric = perf_metric)
+                       metric = perf_metric) +
+    ggtitle(model_name)
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
@@ -86,7 +88,10 @@ plot_vip <- function(RF_model, model_name, num_features, out_dir){
   fileout <- file.path(out_dir, paste0('vip_', model_name, '.png'))
   
   p1 <- vip::vip(RF_model %>% extract_fit_parsnip(), 
-            num_features = num_features)
+            num_features = num_features, aesthetics = list(width = 0.6)) +
+    ggtitle(model_name) +
+    theme(axis.title.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18))
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
@@ -122,11 +127,11 @@ plot_pred_obs <- function(df_pred_obs, model_name, out_dir,
   
   png(filename = fileout, width = 4, height = 4, units = 'in', res = 200)
   plot(df_pred_obs$obs, df_pred_obs$.pred,
-       xlim = c(0,plt_lim), ylim = c(0,plt_lim),
+       xlim = c(1,plt_lim), ylim = c(1,plt_lim),
        xlab = 'Observed', ylab = 'Predicted', cex = 0.4, pch = 16,
        main = paste0('Model: ', model_name),
-       cex.main = 0.8)
-  lines(c(0,plt_lim), c(0,plt_lim), col = 'red')
+       cex.main = 0.8, log = 'xy')
+  lines(c(1,plt_lim), c(1,plt_lim), col = 'red')
   dev.off()
   
   return(fileout)
@@ -140,36 +145,37 @@ plot_metric_boxplot <- function(data_split, model_name, pred_var, out_dir){
   #' @param data_split the training and testing split. Example: p6_Boruta_CONUS_g2$input_data
   #' @param model_name name to append to file name
   #' @param pred_var the column name of the variable to be predicted
+  #' @param out_dir output directory
   #'
   #' @return filepath to the resulting plot
   
-  fileout <- file.path(out_dir, paste0('train_test_boxplot_', model_name, '.png'))
+  fileout <- file.path(out_dir, paste0('train_test_boxplot_', model_name, '_', pred_var, '.png'))
   
   png(filename = fileout, width = 4, height = 4, units = 'in', res = 200)
   boxplot(data_split$training[[pred_var]],
           data_split$testing[[pred_var]], 
           names = c('Training', 'Testing'),
           main = paste0('Model: ', model_name),
-          cex.main = 0.8)
+          cex.main = 0.8, log = 'y')
   dev.off()
   
   return(fileout)
 }
 
 
-barplot_compare_RF <- function(mod, pred_var, perf_metric, out_dir){
+barplot_compare_RF <- function(mod, model_name, pred_var, perf_metric, out_dir){
   #'
   #' @description makes barplots of RMSEs for each of the supplied models
   #'
   #' @param mod best fit model evaluated on the test dataset.
+  #' @param model_name name to append to file name
   #' @param pred_var the column name of the predicted variable
   #' @param perf_metric performance metric name
   #' @param out_dir output directory
   #'
   #' @return filepath to the resulting plot
   
-  #validation and testing within each region
-  fileout <- file.path(out_dir, paste0('compare_models_RF_', pred_var, '_', perf_metric, '_CV.png'))
+  fileout <- file.path(out_dir, paste0('compare_models_', model_name, '_', pred_var, '_', perf_metric, '_CV.png'))
   
   #CV performances dataframe
   plt_df <- data.frame(perf = c(tune::show_best(mod$grid_params, n = 1, metric = perf_metric)$mean,
@@ -191,7 +197,7 @@ barplot_compare_RF <- function(mod, pred_var, perf_metric, out_dir){
     scale_x_discrete(limits=c("RF-Static")) +
     theme(axis.title.y = element_text(size = 14),
           axis.text.x = element_text(size = 14)) +
-    ggtitle(pred_var)
+    ggtitle(paste0(model_name, ', ', pred_var))
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   

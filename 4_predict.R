@@ -1,6 +1,7 @@
 source("4_predict/src/select_features.R")
 source("4_predict/src/train_models.R")
 source("4_predict/src/plot_diagnostics.R")
+source("1_fetch/src/generate_credentials.R")
 
 #Predict phase
 p4_targets_list <- list(
@@ -97,10 +98,40 @@ p4_targets_list <- list(
              deployment = 'worker'
   ),
   
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_1,
+    generate_credentials(dummy_var = p4_Boruta_static),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   #Prepare attributes for RF model training
   #only static attributes
   tar_target(p4_selected_static_attrs,
              select_attrs(brf_output = p4_Boruta_static)
+  ),
+  #only the minimum static attributes identified by any one data split (20)
+  tar_target(p4_min_selected_static_attrs,
+             {ret <- p4_selected_static_attrs
+             min_selected_attrs <- length(p4_selected_static_attrs$brf[[1]]$finalDecision)
+             for(i in 1:length(p4_selected_static_attrs$brf)){
+               num_attrs <- length(p4_Boruta_static$brf[[i]]$finalDecision[p4_Boruta_static$brf[[i]]$finalDecision != 'Rejected'])
+               if (num_attrs < min_selected_attrs){
+                 min_selected_attrs <- num_attrs
+                 #record index with the minimum
+                 ind = i
+               }
+             }
+             names_select <- names(p4_Boruta_static$brf[[ind]]$finalDecision[p4_Boruta_static$brf[[ind]]$finalDecision != 'Rejected'])
+             ret$input_data$split$data <- ret$input_data$split$data %>% 
+               select(all_of(names_select), mean_value)
+             ret$input_data$training <- ret$input_data$training %>% 
+               select(all_of(names_select), mean_value)
+             ret$input_data$testing <- ret$input_data$testing %>% 
+               select(all_of(names_select), mean_value)
+             ret
+             }
   ),
   #static and dynamic
   tar_target(p4_selected_static_dynamic_attrs,
@@ -112,23 +143,103 @@ p4_targets_list <- list(
              ),
              deployment = 'worker'
   ),
+  #minimum static and dynamic
+  tar_target(p4_selected_min_static_dynamic_attrs,
+             {tmp_brf_output <- p4_Boruta_static
+             tmp_brf_output$selected_features <- colnames(p4_min_selected_static_attrs$input_data$training)
+             select_attrs(brf_output = tmp_brf_output,
+                          retain_attrs = p2_all_attr_SC_obs %>% 
+                            select(all_of(p4_screened_attrs)) %>%
+                            select(ends_with('_mean'), ends_with('_0')) %>%
+                            colnames()
+             )
+             },
+             deployment = 'worker'
+  ),
   
   #RF train
   #only static attributes
   tar_target(p4_train_RF_static,
              train_models_grid(brf_output = p4_selected_static_attrs,
-                               ncores = Boruta_cores,
-                               v_folds = cv_folds
+                               ncores = RF_cores,
+                               v_folds = cv_folds,
+                               range_mtry = c(5,30),
+                               range_minn = c(2,20),
+                               range_trees = c(100,500),
+                               gridsize = 50
              ),
              deployment = 'worker'
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_2,
+    generate_credentials(dummy_var = p4_train_RF_static),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  #only the minimum static attributes
+  tar_target(p4_train_RF_min_static,
+             train_models_grid(brf_output = p4_min_selected_static_attrs,
+                               ncores = RF_cores,
+                               v_folds = cv_folds,
+                               range_mtry = c(2,20),
+                               range_minn = c(2,20),
+                               range_trees = c(100,500),
+                               gridsize = 50
+             ),
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_3,
+    generate_credentials(dummy_var = p4_train_RF_min_static),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   #static and dynamic
   tar_target(p4_train_RF_static_dynamic,
              train_models_grid(brf_output = p4_selected_static_dynamic_attrs,
-                               ncores = Boruta_cores,
-                               v_folds = cv_folds
+                               ncores = RF_cores,
+                               v_folds = cv_folds,
+                               range_mtry = c(5,30),
+                               range_minn = c(2,20),
+                               range_trees = c(100,500),
+                               gridsize = 50
              ),
              deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_4,
+    generate_credentials(dummy_var = p4_train_RF_static_dynamic),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  #minimum static and dynamic
+  tar_target(p4_train_RF_min_static_dynamic,
+             train_models_grid(brf_output = p4_selected_min_static_dynamic_attrs,
+                               ncores = RF_cores,
+                               v_folds = cv_folds,
+                               range_mtry = c(5,30),
+                               range_minn = c(2,20),
+                               range_trees = c(100,500),
+                               gridsize = 50
+             ),
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_5,
+    generate_credentials(dummy_var = p4_train_RF_min_static_dynamic),
+    deployment = 'main',
+    cue = tar_cue('always')
   ),
   
   # Visualize Model Diagnostics:
@@ -137,7 +248,7 @@ p4_targets_list <- list(
   # tar_target(p4_Boruta_static_png,
   #            plot_Boruta(p4_Boruta_static$brf_All,
   #                        model_name = 'daily_SC_RF',
-  #                        out_dir = '6_predict/out/Boruta'),
+  #                        out_dir = '4_predict/out/Boruta'),
   #            deployment = 'main',
   #            format = 'file'
   # ),
@@ -148,7 +259,7 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_static$best_fit,
                       model_name = 'daily_SC_RF_static',
                       num_features = 20,
-                      out_dir = '6_predict/out/vip'),
+                      out_dir = '4_predict/out/vip'),
              deployment = 'main',
              format = 'file'
   ),
@@ -156,7 +267,23 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_static_dynamic$best_fit,
                       model_name = 'daily_SC_RF_static_dynamic',
                       num_features = 20,
-                      out_dir = '6_predict/out/vip'),
+                      out_dir = '4_predict/out/vip'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_vip_min_static_png,
+             plot_vip(RF_model = p4_train_RF_min_static$best_fit,
+                      model_name = 'daily_SC_RF_min_static',
+                      num_features = 20,
+                      out_dir = '4_predict/out/vip'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_vip_min_static_dynamic_png,
+             plot_vip(RF_model = p4_train_RF_min_static_dynamic$best_fit,
+                      model_name = 'daily_SC_RF_min_static_dynamic',
+                      num_features = 20,
+                      out_dir = '4_predict/out/vip'),
              deployment = 'main',
              format = 'file'
   ),
@@ -165,7 +292,7 @@ p4_targets_list <- list(
   tar_target(p4_hypopt_static_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_static$grid_params,
                                             model_name = 'daily_SC_RF_static',
-                                            out_dir = '6_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/hypopt'),
              deployment = 'main',
              format = 'file'
   ),
@@ -174,14 +301,14 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_static',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '6_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/hypopt'),
              deployment = 'main',
              format = 'file'
   ),
   tar_target(p4_hypopt_static_dynamic_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_static_dynamic$grid_params,
                                             model_name = 'daily_SC_RF_static_dynamic',
-                                            out_dir = '6_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/hypopt'),
              deployment = 'main',
              format = 'file'
   ),
@@ -190,67 +317,207 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_static_dynamic',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '6_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/hypopt'),
              deployment = 'main',
              format = 'file'
+  ),
+  tar_target(p4_hypopt_min_static_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_min_static$grid_params,
+                                            model_name = 'daily_SC_RF_min_static',
+                                            out_dir = '4_predict/out/hypopt'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_hypopt_marginals_min_static_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_min_static$grid_params,
+                                           model_name = 'daily_SC_RF_min_static',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/hypopt'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_hypopt_min_static_dynamic_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_min_static_dynamic$grid_params,
+                                            model_name = 'daily_SC_RF_min_static_dynamic',
+                                            out_dir = '4_predict/out/hypopt'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_hypopt_marginals_min_static_dynamic_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_min_static_dynamic$grid_params,
+                                           model_name = 'daily_SC_RF_min_static_dynamic',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/hypopt'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  
+  #RF Predictions
+  #Static features, full dataset
+  tar_target(p4_test_RF_static,
+             predict_test_data(model_wf = p4_train_RF_static$workflow,
+                               test_data = p4_train_RF_static$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #Static features, test dataset
+  tar_target(p4_test_RF_static_test,
+             predict_test_data(model_wf = p4_train_RF_static$workflow,
+                               test_data = p4_train_RF_static$best_fit$splits[[1]]$data[-p4_train_RF_static$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #minimum static features, full dataset
+  tar_target(p4_test_RF_min_static,
+             predict_test_data(model_wf = p4_train_RF_min_static$workflow,
+                               test_data = p4_train_RF_min_static$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #minimum static features, test dataset
+  tar_target(p4_test_RF_min_static_test,
+             predict_test_data(model_wf = p4_train_RF_min_static$workflow,
+                               test_data = p4_train_RF_min_static$best_fit$splits[[1]]$data[-p4_train_RF_min_static$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #Static and dynamic features, full dataset
+  tar_target(p4_test_RF_static_dynamic,
+             predict_test_data(model_wf = p4_train_RF_static_dynamic$workflow,
+                               test_data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #Static and dynamic features, test dataset
+  tar_target(p4_test_RF_static_dynamic_test,
+             predict_test_data(model_wf = p4_train_RF_static_dynamic$workflow,
+                               test_data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[-p4_train_RF_static_dynamic$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #minimum static and dynamic features, full dataset
+  tar_target(p4_test_RF_min_static_dynamic,
+             predict_test_data(model_wf = p4_train_RF_min_static_dynamic$workflow,
+                               test_data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #minimum static and dynamic features, test dataset
+  tar_target(p4_test_RF_min_static_dynamic_test,
+             predict_test_data(model_wf = p4_train_RF_min_static_dynamic$workflow,
+                               test_data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[-p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
   ),
   
   # RF predicted vs. observed y 
   #Should be for the mean over X random seeds
   tar_target(p4_pred_obs_static_png,
-             plot_pred_obs(df_pred_obs = p4_train_RF_static$best_fit,
+             plot_pred_obs(df_pred_obs = p4_test_RF_static$pred,
                            model_name = 'daily_SC_RF_static',
-                           out_dir = '6_predict/out/pred_obs'),
+                           out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_static_test_png,
+             plot_pred_obs(df_pred_obs = p4_test_RF_static_test$pred,
+                           model_name = 'daily_SC_RF_static_testset',
+                           out_dir = '4_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   ),
   tar_target(p4_pred_obs_static_dynamic_png,
-             plot_pred_obs(df_pred_obs = p4_train_RF_static_dynamic$best_fit,
+             plot_pred_obs(df_pred_obs = p4_test_RF_static_dynamic$pred,
                            model_name = 'daily_SC_RF_static_dynamic',
-                           out_dir = '6_predict/out/pred_obs'),
+                           out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_static_dynamic_test_png,
+             plot_pred_obs(df_pred_obs = p4_test_RF_static_dynamic_test$pred,
+                           model_name = 'daily_SC_RF_static_dynamic_testset',
+                           out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_min_static_png,
+             plot_pred_obs(df_pred_obs = p4_test_RF_min_static$pred,
+                           model_name = 'daily_SC_RF_min_static',
+                           out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_min_static_test_png,
+             plot_pred_obs(df_pred_obs = p4_test_RF_min_static_test$pred,
+                           model_name = 'daily_SC_RF_min_static_testset',
+                           out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_min_static_dynamic_png,
+             plot_pred_obs(df_pred_obs = p4_test_RF_min_static_dynamic$pred,
+                           model_name = 'daily_SC_RF_min_static_dynamic',
+                           out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_pred_obs_min_static_dynamic_test_png,
+             plot_pred_obs(df_pred_obs = p4_test_RF_min_static_dynamic_test$pred,
+                           model_name = 'daily_SC_RF_min_static_dynamic_testset',
+                           out_dir = '4_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   ),
   
-  #Train test barplot coverage of SC
-  tar_target(p4_train_test_boxplot_coverage_static_png,
-             boxplot_compare_RF(data_split = p4_train_RF_static$best_fit$input_data,
-                           model_name = 'daily_SC_RF_static',
-                           pred_var = 'mean_value',
-                           out_dir = '6_predict/out/pred_obs'),
-             deployment = 'main',
-             format = 'file'
-  ),
-  tar_target(p4_train_test_boxplot_coverage_static_dynamic_png,
-             boxplot_compare_RF(data_split = p4_train_RF_static_dynamic$best_fit$input_data,
-                                model_name = 'daily_SC_RF_static_dynamic',
-                                pred_var = 'mean_value',
-                                out_dir = '6_predict/out/pred_obs'),
+  #Train test boxplot coverage of SC data
+  tar_target(p4_train_test_boxplot_coverage_png,
+             plot_metric_boxplot(data_split = p4_Boruta_static$input_data,
+                                 model_name = 'daily_SC_RF',
+                                 pred_var = 'mean_value',
+                                 out_dir = '4_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   ),
   
-  #Cross validation coverage
+  #Cross validation coverage barplots
   tar_target(p4_train_test_CV_static_png,
-             boxplot_compare_RF(mod = p4_train_RF_static$wf,
+             barplot_compare_RF(mod = p4_train_RF_static,
+                                model_name = 'daily_SC_RF_static',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '6_predict/out/'),
+                                out_dir = '4_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   ),
   tar_target(p4_train_test_CV_static_dynamic_png,
-             boxplot_compare_RF(mod = p4_train_RF_static_dynamic$wf,
+             barplot_compare_RF(data_split = p4_train_RF_static_dynamic,
+                                model_name = 'daily_SC_RF_static_dynamic',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '6_predict/out/'),
+                                out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_train_test_CV_min_static_png,
+             barplot_compare_RF(data_split = p4_train_RF_min_static,
+                                model_name = 'daily_SC_RF_min_static',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/pred_obs'),
+             deployment = 'main',
+             format = 'file'
+  ),
+  tar_target(p4_train_test_CV_min_static_dynamic_png,
+             barplot_compare_RF(data_split = p4_train_RF_min_static_dynamic,
+                                model_name = 'daily_SC_RF_min_static_dynamic',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/pred_obs'),
              deployment = 'main',
              format = 'file'
   )
   
   # Spatial residuals aggregated over time
-  #Should be for the mean over X random seeds
-  
-  
-  # Model RMSE comparison boxplots / barplots
 )

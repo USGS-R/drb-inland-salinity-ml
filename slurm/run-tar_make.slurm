@@ -4,7 +4,7 @@
 #SBATCH --output=insal_mk_%u.out        # user's output file (password here!)
 #SBATCH --partition=cpu                 # which SLURM partition to use
 #SBATCH --nodes=1                       # only request one node
-#SBATCH --ntasks-per-node=1             # only request one core
+#SBATCH --ntasks-per-node=1             # number of cores
 #SBATCH --mail-type=ALL                 # enable email notifications for job status. Sends to submitting user
 
 ####################
@@ -21,4 +21,4 @@ module load singularity
 CONTAINER="/caldera/projects/usgs/water/impd/pump/drb-inland-salinity/containers/${1}"
 
 # Run the tar_make() command
-singularity exec ${CONTAINER} Rscript -e 'source('_targets.R'); tar_make()'
+singularity exec ${CONTAINER} Rscript -e "source('_targets.R'); tar_make()"

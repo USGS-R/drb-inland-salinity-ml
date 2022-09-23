@@ -105,8 +105,6 @@ screen_Boruta <- function(input_data, drop_attrs = NULL, pred_var, ncores, brf_r
     names_unique_all_splits <- unique(c(names_unique_all_splits, names_unique))
   }
   
-  save.image("post-Boruta.RData")
-  
   #Aggregate the input data into a single dataframe for model training and testing
   for (i in 1:num_data_splits){
     if(i == 1){
@@ -124,7 +122,9 @@ screen_Boruta <- function(input_data, drop_attrs = NULL, pred_var, ncores, brf_r
       if (nrow(input_data[input_data$split == 0,]) > 0){
         #add these data to the dataset
         screened_input_data_aggregated$data <- rbind(screened_input_data_aggregated$data,
-                                                     input_data[input_data$split == 0,])
+                                                     input_data[input_data$split == 0,] %>%
+                                                       select(colnames(screened_input_data_aggregated$data))
+                                                     )
       }
     }
   }
@@ -133,6 +133,9 @@ screen_Boruta <- function(input_data, drop_attrs = NULL, pred_var, ncores, brf_r
   screened_input_data_aggregated <- list(split = screened_input_data_aggregated,
                               training = screened_input_data_aggregated$data[screened_input_data_aggregated$in_id,],
                               testing = screened_input_data_aggregated$data[-screened_input_data_aggregated$in_id,])
+  
+  #regenerate AWS credentials
+  generate_credentials()
   
   # metric column name, all brf models, all input datasets (IDs, features, metric),
   # selected features, and the combined input dataset
@@ -168,13 +171,22 @@ select_attrs <- function(brf_output, retain_attrs = NULL){
   return(brf_output)
 }
 
-train_models_grid <- function(brf_output, v_folds, ncores){
+train_models_grid <- function(brf_output, v_folds, ncores,
+                              range_mtry, range_minn, range_trees,
+                              gridsize){
   #' 
   #' @description optimizes hyperparameters using a grid search
   #'
   #' @param brf_output output of the screen_Boruta function
   #' @param v_folds number of cross validation folds to use
   #' @param ncores number of cores to use
+  #' @param range_mtry 2-element numeric vector for min and max values of mtry
+  #' to use within ranger random forest
+  #' @param range_minn 2-element numeric vector for min and max values of min_n
+  #' to use within ranger random forest
+  #' @param range_trees 2-element numeric vector for min and max values of trees
+  #' to use within ranger random forest
+  #' @param gridsize numeric number of points to evaluate within the 3D grid
   #' 
   #' @return Returns a list of the evaluated grid parameters, the 
   #' best fit parameters, and the workflow for those parameters.
@@ -190,13 +202,15 @@ train_models_grid <- function(brf_output, v_folds, ncores){
                probability = FALSE)
   
   #Set parameter ranges
-  params <- parameters(list(mtry = mtry() %>% range_set(c(10,100)), 
-                            min_n = min_n() %>% range_set(c(2,10)),
-                            trees = trees() %>% range_set(c(200,2000))))
+  params <- parameters(list(mtry = mtry() %>% range_set(range_mtry), 
+                            min_n = min_n() %>% range_set(range_minn),
+                            trees = trees() %>% range_set(range_trees)))
   
   #Space filled grid to search setup
   grid <- grid_max_entropy(params,
-                           size = 100,
+                           size = gridsize,
+                           #iterations to make optimal allocation of gridsize 
+                           #as a space filling approach
                            iter = 1000)
   
   #number of cross validation folds (v)
@@ -268,15 +282,21 @@ train_models_grid <- function(brf_output, v_folds, ncores){
   #test set predictions
   #collect_predictions(final_fit)
   
+  #extract workflow for best hyperparameters
+  final_wf_trained <- extract_workflow(final_fit)
+  
   parallel::stopCluster(cl)
+  
+  #regenerate AWS credentials
+  generate_credentials()
   
   return(list(grid_params = grid_result, 
               best_fit = final_fit, 
-              workflow = final_wf))
+              workflow = final_wf_trained))
 }
 
 
-predict_test_data <- function(model_wf, test_data, perf_metrics){
+predict_test_data <- function(model_wf, test_data, target_name){
   #' 
   #' @description uses the provided model to predict on the test dataset and
   #' compute performance metrics
@@ -284,13 +304,15 @@ predict_test_data <- function(model_wf, test_data, perf_metrics){
   #' @param model_wf model workflow containing a single model that will be used
   #' to predict on the test_data.
   #' @param test_data test dataset containing features and the metric to be predicted
-  #' @param perf_metrics character vector of the yardstick performance metrics to use
+  #' @param target_name character string of the column name in test_data to use
+  #' as the target variable to be predicted
   #' 
   #' @return Returns the predictions and the performance metrics
   
-  preds <- predict(model_wf, new_data = test_data, type = 'numeric')
+  preds <- predict(model_wf, new_data = test_data, type = 'numeric') %>%
+    mutate(obs = test_data[[target_name]])
   
-  perf_metrics <- metrics(preds, test_data$metric, perf_metrics)
+  perf_metrics <- metrics(data = preds, truth = 'obs', estimate = '.pred')
   
-  return(list(pred = preds, metrics = perf_metrics))
+  return(list(target = target_name, pred = preds, metrics = perf_metrics))
 }

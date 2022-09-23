@@ -149,6 +149,7 @@ Boruta_runs <- 300
 Boruta_trees <- 500
 #number of cores
 Boruta_cores <- 70
+RF_cores <- 60
 #Cross validation folds
 cv_folds <- 10
 
