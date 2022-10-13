@@ -173,7 +173,7 @@ select_attrs <- function(brf_output, retain_attrs = NULL){
 
 train_models_grid <- function(brf_output, v_folds, ncores,
                               range_mtry, range_minn, range_trees,
-                              gridsize){
+                              gridsize, id_cols){
   #' 
   #' @description optimizes hyperparameters using a grid search
   #'
@@ -187,12 +187,13 @@ train_models_grid <- function(brf_output, v_folds, ncores,
   #' @param range_trees 2-element numeric vector for min and max values of trees
   #' to use within ranger random forest
   #' @param gridsize numeric number of points to evaluate within the 3D grid
+  #' @param id_cols vector of column names that are IDs (e.g., segment ID, Date) 
+  #' and not used to predict
   #' 
   #' @return Returns a list of the evaluated grid parameters, the 
   #' best fit parameters, and the workflow for those parameters.
   
   #Set the parameters to be tuned
-  #Test with and without write.forest
   tune_spec <- rand_forest(mode = "regression",
                            mtry = tune(), 
                            min_n = tune(), 
@@ -217,16 +218,17 @@ train_models_grid <- function(brf_output, v_folds, ncores,
   cv_folds <- vfold_cv(data = brf_output$input_data$training, v = v_folds)
   
   #specify workflow to tune the grid
+  target_name <- brf_output$metric
   wf <- workflow() %>%
     add_model(tune_spec) %>%
-    add_variables(outcomes = contains(brf_output$metric),
-                  predictors = !(contains(brf_output$metric)))
+    add_variables(outcomes = target_name,
+                  predictors = !(all_of(c(id_cols))))
   
   #Find best model with a grid search over hyperparameters
   cl = parallel::makeCluster(ncores)
   doParallel::registerDoParallel(cl)
   #Send variables to worker environments
-  parallel::clusterExport(cl = cl, varlist = c('brf_output'), 
+  parallel::clusterExport(cl = cl, varlist = c('target_name', 'id_cols'), 
                           envir = environment())
   
   grid_result <- tune_grid(wf, 
@@ -234,7 +236,7 @@ train_models_grid <- function(brf_output, v_folds, ncores,
                            grid = grid, 
                            metrics = metric_set(rmse, mae, rsq, rsq_trad),
                            control = control_grid(
-                             verbose = TRUE,
+                             verbose = FALSE,
                              allow_par = TRUE,
                              extract = NULL,
                              save_pred = FALSE,
@@ -313,6 +315,11 @@ predict_test_data <- function(model_wf, test_data, target_name){
     mutate(obs = test_data[[target_name]])
   
   perf_metrics <- metrics(data = preds, truth = 'obs', estimate = '.pred')
+  
+  #Add PRMS segment and Date to results
+  preds <- cbind(test_data[,c('PRMS_segid', 'Date')], preds)
+  #Add squared error so that it can later be grouped by PRMS segid mean
+  preds$errsq <- (preds$obs - preds$.pred)^2
   
   return(list(target = target_name, pred = preds, metrics = perf_metrics))
 }
