@@ -1,4 +1,5 @@
-plot_nhdv2_attr <- function(attr_data,network_geometry,file_path){
+plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
+                            filename_end = NULL){
   #' 
   #' @description This function visualizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
@@ -7,6 +8,8 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path){
   #' @param network_geometry sf object containing the network flowline geometry; 
   #' must include columns "subsegid" and "geometry"
   #' @param file_path a character string that indicates the location of the saved plot
+  #' @param filename_end optional character string to add to the end of the filename
+  #' before the file extension.
   #'
   #' @value Returns a png file containing a violin plot showing distribution of each NHDv2 attribute variable
   
@@ -44,7 +47,7 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path){
     # create combined plot showing violin plot and spatial distribution
     attr_plot_combined <- attr_plot + attr_plot_spatial + patchwork::plot_layout(ncol=2)
 
-    plot_name <- paste0(file_path,"/",col_name,".png")
+    plot_name <- paste0(file_path,"/",col_name,filename_end,".png")
     plot_names <- c(plot_names,plot_name)
     
     suppressWarnings(ggsave(plot_name,plot = attr_plot_combined,width=7,height=4,device = "png"))
