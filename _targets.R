@@ -43,6 +43,11 @@ dir.create("4_predict/out/Boruta",showWarnings = FALSE)
 dir.create("4_predict/out/vip",showWarnings = FALSE)
 dir.create("4_predict/out/hypopt",showWarnings = FALSE)
 dir.create("4_predict/out/pred_obs",showWarnings = FALSE)
+dir.create("4_predict/out/spatial_res",showWarnings = FALSE)
+dir.create("4_predict/out/spatial_res/RF_static",showWarnings = FALSE)
+dir.create("4_predict/out/spatial_res/RF_min_static",showWarnings = FALSE)
+dir.create("4_predict/out/spatial_res/RF_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/spatial_res/RF_min_static_dynamic",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
