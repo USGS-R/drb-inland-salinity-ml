@@ -4,7 +4,7 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
   #' @description This function visualizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
   #' @param attr_data data frame containing the processed NHDv2 attribute data; 
-  #' must include column "PRMS_segid"
+  #' must include column "PRMS_segid" as the first column
   #' @param network_geometry sf object containing the network flowline geometry; 
   #' must include columns "subsegid" and "geometry"
   #' @param file_path a character string that indicates the location of the saved plot
@@ -33,11 +33,17 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
       theme(plot.margin = unit(c(0,0,0,0), "cm"))
     
     # plot the spatial variation
-    attr_plot_spatial <- dat_subset %>% 
-      left_join(.,network_geometry[,c("subsegid","geometry")],by=c("PRMS_segid"="subsegid")) %>%
-      sf::st_as_sf() %>%
-      ggplot() + 
-      geom_sf(aes(color=.data[[col_name]]), size = 0.3) + 
+    attr_plot_spatial <- ggplot() + 
+      #full network (in case there are reaches without data)
+      geom_sf(data = network_geometry, 
+              size = 0.3, color = 'gray') +
+      #attribute data
+      geom_sf(data = dat_subset %>% 
+                left_join(.,network_geometry[,c("subsegid","geometry")],
+                          by=c("PRMS_segid"="subsegid")) %>%
+                sf::st_as_sf(),
+              mapping = aes(color=.data[[col_name]]),
+              size = 0.3) + 
       scale_color_viridis_c(option="plasma") + 
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,2), "cm"),
