@@ -319,7 +319,11 @@ predict_test_data <- function(model_wf, test_data, target_name){
   #Add PRMS segment and Date to results
   preds <- cbind(test_data[,c('PRMS_segid', 'Date')], preds)
   #Add squared error so that it can later be grouped by PRMS segid mean
-  preds$errsq <- (preds$obs - preds$.pred)^2
+  preds$err <- preds$.pred - preds$obs
+  preds$errsq <- (preds$err)^2
+  #Add month and year for use in other functions
+  preds$Month <- month(preds$Date)
+  preds$Year <- year(preds$Date)
   
   return(list(target = target_name, pred = preds, metrics = perf_metrics))
 }

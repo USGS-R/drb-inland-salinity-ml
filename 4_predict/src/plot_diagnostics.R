@@ -233,3 +233,49 @@ get_perf_metric <- function(model_fit, perf_metric){
   
   model_fit$.estimate[model_fit$.metric == perf_metric]
 }
+
+plot_barplot <- function(attr_data, file_path,
+                         model_name){
+  #' 
+  #' @description Creates a barplot for each of the columns in attr_data
+  #'
+  #' @param attr_data data frame for which the first column is the x-axis of the 
+  #' barplot and the remaining columns are y-axes
+  #' @param file_path a character string that indicates the location of the saved plot
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #'
+  #' @value Returns the path to png files containing barplots of each attribute
+  
+  plot_names <- vector('character', length = 0L)
+  
+  # For each column, create a barplot
+  for(i in 2:dim(attr_data)[2]){
+    
+    dat_subset <- attr_data[,c(1,i)]
+    col_name <- names(dat_subset)[2]
+    
+    #y limits
+    plt_lim <- c(min(0, dat_subset[[2]]), max(dat_subset[[2]]))
+    
+    # barplot
+    cols <- colnames(dat_subset)
+    attr_plot <- ggplot() + 
+      geom_col(data = dat_subset, aes(x=.data[[cols[1]]], 
+                                      y=.data[[cols[2]]]),
+               width = 0.5) + 
+      theme_classic() + 
+      theme(axis.text = element_text(size = 10),
+            axis.title = element_text(size = 12)) +
+      ggtitle(model_name) +
+      scale_x_continuous(breaks = dat_subset[[1]], labels = dat_subset[[1]]) +
+      ylim(plt_lim)
+    
+    plot_name <- paste0(file_path,"/",col_name,'_',model_name,".png")
+    plot_names <- c(plot_names,plot_name)
+    
+    suppressWarnings(ggsave(plot_name,plot = attr_plot,width=5,height=3,device = "png"))
+  }
+  
+  return(plot_names)
+}

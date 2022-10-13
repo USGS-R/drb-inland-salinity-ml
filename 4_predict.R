@@ -667,5 +667,250 @@ p4_targets_list <- list(
     },
     format = "file",
     repository = 'local'
+  ),
+  
+  #Monthly RMSE and Bias barplots
+  #aggregated over all segments and timesteps within the month
+  tar_target(
+    p4_monthly_res_static_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static$pred, Month),
+                                 RMSE = sqrt(mean(errsq)),
+                                 Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                      file_path = "4_predict/out/monthly_res/RF_static",
+                      model_name = 'RF_static_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_static_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_static",
+                   model_name = 'RF_static_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_min_static",
+                   model_name = 'RF_min_static_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_min_static",
+                   model_name = 'RF_min_static_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_static_dynamic_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_dynamic$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_static_dynamic_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_dynamic_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_dynamic_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_dynamic$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_dynamic_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_dynamic_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/monthly_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  
+  #Annual RMSE and Bias over time, aggregated over all reaches
+  tar_target(
+    p4_annual_res_static_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static$pred, Year),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_static",
+                   model_name = 'RF_static_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_static_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_static",
+                   model_name = 'RF_static_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_min_static",
+                   model_name = 'RF_min_static_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_min_static",
+                   model_name = 'RF_min_static_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_static_dynamic_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_static_dynamic_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_dynamic_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_dynamic_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/annual_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_test')
+    },
+    format = "file",
+    repository = 'local'
   )
 )
