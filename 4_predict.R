@@ -184,16 +184,31 @@ p4_targets_list <- list(
   ),
   
   #only the minimum static attributes
+  # tar_target(p4_train_RF_min_static,
+  #            train_models_grid(brf_output = p4_min_selected_static_attrs,
+  #                              ncores = RF_cores,
+  #                              v_folds = cv_folds,
+  #                              range_mtry = c(2,20),
+  #                              range_minn = c(2,20),
+  #                              range_trees = c(100,500),
+  #                              gridsize = 50,
+  #                              id_cols = c('PRMS_segid', 'Date')
+  #            ),
+  #            deployment = 'worker'
+  # ),
   tar_target(p4_train_RF_min_static,
-             train_models_grid(brf_output = p4_min_selected_static_attrs,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_min_selected_static_attrs,
+                                                  '1984-09-30')
+             train_models_grid(brf_output = filtered_attrs,
                                ncores = RF_cores,
-                               v_folds = cv_folds,
+                               v_folds = 2,
                                range_mtry = c(2,20),
                                range_minn = c(2,20),
                                range_trees = c(100,500),
-                               gridsize = 50,
-                               id_cols = c('PRMS_segid', 'Date')
-             ),
+                               gridsize = 3,
+                               id_cols = c('PRMS_segid', 'Date'))
+             },
              deployment = 'worker'
   ),
   
@@ -206,16 +221,34 @@ p4_targets_list <- list(
   ),
   
   #static and dynamic
+  # tar_target(p4_train_RF_static_dynamic,
+  #            {#Filter out data before 1984-09-30 for training due to NAs
+  #              filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs,
+  #                                                 '1984-09-30')
+  #              train_models_grid(brf_output = filtered_attrs,
+  #                                ncores = RF_cores,
+  #                                v_folds = cv_folds,
+  #                                range_mtry = c(5,30),
+  #                                range_minn = c(2,20),
+  #                                range_trees = c(100,500),
+  #                                gridsize = 50,
+  #                                id_cols = c('PRMS_segid', 'Date'))
+  #            },
+  #            deployment = 'worker'
+  # ),
   tar_target(p4_train_RF_static_dynamic,
-             train_models_grid(brf_output = p4_selected_static_dynamic_attrs,
-                               ncores = RF_cores,
-                               v_folds = cv_folds,
-                               range_mtry = c(5,30),
-                               range_minn = c(2,20),
-                               range_trees = c(100,500),
-                               gridsize = 50,
-                               id_cols = c('PRMS_segid', 'Date')
-             ),
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = RF_cores,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date'))
+             },
              deployment = 'worker'
   ),
   
@@ -241,15 +274,18 @@ p4_targets_list <- list(
   #            deployment = 'worker'
   # ),
   tar_target(p4_train_RF_min_static_dynamic,
-             train_models_grid(brf_output = p4_selected_min_static_dynamic_attrs,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
                                ncores = 35,
                                v_folds = 2,
                                range_mtry = c(5,30),
                                range_minn = c(2,20),
                                range_trees = c(100,500),
                                gridsize = 3,
-                               id_cols = c('PRMS_segid', 'Date')
-             ),
+                               id_cols = c('PRMS_segid', 'Date'))
+             },
              deployment = 'worker'
   ),
   
@@ -680,8 +716,10 @@ p4_targets_list <- list(
                                  Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                      file_path = "4_predict/out/monthly_res/RF_static",
-                      model_name = 'RF_static_full')
+                   file_path = "4_predict/out/monthly_res/RF_static",
+                   model_name = 'RF_static_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -696,7 +734,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_static",
-                   model_name = 'RF_static_test')
+                   model_name = 'RF_static_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -711,7 +751,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_min_static",
-                   model_name = 'RF_min_static_full')
+                   model_name = 'RF_min_static_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -726,7 +768,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_min_static",
-                   model_name = 'RF_min_static_test')
+                   model_name = 'RF_min_static_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -741,7 +785,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_static_dynamic",
-                   model_name = 'RF_static_dynamic_full')
+                   model_name = 'RF_static_dynamic_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -756,7 +802,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_static_dynamic",
-                   model_name = 'RF_static_dynamic_test')
+                   model_name = 'RF_static_dynamic_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -771,7 +819,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_min_static_dynamic",
-                   model_name = 'RF_min_static_dynamic_full')
+                   model_name = 'RF_min_static_dynamic_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -786,7 +836,9 @@ p4_targets_list <- list(
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
                    file_path = "4_predict/out/monthly_res/RF_min_static_dynamic",
-                   model_name = 'RF_min_static_dynamic_test')
+                   model_name = 'RF_min_static_dynamic_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
     },
     format = "file",
     repository = 'local'
@@ -803,7 +855,8 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_static",
-                   model_name = 'RF_static_full')
+                   model_name = 'RF_static_full',
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'

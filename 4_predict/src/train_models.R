@@ -327,3 +327,26 @@ predict_test_data <- function(model_wf, test_data, target_name){
   
   return(list(target = target_name, pred = preds, metrics = perf_metrics))
 }
+
+
+filter_rows_date <- function(attrs, start_date){
+  #' 
+  #' @description filters attrs for rows >= start_date and corrects the training
+  #' and testing datasets to match that filter
+  #'
+  #' @param attrs dataframe to be filtered
+  #' @param start_date desired start date as character string
+  #' 
+  #' @return Returns filtered attrs
+  
+  #Remove data before the start_date
+  attrs$input_data$training <- filter(attrs$input_data$training, Date >= as.Date(start_date))
+  attrs$input_data$testing <- filter(attrs$input_data$testing, Date >= as.Date(start_date))
+  attrs$input_data$split$data <- filter(attrs$input_data$split$data, Date >= as.Date(start_date))
+  #Correct the in_id (training data IDs)
+  attrs$input_data$split$in_id <- which(!is.na(left_join(x = filtered_attrs$input_data$split$data, 
+                                                         y = filtered_attrs$input_data$training, 
+                                                         by = c('PRMS_segid', 'Date'))$mean_value.y))
+  
+  return(attrs)
+}
