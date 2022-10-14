@@ -235,7 +235,8 @@ get_perf_metric <- function(model_fit, perf_metric){
 }
 
 plot_barplot <- function(attr_data, file_path,
-                         model_name){
+                         model_name, plot_month_names = FALSE,
+                         panel = FALSE, label_sequence = NULL){
   #' 
   #' @description Creates a barplot for each of the columns in attr_data
   #'
@@ -244,10 +245,17 @@ plot_barplot <- function(attr_data, file_path,
   #' @param file_path a character string that indicates the location of the saved plot
   #' @param model_name character string describing the model. Will be added 
   #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param plot_month_names if TRUE, then the x-axis will be converted from
+  #' numeric to month.abb month names
+  #' @param panel if TRUE, columns 2 and 3 of attr_data will be plotted in a
+  #' panel plot.
+  #' @param label_sequence the indices of labels to plot on the x-axis. NULL
+  #' plots all labels, which can get crowded for some plots.
   #'
   #' @value Returns the path to png files containing barplots of each attribute
   
   plot_names <- vector('character', length = 0L)
+  plt_lst <- list()
   
   # For each column, create a barplot
   for(i in 2:dim(attr_data)[2]){
@@ -265,16 +273,45 @@ plot_barplot <- function(attr_data, file_path,
                                       y=.data[[cols[2]]]),
                width = 0.5) + 
       theme_classic() + 
-      theme(axis.text = element_text(size = 10),
+      theme(axis.text.y = element_text(size = 10),
+            axis.text.x = element_text(angle = 45, size = 8),
             axis.title = element_text(size = 12)) +
       ggtitle(model_name) +
-      scale_x_continuous(breaks = dat_subset[[1]], labels = dat_subset[[1]]) +
-      ylim(plt_lim)
+      ylim(plt_lim) +
+      if (plot_month_names){
+        if(!is.null(label_sequence)){
+          scale_x_continuous(breaks = dat_subset[[1]][label_sequence], 
+                             labels = month.abb[dat_subset[[1]]][label_sequence])
+        }else{
+          scale_x_continuous(breaks = dat_subset[[1]], labels = month.abb[dat_subset[[1]]])
+        }
+      }else{
+        if(!is.null(label_sequence)){
+          scale_x_continuous(breaks = dat_subset[[1]][label_sequence], 
+                             labels = dat_subset[[1]][label_sequence])
+        }else{
+          scale_x_continuous(breaks = dat_subset[[1]], labels = dat_subset[[1]])
+        }
+      }
     
     plot_name <- paste0(file_path,"/",col_name,'_',model_name,".png")
     plot_names <- c(plot_names,plot_name)
     
     suppressWarnings(ggsave(plot_name,plot = attr_plot,width=5,height=3,device = "png"))
+    
+    if(panel){
+      plt_lst <- c(plt_lst, list(attr_plot))
+    }
+  }
+  
+  if(panel){
+    plot_name <- paste0(file_path,"/panel_",model_name,".png")
+    plot_names <- c(plot_names,plot_name)
+    
+    attr_plot <- plt_lst[[1]] + 
+      plt_lst[[2]]+ggtitle('') + 
+      patchwork::plot_layout(nrow=2)
+    suppressWarnings(ggsave(plot_name,plot = attr_plot,width=5,height=6,device = "png"))
   }
   
   return(plot_names)
