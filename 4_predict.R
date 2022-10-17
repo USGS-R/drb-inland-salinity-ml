@@ -508,7 +508,8 @@ p4_targets_list <- list(
   tar_target(p4_pred_RF_static,
              predict_test_data(model_wf = p4_train_RF_static$workflow,
                                test_data = p4_train_RF_static$best_fit$splits[[1]]$data,
-                               target_name = 'mean_value'),
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_static$best_fit$splits[[1]]$in_id),
              deployment = 'main'
   ),
   #Static features, test dataset
@@ -522,7 +523,8 @@ p4_targets_list <- list(
   tar_target(p4_pred_RF_min_static,
              predict_test_data(model_wf = p4_train_RF_min_static$workflow,
                                test_data = p4_train_RF_min_static$best_fit$splits[[1]]$data,
-                               target_name = 'mean_value'),
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_min_static$best_fit$splits[[1]]$in_id),
              deployment = 'main'
   ),
   #minimum static features, test dataset
@@ -536,7 +538,8 @@ p4_targets_list <- list(
   tar_target(p4_pred_RF_static_dynamic,
              predict_test_data(model_wf = p4_train_RF_static_dynamic$workflow,
                                test_data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data,
-                               target_name = 'mean_value'),
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_static_dynamic$best_fit$splits[[1]]$in_id),
              deployment = 'main'
   ),
   #Static and dynamic features, test dataset
@@ -550,7 +553,8 @@ p4_targets_list <- list(
   tar_target(p4_pred_RF_min_static_dynamic,
              predict_test_data(model_wf = p4_train_RF_min_static_dynamic$workflow,
                                test_data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data,
-                               target_name = 'mean_value'),
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$in_id),
              deployment = 'main'
   ),
   #minimum static and dynamic features, test dataset
@@ -564,7 +568,8 @@ p4_targets_list <- list(
   tar_target(p4_pred_RF_dynamic,
              predict_test_data(model_wf = p4_train_RF_dynamic$workflow,
                                test_data = p4_train_RF_dynamic$best_fit$splits[[1]]$data,
-                               target_name = 'mean_value'),
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_dynamic$best_fit$splits[[1]]$in_id),
              deployment = 'main'
   ),
   #dynamic features, test dataset
@@ -1225,6 +1230,98 @@ p4_targets_list <- list(
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
+    format = "file",
+    repository = 'local'
+  ),
+  
+  #Timeseries of predictions for each reach
+  tar_target(
+    p4_temporal_res_static_png,
+    plot_timeseries(pred_df = p4_pred_RF_static$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_full',
+                    out_dir = "4_predict/out/temporal_res/RF_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_test',
+                    out_dir = "4_predict/out/temporal_res/RF_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_full',
+                    out_dir = "4_predict/out/temporal_res/RF_min_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_test',
+                    out_dir = "4_predict/out/temporal_res/RF_min_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_dynamic_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_dynamic$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_dynamic_full',
+                    out_dir = "4_predict/out/temporal_res/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_dynamic_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_dynamic_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_dynamic_test',
+                    out_dir = "4_predict/out/temporal_res/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_dynamic_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_dynamic_full',
+                    out_dir = "4_predict/out/temporal_res/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_dynamic_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_dynamic_test',
+                    out_dir = "4_predict/out/temporal_res/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_dynamic_png,
+    plot_timeseries(pred_df = p4_pred_RF_dynamic$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_dynamic_full',
+                    out_dir = "4_predict/out/temporal_res/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_dynamic_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_dynamic_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_dynamic_test',
+                    out_dir = "4_predict/out/temporal_res/RF_dynamic"),
     format = "file",
     repository = 'local'
   )

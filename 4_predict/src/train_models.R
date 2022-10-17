@@ -298,7 +298,8 @@ train_models_grid <- function(brf_output, v_folds, ncores,
 }
 
 
-predict_test_data <- function(model_wf, test_data, target_name){
+predict_test_data <- function(model_wf, test_data, target_name,
+                              train_ind = NULL){
   #' 
   #' @description uses the provided model to predict on the test dataset and
   #' compute performance metrics
@@ -308,6 +309,8 @@ predict_test_data <- function(model_wf, test_data, target_name){
   #' @param test_data test dataset containing features and the metric to be predicted
   #' @param target_name character string of the column name in test_data to use
   #' as the target variable to be predicted
+  #' @param train_ind indicator for which rows in test_data are the training data.
+  #' A column with this indicator will be appended to the output file.
   #' 
   #' @return Returns the predictions and the performance metrics
   
@@ -324,6 +327,12 @@ predict_test_data <- function(model_wf, test_data, target_name){
   #Add month and year for use in other functions
   preds$Month <- month(preds$Date)
   preds$Year <- year(preds$Date)
+  
+  #Add training data indicator
+  if(!is.null(train_ind)){
+    preds$training <- 0
+    preds$training[train_ind] <- 1
+  }
   
   return(list(target = target_name, pred = preds, metrics = perf_metrics))
 }

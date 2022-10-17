@@ -61,6 +61,12 @@ dir.create("4_predict/out/annual_res/RF_min_static",showWarnings = FALSE)
 dir.create("4_predict/out/annual_res/RF_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/annual_res/RF_min_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/annual_res/RF_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal_res",showWarnings = FALSE)
+dir.create("4_predict/out/temporal_res/RF_static",showWarnings = FALSE)
+dir.create("4_predict/out/temporal_res/RF_min_static",showWarnings = FALSE)
+dir.create("4_predict/out/temporal_res/RF_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal_res/RF_min_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal_res/RF_dynamic",showWarnings = FALSE)
 
 
 # Define columns of interest for harmonized WQP data

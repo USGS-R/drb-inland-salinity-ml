@@ -324,32 +324,75 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
   #' 
   #' @description Creates a timeseries plot for each of the reaches in pred_df.
   #'
-  #' @param pred_df dataframe with 'PRMS_segid' column, 'obs' column, and '.pred'
-  #' column
+  #' @param pred_df dataframe with columns for 'PRMS_segid', 'Date', 'obs', 
+  #' '.pred', and 'training' as output from `predict_test_data`
   #' @param network_geometry sf object containing the network flowline geometry; 
   #' must include columns "subsegid" and "geometry"
   #'
   #' @value Returns the path to png files containing observed and predicted timeseries
   
   #number of plots equals number of unique reaches in pred_df
-  filesout <- 
+  reaches <- unique(pred_df$PRMS_segid) %>%
+    sort()
+  filesout <- vector('character', length = length(reaches))
   
-  fileout <- file.path(out_dir, paste0('timeseries_', model_name, '_reach', , '.png'))
+  #for plotting observation locations, add column of y=0
+  pred_df$y0 <- 0
+  #for plotting training and testing indicators
+  if(!('training' %in% colnames(pred_df))){
+    #add training column
+    pred_df$training = 1
+    plt_labs = c('testing', 'observed', 'predicted')
+  }else{
+    plt_labs = c('training', 'testing', 'observed', 'predicted')
+  }
   
-  p1 <- ggplot(data = plt_df, aes(x = grp, y = perf, fill = Dataset)) +
-    geom_bar(stat="identity", position=position_dodge(), width = 0.6) +
-    theme_bw() +
-    scale_fill_brewer(palette="Paired") +
-    geom_errorbar(aes(ymin = perf - 2*sd, ymax = perf + 2*sd), width = .2,
-                  position = position_dodge(0.6)) +
-    xlab('') +
-    ylab(perf_metric) + 
-    scale_x_discrete(limits=c("RF-Static")) +
-    theme(axis.title.y = element_text(size = 14),
-          axis.text.x = element_text(size = 14)) +
-    ggtitle(paste0(model_name, ', ', pred_var))
+  for (i in 1:length(filesout)){
+    filesout[i] <- file.path(out_dir, 
+                             paste0('timeseries_', model_name, '_reach-', reaches[i], '.png'))
+    
+    #get all data for this reach in time order
+    plt_df <- filter(pred_df, PRMS_segid == reaches[i]) %>%
+      arrange(Date)
+    
+    #timeseries lineplot
+    p_time <- ggplot(data = plt_df, aes(x = Date, y = obs)) +
+      {if (nrow(plt_df) == 1){
+        geom_point(mapping = aes(color = 'observed'))
+      }else{
+        geom_line(mapping = aes(color = 'observed'))
+      }}+
+      #observation locations
+      geom_point(shape = '|', mapping = aes(x = Date, y = y0, color = as.character(training))) +
+      {if (nrow(plt_df) == 1){
+        geom_point(mapping = aes(x = Date, y = .pred, color = 'predicted'))
+      }else{
+        geom_line(mapping = aes(x = Date, y = .pred, color = 'predicted'))
+      }}+
+      theme_bw() +
+      xlab('Date') +
+      ylab(paste0('Specific Conductivity (', expression(mu), 'S/cm)')) + 
+      ggtitle(paste0(model_name, ', reach ', reaches[i])) + 
+      scale_color_discrete(labels = plt_labs)
+    
+    #spatial location indicator
+    p_space <- attr_plot_spatial <- ggplot() + 
+      geom_sf(data = network_geometry, 
+              size = 0.3, color = 'gray') +
+      #specific reach
+      geom_sf(data = filter(network_geometry, subsegid == reaches[i]),
+              mapping = aes(color='red'),
+              size = 1) + 
+      theme_bw() + 
+      theme(plot.margin = unit(c(0,0,0,2), "cm"),
+            axis.text = element_text(size = 6),
+            legend.position = "none")
+    
+    # create combined plot showing violin plot and spatial distribution
+    p_combined <- p_time + p_space + patchwork::plot_layout(ncol=2)
+    
+    ggsave(filename = filesout[i], plot = p_combined, device = 'png')
+  }
   
-  ggsave(filename = fileout, plot = p1, device = 'png')
-  
-  return(fileout)
+  return(filesout)
 }
