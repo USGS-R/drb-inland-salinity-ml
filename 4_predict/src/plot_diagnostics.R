@@ -318,3 +318,38 @@ plot_barplot <- function(attr_data, file_path,
   
   return(plot_names)
 }
+
+
+plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
+  #' 
+  #' @description Creates a timeseries plot for each of the reaches in pred_df.
+  #'
+  #' @param pred_df dataframe with 'PRMS_segid' column, 'obs' column, and '.pred'
+  #' column
+  #' @param network_geometry sf object containing the network flowline geometry; 
+  #' must include columns "subsegid" and "geometry"
+  #'
+  #' @value Returns the path to png files containing observed and predicted timeseries
+  
+  #number of plots equals number of unique reaches in pred_df
+  filesout <- 
+  
+  fileout <- file.path(out_dir, paste0('timeseries_', model_name, '_reach', , '.png'))
+  
+  p1 <- ggplot(data = plt_df, aes(x = grp, y = perf, fill = Dataset)) +
+    geom_bar(stat="identity", position=position_dodge(), width = 0.6) +
+    theme_bw() +
+    scale_fill_brewer(palette="Paired") +
+    geom_errorbar(aes(ymin = perf - 2*sd, ymax = perf + 2*sd), width = .2,
+                  position = position_dodge(0.6)) +
+    xlab('') +
+    ylab(perf_metric) + 
+    scale_x_discrete(limits=c("RF-Static")) +
+    theme(axis.title.y = element_text(size = 14),
+          axis.text.x = element_text(size = 14)) +
+    ggtitle(paste0(model_name, ', ', pred_var))
+  
+  ggsave(filename = fileout, plot = p1, device = 'png')
+  
+  return(fileout)
+}
