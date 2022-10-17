@@ -172,7 +172,8 @@ p4_targets_list <- list(
                                gridsize = 50,
                                id_cols = c('PRMS_segid', 'Date')
              ),
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -201,7 +202,7 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_min_selected_static_attrs,
                                                   '1984-09-30')
              train_models_grid(brf_output = filtered_attrs,
-                               ncores = RF_cores,
+                               ncores = 35,
                                v_folds = 2,
                                range_mtry = c(2,20),
                                range_minn = c(2,20),
@@ -241,7 +242,7 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                                 ncores = RF_cores,
+                                 ncores = 35,
                                  v_folds = 2,
                                  range_mtry = c(5,30),
                                  range_minn = c(2,20),
@@ -555,7 +556,7 @@ p4_targets_list <- list(
              format = 'file'
   ),
   tar_target(p4_train_test_CV_static_dynamic_png,
-             barplot_compare_RF(data_split = p4_train_RF_static_dynamic,
+             barplot_compare_RF(mod = p4_train_RF_static_dynamic,
                                 model_name = 'daily_SC_RF_static_dynamic',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
@@ -564,7 +565,7 @@ p4_targets_list <- list(
              format = 'file'
   ),
   tar_target(p4_train_test_CV_min_static_png,
-             barplot_compare_RF(data_split = p4_train_RF_min_static,
+             barplot_compare_RF(mod = p4_train_RF_min_static,
                                 model_name = 'daily_SC_RF_min_static',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
@@ -573,7 +574,7 @@ p4_targets_list <- list(
              format = 'file'
   ),
   tar_target(p4_train_test_CV_min_static_dynamic_png,
-             barplot_compare_RF(data_split = p4_train_RF_min_static_dynamic,
+             barplot_compare_RF(mod = p4_train_RF_min_static_dynamic,
                                 model_name = 'daily_SC_RF_min_static_dynamic',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
@@ -856,6 +857,7 @@ p4_targets_list <- list(
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_static",
                    model_name = 'RF_static_full',
+                   panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
@@ -871,7 +873,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_static",
-                   model_name = 'RF_static_test')
+                   model_name = 'RF_static_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
@@ -886,7 +890,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_min_static",
-                   model_name = 'RF_min_static_full')
+                   model_name = 'RF_min_static_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
@@ -901,7 +907,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_min_static",
-                   model_name = 'RF_min_static_test')
+                   model_name = 'RF_min_static_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
@@ -916,7 +924,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_static_dynamic",
-                   model_name = 'RF_static_dynamic_full')
+                   model_name = 'RF_static_dynamic_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
@@ -931,7 +941,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_static_dynamic",
-                   model_name = 'RF_static_dynamic_test')
+                   model_name = 'RF_static_dynamic_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
@@ -946,7 +958,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_min_static_dynamic",
-                   model_name = 'RF_min_static_dynamic_full')
+                   model_name = 'RF_min_static_dynamic_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
@@ -961,7 +975,9 @@ p4_targets_list <- list(
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/annual_res/RF_min_static_dynamic",
-                   model_name = 'RF_min_static_dynamic_test')
+                   model_name = 'RF_min_static_dynamic_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
     format = "file",
     repository = 'local'
