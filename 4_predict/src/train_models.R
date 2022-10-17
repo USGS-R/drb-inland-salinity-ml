@@ -200,7 +200,7 @@ train_models_grid <- function(brf_output, v_folds, ncores,
                            trees = tune()) %>% 
     set_engine(engine = "ranger", 
                verbose = FALSE, importance = 'impurity', 
-               probability = FALSE)
+               probability = FALSE, num.threads = floor((ncores - v_folds)/v_folds))
   
   #Set parameter ranges
   params <- parameters(list(mtry = mtry() %>% range_set(range_mtry), 
@@ -243,7 +243,7 @@ train_models_grid <- function(brf_output, v_folds, ncores,
                              pkgs = NULL,
                              save_workflow = FALSE,
                              event_level = "first",
-                             parallel_over = "everything"
+                             parallel_over = "resamples"
                            )
   )
   #refine hyperparameters with a Bayesian optimizaton
@@ -344,8 +344,8 @@ filter_rows_date <- function(attrs, start_date){
   attrs$input_data$testing <- filter(attrs$input_data$testing, Date >= as.Date(start_date))
   attrs$input_data$split$data <- filter(attrs$input_data$split$data, Date >= as.Date(start_date))
   #Correct the in_id (training data IDs)
-  attrs$input_data$split$in_id <- which(!is.na(left_join(x = filtered_attrs$input_data$split$data, 
-                                                         y = filtered_attrs$input_data$training, 
+  attrs$input_data$split$in_id <- which(!is.na(left_join(x = attrs$input_data$split$data, 
+                                                         y = attrs$input_data$training, 
                                                          by = c('PRMS_segid', 'Date'))$mean_value.y))
   
   return(attrs)
