@@ -117,24 +117,11 @@ plot_pred_obs <- function(df_pred_obs, model_name, out_dir,
   #'
   #' @return filepath to the resulting plot
   
-  fileout <- file.path(out_dir, paste0('pred_obs_scatter_', model_name, '.png'))
-  
   if(from_predict){
     #predict from provided workflow and data
     df_pred_obs <- predict(model_wf, new_data = pred_data, type = 'numeric') %>%
       mutate(obs = pred_data[[pred_var]])
   }
-  
-  plt_lim <- max(c(df_pred_obs$obs, df_pred_obs$.pred))
-  
-  png(filename = fileout, width = 4, height = 4, units = 'in', res = 200)
-  plot(df_pred_obs$obs, df_pred_obs$.pred,
-       xlim = c(1,plt_lim), ylim = c(1,plt_lim),
-       xlab = 'Observed', ylab = 'Predicted', cex = 0.4, pch = 16,
-       main = paste0('Model: ', model_name),
-       cex.main = 0.8, log = 'xy')
-  lines(c(1,plt_lim), c(1,plt_lim), col = 'red')
-  dev.off()
   
   #count shaded plot
   if(count_shade){
@@ -151,6 +138,21 @@ plot_pred_obs <- function(df_pred_obs, model_name, out_dir,
       geom_abline(slope=1, intercept=0)
     
     ggsave(filename = fileout, plot = p1, device = 'png', path = out_dir)
+    
+    fileout <- file.path(out_dir, fileout)
+  }else{
+    fileout <- file.path(out_dir, paste0('pred_obs_scatter_', model_name, '.png'))
+    
+    plt_lim <- max(c(df_pred_obs$obs, df_pred_obs$.pred))
+    
+    png(filename = fileout, width = 4, height = 4, units = 'in', res = 200)
+    plot(df_pred_obs$obs, df_pred_obs$.pred,
+         xlim = c(1,plt_lim), ylim = c(1,plt_lim),
+         xlab = 'Observed', ylab = 'Predicted', cex = 0.4, pch = 16,
+         main = paste0('Model: ', model_name),
+         cex.main = 0.8, log = 'xy')
+    lines(c(1,plt_lim), c(1,plt_lim), col = 'red')
+    dev.off()
   }
   
   return(fileout)
