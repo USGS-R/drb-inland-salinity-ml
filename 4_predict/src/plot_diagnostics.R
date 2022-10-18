@@ -338,14 +338,6 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
   
   #for plotting observation locations, add column of y=0
   pred_df$y0 <- 0
-  #for plotting training and testing indicators
-  if(!('training' %in% colnames(pred_df))){
-    #add training column
-    pred_df$training = 1
-    plt_labs = c('testing', 'observed', 'predicted')
-  }else{
-    plt_labs = c('training', 'testing', 'observed', 'predicted')
-  }
   
   for (i in 1:length(filesout)){
     filesout[i] <- file.path(out_dir, 
@@ -354,6 +346,21 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
     #get all data for this reach in time order
     plt_df <- filter(pred_df, PRMS_segid == reaches[i]) %>%
       arrange(Date)
+    
+    #for plotting training and testing indicators
+    if(!('training' %in% colnames(plt_df))){
+      #add training column. Data are all testing.
+      plt_df$training <- 0
+      plt_labs <- c('testing', 'observed', 'predicted')
+    }else{
+      if(all(plt_df$training == 0)){
+        plt_labs <- c('testing', 'observed', 'predicted')
+      }else if (all(plt_df$training == 1)){
+        plt_labs <- c('training', 'observed', 'predicted')
+      }else{
+        plt_labs <- c('testing', 'training', 'observed', 'predicted')
+      }
+    }
     
     #timeseries lineplot
     p_time <- ggplot(data = plt_df, aes(x = Date, y = obs)) +
@@ -372,8 +379,8 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
       theme_bw() +
       xlab('Date') +
       ylab(paste0('Specific Conductivity (', expression(mu), 'S/cm)')) + 
-      ggtitle(paste0(model_name, ', reach ', reaches[i])) + 
-      scale_color_discrete(labels = plt_labs)
+      ggtitle(paste0(model_name, ', reach ', reaches[i])) +
+      scale_color_discrete('', labels = plt_labs)
     
     #spatial location indicator
     p_space <- attr_plot_spatial <- ggplot() + 
