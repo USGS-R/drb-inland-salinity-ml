@@ -95,7 +95,8 @@ p4_targets_list <- list(
                            by_time = FALSE,
                            num_data_splits = 20
              ),
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -162,9 +163,9 @@ p4_targets_list <- list(
   #dynamic only
   tar_target(p4_dynamic_attrs,
              {
+               brf_output <- p4_Boruta_static
                #using this removal of attributes to allow selecting only the 
                #dynamic attributes
-               brf_output <- p4_Boruta_static
                brf_output$selected_features <- NULL
                select_attrs(brf_output = brf_output,
                             retain_attrs = c(p2_all_attr_SC_obs %>%
@@ -176,6 +177,26 @@ p4_targets_list <- list(
              },
              deployment = 'worker'
   ),
+  #Temporal split rule for tests with dynamic attrs
+  #static and dynamic
+  tar_target(p4_selected_static_dynamic_attrs_temporal,
+             make_temporal_split(attrs = p4_selected_static_dynamic_attrs,
+                             train_prop = 0.8),
+             deployment = 'worker'
+  ),
+  #minimum static and dynamic
+  tar_target(p4_selected_min_static_dynamic_attrs_temporal,
+             make_temporal_split(attrs = p4_selected_min_static_dynamic_attrs,
+                                 train_prop = 0.8),
+             deployment = 'worker'
+  ),
+  #dynamic only
+  tar_target(p4_dynamic_attrs_temporal,
+             make_temporal_split(attrs = p4_dynamic_attrs,
+                                 train_prop = 0.8),
+             deployment = 'worker'
+  ),
+  
   
   #RF train
   #only static attributes
@@ -352,6 +373,79 @@ p4_targets_list <- list(
     cue = tar_cue('always')
   ),
   
+  #Temporal train/test split and CV splits
+  tar_target(p4_train_RF_static_dynamic_temporal,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_temporal,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 35,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date'))
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_7,
+    generate_credentials(dummy_var = p4_train_RF_static_dynamic_temporal),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  tar_target(p4_train_RF_min_static_dynamic_temporal,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs_temporal,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 35,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date'))
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_8,
+    generate_credentials(dummy_var = p4_train_RF_min_static_dynamic_temporal),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  tar_target(p4_train_RF_dynamic_temporal,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_dynamic_attrs_temporal,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 35,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date'))
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_9,
+    generate_credentials(dummy_var = p4_train_RF_dynamic),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   # Visualize Model Diagnostics:
   
   # Boruta screening
@@ -369,7 +463,7 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_static$best_fit,
                       model_name = 'daily_SC_RF_static',
                       num_features = 20,
-                      out_dir = '4_predict/out/vip'),
+                      out_dir = '4_predict/out/random/vip'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -378,7 +472,7 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_static_dynamic$best_fit,
                       model_name = 'daily_SC_RF_static_dynamic',
                       num_features = 20,
-                      out_dir = '4_predict/out/vip'),
+                      out_dir = '4_predict/out/random/vip'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -387,7 +481,7 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_min_static$best_fit,
                       model_name = 'daily_SC_RF_min_static',
                       num_features = 20,
-                      out_dir = '4_predict/out/vip'),
+                      out_dir = '4_predict/out/random/vip'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -396,7 +490,7 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_min_static_dynamic$best_fit,
                       model_name = 'daily_SC_RF_min_static_dynamic',
                       num_features = 20,
-                      out_dir = '4_predict/out/vip'),
+                      out_dir = '4_predict/out/random/vip'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -405,7 +499,34 @@ p4_targets_list <- list(
              plot_vip(RF_model = p4_train_RF_dynamic$best_fit,
                       model_name = 'daily_SC_RF_dynamic',
                       num_features = 20,
-                      out_dir = '4_predict/out/vip'),
+                      out_dir = '4_predict/out/random/vip'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_vip_static_dynamic_temporal_png,
+             plot_vip(RF_model = p4_train_RF_static_dynamic_temporal$best_fit,
+                      model_name = 'daily_SC_RF_static_dynamic_temporal',
+                      num_features = 20,
+                      out_dir = '4_predict/out/temporal/vip'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_vip_min_static_dynamic_temporal_png,
+             plot_vip(RF_model = p4_train_RF_min_static_dynamic_temporal$best_fit,
+                      model_name = 'daily_SC_RF_min_static_dynamic_temporal',
+                      num_features = 20,
+                      out_dir = '4_predict/out/temporal/vip'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_vip_dynamic_temporal_png,
+             plot_vip(RF_model = p4_train_RF_dynamic_temporal$best_fit,
+                      model_name = 'daily_SC_RF_dynamic_temporal',
+                      num_features = 20,
+                      out_dir = '4_predict/out/temporal/vip'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -415,7 +536,7 @@ p4_targets_list <- list(
   tar_target(p4_hypopt_static_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_static$grid_params,
                                             model_name = 'daily_SC_RF_static',
-                                            out_dir = '4_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -425,7 +546,7 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_static',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '4_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -433,7 +554,7 @@ p4_targets_list <- list(
   tar_target(p4_hypopt_static_dynamic_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_static_dynamic$grid_params,
                                             model_name = 'daily_SC_RF_static_dynamic',
-                                            out_dir = '4_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -443,7 +564,7 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_static_dynamic',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '4_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -451,7 +572,7 @@ p4_targets_list <- list(
   tar_target(p4_hypopt_min_static_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_min_static$grid_params,
                                             model_name = 'daily_SC_RF_min_static',
-                                            out_dir = '4_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -461,7 +582,7 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_min_static',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '4_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -469,7 +590,7 @@ p4_targets_list <- list(
   tar_target(p4_hypopt_min_static_dynamic_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_min_static_dynamic$grid_params,
                                             model_name = 'daily_SC_RF_min_static_dynamic',
-                                            out_dir = '4_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -479,7 +600,7 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_min_static_dynamic',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '4_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -487,7 +608,7 @@ p4_targets_list <- list(
   tar_target(p4_hypopt_dynamic_png,
              plot_hyperparam_opt_results_RF(p4_train_RF_dynamic$grid_params,
                                             model_name = 'daily_SC_RF_dynamic',
-                                            out_dir = '4_predict/out/hypopt'),
+                                            out_dir = '4_predict/out/random/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -497,7 +618,61 @@ p4_targets_list <- list(
                                            model_name = 'daily_SC_RF_dynamic',
                                            plt_type = "marginals",
                                            perf_metric = NULL,
-                                           out_dir = '4_predict/out/hypopt'),
+                                           out_dir = '4_predict/out/random/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_static_dynamic_temporal_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_static_dynamic_temporal$grid_params,
+                                            model_name = 'daily_SC_RF_static_dynamic_temporal',
+                                            out_dir = '4_predict/out/temporal/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_marginals_static_dynamic_temporal_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_static_dynamic_temporal$grid_params,
+                                           model_name = 'daily_SC_RF_static_dynamic_temporal',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/temporal/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_min_static_dynamic_temporal_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_min_static_dynamic_temporal$grid_params,
+                                            model_name = 'daily_SC_RF_min_static_dynamic_temporal',
+                                            out_dir = '4_predict/out/temporal/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_marginals_min_static_dynamic_temporal_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_min_static_dynamic_temporal$grid_params,
+                                           model_name = 'daily_SC_RF_min_static_dynamic_temporal',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/temporal/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_dynamic_temporal_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_dynamic_temporal$grid_params,
+                                            model_name = 'daily_SC_RF_dynamic_temporal',
+                                            out_dir = '4_predict/out/temporal/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_marginals_dynamic_temporal_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_dynamic_temporal$grid_params,
+                                           model_name = 'daily_SC_RF_dynamic_temporal',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/temporal/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -579,13 +754,59 @@ p4_targets_list <- list(
                                target_name = 'mean_value'),
              deployment = 'main'
   ),
+  #Temporal train test split
+  #Static and dynamic features, full dataset
+  tar_target(p4_pred_RF_static_dynamic_temporal,
+             predict_test_data(model_wf = p4_train_RF_static_dynamic_temporal$workflow,
+                               test_data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$in_id),
+             deployment = 'main'
+  ),
+  #Static and dynamic features, test dataset
+  tar_target(p4_pred_RF_static_dynamic_temporal_test,
+             predict_test_data(model_wf = p4_train_RF_static_dynamic_temporal$workflow,
+                               test_data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[-p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #minimum static and dynamic features, full dataset
+  tar_target(p4_pred_RF_min_static_dynamic_temporal,
+             predict_test_data(model_wf = p4_train_RF_min_static_dynamic_temporal$workflow,
+                               test_data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$in_id),
+             deployment = 'main'
+  ),
+  #minimum static and dynamic features, test dataset
+  tar_target(p4_pred_RF_min_static_dynamic_temporal_test,
+             predict_test_data(model_wf = p4_train_RF_min_static_dynamic_temporal$workflow,
+                               test_data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[-p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #dynamic features, full dataset
+  tar_target(p4_pred_RF_dynamic_temporal,
+             predict_test_data(model_wf = p4_train_RF_dynamic_temporal$workflow,
+                               test_data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$in_id),
+             deployment = 'main'
+  ),
+  #dynamic features, test dataset
+  tar_target(p4_pred_RF_dynamic_temporal_test,
+             predict_test_data(model_wf = p4_train_RF_dynamic_temporal$workflow,
+                               test_data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[-p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
   
   # RF predicted vs. observed y 
   #Should be for the mean over X random seeds
   tar_target(p4_pred_obs_static_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_static$pred,
                            model_name = 'daily_SC_RF_static',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -594,7 +815,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_static_test_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_static_test$pred,
                            model_name = 'daily_SC_RF_static_testset',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -603,7 +824,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_static_dynamic_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_static_dynamic$pred,
                            model_name = 'daily_SC_RF_static_dynamic',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -612,7 +833,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_static_dynamic_test_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_static_dynamic_test$pred,
                            model_name = 'daily_SC_RF_static_dynamic_testset',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -621,7 +842,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_min_static_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_min_static$pred,
                            model_name = 'daily_SC_RF_min_static',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -630,7 +851,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_min_static_test_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_test$pred,
                            model_name = 'daily_SC_RF_min_static_testset',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -639,7 +860,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_min_static_dynamic_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_dynamic$pred,
                            model_name = 'daily_SC_RF_min_static_dynamic',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -648,7 +869,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_min_static_dynamic_test_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_dynamic_test$pred,
                            model_name = 'daily_SC_RF_min_static_dynamic_testset',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -657,7 +878,7 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_dynamic_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_dynamic$pred,
                            model_name = 'daily_SC_RF_dynamic',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -666,7 +887,61 @@ p4_targets_list <- list(
   tar_target(p4_pred_obs_dynamic_test_png,
              plot_pred_obs(df_pred_obs = p4_pred_RF_dynamic_test$pred,
                            model_name = 'daily_SC_RF_dynamic_testset',
-                           out_dir = '4_predict/out/pred_obs', 
+                           out_dir = '4_predict/out/random/pred_obs', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_static_dynamic_temporal_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_static_dynamic_temporal$pred,
+                           model_name = 'daily_SC_RF_static_dynamic_temporal',
+                           out_dir = '4_predict/out/temporal/pred_obs', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_static_dynamic_temporal_test_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_static_dynamic_temporal_test$pred,
+                           model_name = 'daily_SC_RF_static_dynamic_temporal_testset',
+                           out_dir = '4_predict/out/temporal/pred_obs', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_min_static_dynamic_temporal_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_dynamic_temporal$pred,
+                           model_name = 'daily_SC_RF_min_static_dynamic_temporal',
+                           out_dir = '4_predict/out/temporal/pred_obs', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_min_static_dynamic_temporal_test_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_dynamic_temporal_test$pred,
+                           model_name = 'daily_SC_RF_min_static_dynamic_temporal_testset',
+                           out_dir = '4_predict/out/temporal/pred_obs', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_dynamic_temporal_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_dynamic_temporal$pred,
+                           model_name = 'daily_SC_RF_dynamic_temporal',
+                           out_dir = '4_predict/out/temporal/pred_obs', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_dynamic_temporal_test_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_dynamic_temporal_test$pred,
+                           model_name = 'daily_SC_RF_dynamic_temporal_testset',
+                           out_dir = '4_predict/out/temporal/pred_obs', 
                            count_shade = TRUE),
              deployment = 'main',
              format = 'file',
@@ -678,7 +953,16 @@ p4_targets_list <- list(
              plot_metric_boxplot(data_split = p4_Boruta_static$input_data,
                                  model_name = 'daily_SC_RF',
                                  pred_var = 'mean_value',
-                                 out_dir = '4_predict/out/pred_obs'),
+                                 out_dir = '4_predict/out/random/pred_obs'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_boxplot_coverage_temporal_png,
+             plot_metric_boxplot(data_split = p4_selected_static_dynamic_attrs$input_data,
+                                 model_name = 'daily_SC_RF',
+                                 pred_var = 'mean_value',
+                                 out_dir = '4_predict/out/temporal/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -690,7 +974,7 @@ p4_targets_list <- list(
                                 model_name = 'daily_SC_RF_static',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '4_predict/out/pred_obs'),
+                                out_dir = '4_predict/out/random/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -700,7 +984,7 @@ p4_targets_list <- list(
                                 model_name = 'daily_SC_RF_static_dynamic',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '4_predict/out/pred_obs'),
+                                out_dir = '4_predict/out/random/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -710,7 +994,7 @@ p4_targets_list <- list(
                                 model_name = 'daily_SC_RF_min_static',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '4_predict/out/pred_obs'),
+                                out_dir = '4_predict/out/random/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -720,7 +1004,7 @@ p4_targets_list <- list(
                                 model_name = 'daily_SC_RF_min_static_dynamic',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '4_predict/out/pred_obs'),
+                                out_dir = '4_predict/out/random/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -730,7 +1014,37 @@ p4_targets_list <- list(
                                 model_name = 'daily_SC_RF_dynamic',
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
-                                out_dir = '4_predict/out/pred_obs'),
+                                out_dir = '4_predict/out/random/pred_obs'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_CV_static_dynamic_temporal_png,
+             barplot_compare_RF(mod = p4_train_RF_static_dynamic_temporal,
+                                model_name = 'daily_SC_RF_static_dynamic_temporal',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/temporal/pred_obs'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_CV_min_static_dynamic_temporal_png,
+             barplot_compare_RF(mod = p4_train_RF_min_static_dynamic_temporal,
+                                model_name = 'daily_SC_RF_min_static_dynamic_temporal',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/temporal/pred_obs'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_CV_dynamic_temporal_png,
+             barplot_compare_RF(mod = p4_train_RF_dynamic_temporal,
+                                model_name = 'daily_SC_RF_dynamic_temporal',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/temporal/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -747,7 +1061,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_static",
+                      file_path = "4_predict/out/random/spatial_res/RF_static",
                       filename_end = '_full')
     },
     format = "file",
@@ -762,7 +1076,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_static",
+                      file_path = "4_predict/out/random/spatial_res/RF_static",
                       filename_end = '_test')
     },
     format = "file",
@@ -777,7 +1091,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_min_static",
+                      file_path = "4_predict/out/random/spatial_res/RF_min_static",
                       filename_end = '_full')
     },
     format = "file",
@@ -792,7 +1106,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_min_static",
+                      file_path = "4_predict/out/random/spatial_res/RF_min_static",
                       filename_end = '_test')
     },
     format = "file",
@@ -807,7 +1121,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_static_dynamic",
+                      file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
                       filename_end = '_full')
     },
     format = "file",
@@ -822,7 +1136,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_static_dynamic",
+                      file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
                       filename_end = '_test')
     },
     format = "file",
@@ -837,7 +1151,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_min_static_dynamic",
+                      file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
                       filename_end = '_full')
     },
     format = "file",
@@ -852,7 +1166,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_min_static_dynamic",
+                      file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
                       filename_end = '_test')
     },
     format = "file",
@@ -867,7 +1181,7 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_dynamic",
+                      file_path = "4_predict/out/random/spatial_res/RF_dynamic",
                       filename_end = '_full')
     },
     format = "file",
@@ -882,7 +1196,97 @@ p4_targets_list <- list(
                                  RMSE_log10 = log10(RMSE))
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial_res/RF_dynamic",
+                      file_path = "4_predict/out/random/spatial_res/RF_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_static_dynamic_temporal_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_temporal$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic_temporal",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_temporal_test$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic_temporal",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_min_static_dynamic_temporal_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic_temporal",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_min_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal_test$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic_temporal",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_dynamic_temporal_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_temporal$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RF_dynamic_temporal",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_temporal_test$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RF_dynamic_temporal",
                       filename_end = '_test')
     },
     format = "file",
@@ -900,7 +1304,7 @@ p4_targets_list <- list(
                                  Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_static",
+                   file_path = "4_predict/out/random/monthly_res/RF_static",
                    model_name = 'RF_static_full', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -917,7 +1321,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_static",
+                   file_path = "4_predict/out/random/monthly_res/RF_static",
                    model_name = 'RF_static_test', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -934,7 +1338,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_min_static",
+                   file_path = "4_predict/out/random/monthly_res/RF_min_static",
                    model_name = 'RF_min_static_full', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -951,7 +1355,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_min_static",
+                   file_path = "4_predict/out/random/monthly_res/RF_min_static",
                    model_name = 'RF_min_static_test', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -968,7 +1372,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_static_dynamic",
+                   file_path = "4_predict/out/random/monthly_res/RF_static_dynamic",
                    model_name = 'RF_static_dynamic_full', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -985,7 +1389,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_static_dynamic",
+                   file_path = "4_predict/out/random/monthly_res/RF_static_dynamic",
                    model_name = 'RF_static_dynamic_test', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -1002,7 +1406,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_min_static_dynamic",
+                   file_path = "4_predict/out/random/monthly_res/RF_min_static_dynamic",
                    model_name = 'RF_min_static_dynamic_full', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -1019,7 +1423,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_min_static_dynamic",
+                   file_path = "4_predict/out/random/monthly_res/RF_min_static_dynamic",
                    model_name = 'RF_min_static_dynamic_test', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -1036,7 +1440,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_dynamic",
+                   file_path = "4_predict/out/random/monthly_res/RF_dynamic",
                    model_name = 'RF_dynamic_full', 
                    panel = TRUE,
                    plot_month_names = TRUE)
@@ -1053,8 +1457,110 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Month)
       plot_barplot(attr_data = PRMS_month,
-                   file_path = "4_predict/out/monthly_res/RF_dynamic",
+                   file_path = "4_predict/out/random/monthly_res/RF_dynamic",
                    model_name = 'RF_dynamic_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_static_dynamic_temporal_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_dynamic_temporal$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RF_static_dynamic_temporal",
+                   model_name = 'RF_static_dynamic_temporal_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_dynamic_temporal_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RF_static_dynamic_temporal",
+                   model_name = 'RF_static_dynamic_temporal_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_dynamic_temporal_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RF_min_static_dynamic_temporal",
+                   model_name = 'RF_min_static_dynamic_temporal_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RF_min_static_dynamic_temporal",
+                   model_name = 'RF_min_static_dynamic_temporal_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_dynamic_temporal_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_dynamic_temporal$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RF_dynamic_temporal",
+                   model_name = 'RF_dynamic_temporal_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_dynamic_temporal_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RF_dynamic_temporal",
+                   model_name = 'RF_dynamic_temporal_test', 
                    panel = TRUE,
                    plot_month_names = TRUE)
     },
@@ -1072,7 +1578,7 @@ p4_targets_list <- list(
                               Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_static",
+                   file_path = "4_predict/out/random/annual_res/RF_static",
                    model_name = 'RF_static_full',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1089,7 +1595,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_static",
+                   file_path = "4_predict/out/random/annual_res/RF_static",
                    model_name = 'RF_static_test',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1106,7 +1612,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_min_static",
+                   file_path = "4_predict/out/random/annual_res/RF_min_static",
                    model_name = 'RF_min_static_full',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1123,7 +1629,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_min_static",
+                   file_path = "4_predict/out/random/annual_res/RF_min_static",
                    model_name = 'RF_min_static_test',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1140,7 +1646,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_static_dynamic",
+                   file_path = "4_predict/out/random/annual_res/RF_static_dynamic",
                    model_name = 'RF_static_dynamic_full',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1157,7 +1663,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_static_dynamic",
+                   file_path = "4_predict/out/random/annual_res/RF_static_dynamic",
                    model_name = 'RF_static_dynamic_test',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1174,7 +1680,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_min_static_dynamic",
+                   file_path = "4_predict/out/random/annual_res/RF_min_static_dynamic",
                    model_name = 'RF_min_static_dynamic_full',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1191,7 +1697,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_min_static_dynamic",
+                   file_path = "4_predict/out/random/annual_res/RF_min_static_dynamic",
                    model_name = 'RF_min_static_dynamic_test',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1208,7 +1714,7 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_dynamic",
+                   file_path = "4_predict/out/random/annual_res/RF_dynamic",
                    model_name = 'RF_dynamic_full',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
@@ -1225,8 +1731,110 @@ p4_targets_list <- list(
                             Bias = mean(err)) %>%
         arrange(Year)
       plot_barplot(attr_data = PRMS_ann,
-                   file_path = "4_predict/out/annual_res/RF_dynamic",
+                   file_path = "4_predict/out/random/annual_res/RF_dynamic",
                    model_name = 'RF_dynamic_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_static_dynamic_temporal_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_temporal$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RF_static_dynamic_temporal",
+                   model_name = 'RF_static_dynamic_temporal_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_temporal_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RF_static_dynamic_temporal",
+                   model_name = 'RF_static_dynamic_temporal_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_dynamic_temporal_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RF_min_static_dynamic_temporal",
+                   model_name = 'RF_min_static_dynamic_temporal_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RF_min_static_dynamic_temporal",
+                   model_name = 'RF_min_static_dynamic_temporal_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_dynamic_temporal_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_temporal$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RF_dynamic_temporal",
+                   model_name = 'RF_dynamic_temporal_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_temporal_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RF_dynamic_temporal",
+                   model_name = 'RF_dynamic_temporal_test',
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
@@ -1240,7 +1848,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_static$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_static_full',
-                    out_dir = "4_predict/out/temporal_res/RF_static"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_static"),
     format = "file",
     repository = 'local'
   ),
@@ -1249,7 +1857,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_static_test$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_static_test',
-                    out_dir = "4_predict/out/temporal_res/RF_static"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_static"),
     format = "file",
     repository = 'local'
   ),
@@ -1258,7 +1866,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_min_static$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_min_static_full',
-                    out_dir = "4_predict/out/temporal_res/RF_min_static"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_min_static"),
     format = "file",
     repository = 'local'
   ),
@@ -1267,7 +1875,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_min_static_test$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_min_static_test',
-                    out_dir = "4_predict/out/temporal_res/RF_min_static"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_min_static"),
     format = "file",
     repository = 'local'
   ),
@@ -1276,7 +1884,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_static_dynamic$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_static_dynamic_full',
-                    out_dir = "4_predict/out/temporal_res/RF_static_dynamic"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_static_dynamic"),
     format = "file",
     repository = 'local'
   ),
@@ -1285,7 +1893,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_static_dynamic_test$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_static_dynamic_test',
-                    out_dir = "4_predict/out/temporal_res/RF_static_dynamic"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_static_dynamic"),
     format = "file",
     repository = 'local'
   ),
@@ -1294,7 +1902,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_min_static_dynamic_full',
-                    out_dir = "4_predict/out/temporal_res/RF_min_static_dynamic"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_min_static_dynamic"),
     format = "file",
     repository = 'local'
   ),
@@ -1303,7 +1911,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic_test$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_min_static_dynamic_test',
-                    out_dir = "4_predict/out/temporal_res/RF_min_static_dynamic"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_min_static_dynamic"),
     format = "file",
     repository = 'local'
   ),
@@ -1312,7 +1920,7 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_dynamic$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_dynamic_full',
-                    out_dir = "4_predict/out/temporal_res/RF_dynamic"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_dynamic"),
     format = "file",
     repository = 'local'
   ),
@@ -1321,7 +1929,61 @@ p4_targets_list <- list(
     plot_timeseries(pred_df = p4_pred_RF_dynamic_test$pred,
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_dynamic_test',
-                    out_dir = "4_predict/out/temporal_res/RF_dynamic"),
+                    out_dir = "4_predict/out/random/temporal_res/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_dynamic_temporal_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_dynamic_temporal$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/temporal_res/RF_static_dynamic_temporal"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_dynamic_temporal_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_dynamic_temporal_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_dynamic_temporal_test',
+                    out_dir = "4_predict/out/temporal/temporal_res/RF_static_dynamic_temporal"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_dynamic_temporal_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic_temporal$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/temporal_res/RF_min_static_dynamic_temporal"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_dynamic_temporal_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic_temporal_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_dynamic_temporal_test',
+                    out_dir = "4_predict/out/temporal/temporal_res/RF_min_static_dynamic_temporal"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_dynamic_temporal_png,
+    plot_timeseries(pred_df = p4_pred_RF_dynamic_temporal$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/temporal_res/RF_dynamic_temporal"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_dynamic_temporal_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_dynamic_temporal_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_dynamic_temporal_test',
+                    out_dir = "4_predict/out/temporal/temporal_res/RF_dynamic_temporal"),
     format = "file",
     repository = 'local'
   )
