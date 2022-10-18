@@ -12,7 +12,14 @@ split_data <- function(data, train_prop, time_lag = 0, by_time){
   #' the testing dataset
   
   if(by_time){
+    #ensure that data are arranged by date
+    data <- arrange(data, Date)
     split <- rsample::initial_time_split(data, prop = train_prop, lag = time_lag)
+    #reallocate samples to training and testing because initial_time_split may miss
+    #some reaches that have data on the train_prop-th date.
+    max_Date <- max(split$data[split$in_id,]$Date)
+    split$in_id <- which(split$data$Date <= max_Date)
+    split$out_id <- which(split$data$Date > max_Date)
   }else{
     split <- rsample::initial_split(data, prop = train_prop)
   }
@@ -146,16 +153,15 @@ screen_Boruta <- function(input_data, drop_attrs = NULL, pred_var, ncores, brf_r
 
 select_attrs <- function(brf_output, retain_attrs = NULL){
   #' 
-  #' @description Applies Boruta screening to the features. Makes a train/test
-  #' split before applying the screening.
+  #' @description Reduces the attributes in the brf_output table to those
+  #' that were selected from the Boruta algorithm and specified in the
+  #' retain_attrs.
   #'
   #' @param brf_output output from the screen_Boruta function
   #' @param retain_attrs character vector of additional attributes to retain
   #' beyond those in brf_output$selected_features.
   #' 
-  #' @return Returns a list of all brf models, and the input dataset 
-  #' (IDs, features, metric) as a list with train/test splits as the list elements.
-  #' The training and testing dataframes only contain the selected attributes.
+  #' @return Returns brf_output with only the selected attributes.
   
   #vector of attributes to retain
   retain_attrs <- unique(c(brf_output$selected_features, retain_attrs, brf_output$metric))
@@ -171,9 +177,28 @@ select_attrs <- function(brf_output, retain_attrs = NULL){
   return(brf_output)
 }
 
+make_temporal_split <- function(attrs_df, train_prop){
+  #' 
+  #' @description creates temporal splits for the training and testing dataset.
+  #'
+  #' @param attrs_df output from select_attrs
+  #' @param train_prop proportion of the data to use as training.
+  #' 
+  #' @return Returns attrs_df with an updated training and testing dataset based
+  #' on time.
+  
+  new_split <- split_data(data = attrs_df$input_data$split$data, 
+                          train_prop = train_prop,
+                          by_time = TRUE)
+  
+  attrs_df$input_data <- new_split
+  
+  return(attrs_df)
+}
+
 train_models_grid <- function(brf_output, v_folds, ncores,
                               range_mtry, range_minn, range_trees,
-                              gridsize, id_cols){
+                              gridsize, id_cols, temporal = FALSE){
   #' 
   #' @description optimizes hyperparameters using a grid search
   #'
@@ -189,18 +214,22 @@ train_models_grid <- function(brf_output, v_folds, ncores,
   #' @param gridsize numeric number of points to evaluate within the 3D grid
   #' @param id_cols vector of column names that are IDs (e.g., segment ID, Date) 
   #' and not used to predict
+  #' @param temporal logical indicating if the cross validation should be completed
+  #' using a temporal holdout instead of a random holdout
   #' 
   #' @return Returns a list of the evaluated grid parameters, the 
   #' best fit parameters, and the workflow for those parameters.
   
   #Set the parameters to be tuned
+  threads <- floor((ncores - v_folds)/v_folds)
+  
   tune_spec <- rand_forest(mode = "regression",
                            mtry = tune(), 
                            min_n = tune(), 
                            trees = tune()) %>% 
     set_engine(engine = "ranger", 
                verbose = FALSE, importance = 'impurity', 
-               probability = FALSE, num.threads = floor((ncores - v_folds)/v_folds))
+               probability = FALSE, num.threads = threads)
   
   #Set parameter ranges
   params <- parameters(list(mtry = mtry() %>% range_set(range_mtry), 
@@ -215,7 +244,31 @@ train_models_grid <- function(brf_output, v_folds, ncores,
                            iter = 1000)
   
   #number of cross validation folds (v)
-  cv_folds <- vfold_cv(data = brf_output$input_data$training, v = v_folds)
+  if(temporal){
+    #add group variable to dataset based on an even temporal split
+    brf_output$input_data$training$group <- 0
+    brf_output$input_data$testing$group <- NA
+    brf_output$input_data$split[[1]]$group <- NA
+    for (i in 1:v_folds){
+      if(i == v_folds){
+        inds_grp <- which(brf_output$input_data$training$group == 0)
+      }else{
+        inds_grp <- split_data(brf_output$input_data$training, 
+                               train_prop = i/v_folds, time_lag = 0, 
+                               by_time = TRUE)$split$in_id
+      }
+      #assign group index only to rows that have not yet been assigned a group index
+      brf_output$input_data$training$group[inds_grp][brf_output$input_data$training$group[inds_grp] == 0] <- i
+    }
+    
+    #add group to the id_cols vector so it's not used for prediction
+    id_cols <- c(id_cols, 'group')
+    
+    #make 1 fold per group
+    cv_folds <- group_vfold_cv(data = brf_output$input_data$training, group = 'group')
+  }else{
+    cv_folds <- vfold_cv(data = brf_output$input_data$training, v = v_folds)
+  }
   
   #specify workflow to tune the grid
   target_name <- brf_output$metric
@@ -288,6 +341,9 @@ train_models_grid <- function(brf_output, v_folds, ncores,
   final_wf_trained <- extract_workflow(final_fit)
   
   parallel::stopCluster(cl)
+  
+  #remove data from grid_result to reduce file size
+  grid_result$splits <- NULL
   
   #regenerate AWS credentials
   generate_credentials()
