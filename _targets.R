@@ -219,7 +219,7 @@ RF_cores <- 60
 cv_folds <- 10
 
 #SHAP
-SHAP_nsim = 20
+SHAP_nsim = 2
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list)
