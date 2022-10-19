@@ -420,22 +420,47 @@ filter_rows_date <- function(attrs, start_date){
 
 
 #SHAP values
-compute_SHAP <- function(model, data, ncores){
+compute_SHAP <- function(model, data, ncores, nsim){
   #' 
   #' @description computes SHAP values
   #'
   #' @param model the model to be used
   #' @param data the dataset with predictor attributes
   #' @param ncores number of parallel cores to use
+  #' @param nsim number of replicates to run (more = better SHAP estimates)
   #' 
   #' @return Returns a dataframe of SHAP values
 
   cl <- parallel::makeCluster(ncores)
   doParallel::registerDoParallel(cl)
+  parallel::clusterExport(cl = cl, varlist = c('nsim'))
+  parallel::clusterEvalQ(cl = cl, expr = library(tidyverse))
+  parallel::clusterEvalQ(cl = cl, expr = library(tidymodels))
   
-  shap <- fastshap::explain(model, X = data, pred_wrapper = pfun, nsim = 100, .parallel = TRUE)
+  shap <- fastshap::explain(object = model, 
+                            X = data, 
+                            pred_wrapper = predict_shap_data, 
+                            nsim = nsim, 
+                            .parallel = TRUE)
   
   parallel::stopCluster(cl)
   
   return(shap)
+}
+
+
+predict_shap_data <- function(model, newdata){
+  #' 
+  #' @description uses the provided model to predict on the test dataset.
+  #'
+  #' @param model model workflow containing a single model that will be used
+  #' to predict on the test_data.
+  #' @param newdata dataset containing features and the metric to be predicted
+  #' 
+  #' @return Returns a vector of predictions
+  
+  preds <- predict(model, newdata, type = 'numeric') %>% 
+    pull(.pred)
+  
+  return(preds)
 }

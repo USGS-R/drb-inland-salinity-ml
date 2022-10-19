@@ -45,35 +45,39 @@ dir.create("4_predict/out/temporal",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/vip",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/hypopt",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/pred_obs",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/pred_obs/RF_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/pred_obs/RF_min_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/pred_obs/RF_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/spatial_res",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/spatial_res/RF_static",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/spatial_res/RF_min_static",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/spatial_res/RF_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/spatial_res/RF_min_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/spatial_res/RF_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/monthly_res",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/monthly_res/RF_static",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/monthly_res/RF_min_static",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/monthly_res/RF_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/monthly_res/RF_min_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/monthly_res/RF_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/annual_res",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/annual_res/RF_static",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/annual_res/RF_min_static",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/annual_res/RF_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/annual_res/RF_min_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/annual_res/RF_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/temporal_res",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/temporal_res/RF_static",showWarnings = FALSE)
-dir.create("4_predict/out/temporal/temporal_res/RF_min_static",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/temporal_res/RF_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/temporal_res/RF_min_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/temporal/temporal_res/RF_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/shap",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/shap/RF_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/shap/RF_min_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/temporal/shap/RF_dynamic",showWarnings = FALSE)
 #Random train/test split
 dir.create("4_predict/out/random",showWarnings = FALSE)
 dir.create("4_predict/out/random/vip",showWarnings = FALSE)
 dir.create("4_predict/out/random/hypopt",showWarnings = FALSE)
 dir.create("4_predict/out/random/pred_obs",showWarnings = FALSE)
+dir.create("4_predict/out/random/pred_obs/RF_static",showWarnings = FALSE)
+dir.create("4_predict/out/random/pred_obs/RF_min_static",showWarnings = FALSE)
+dir.create("4_predict/out/random/pred_obs/RF_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/random/pred_obs/RF_min_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/random/pred_obs/RF_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/random/spatial_res",showWarnings = FALSE)
 dir.create("4_predict/out/random/spatial_res/RF_static",showWarnings = FALSE)
 dir.create("4_predict/out/random/spatial_res/RF_min_static",showWarnings = FALSE)
@@ -98,7 +102,12 @@ dir.create("4_predict/out/random/temporal_res/RF_min_static",showWarnings = FALS
 dir.create("4_predict/out/random/temporal_res/RF_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/random/temporal_res/RF_min_static_dynamic",showWarnings = FALSE)
 dir.create("4_predict/out/random/temporal_res/RF_dynamic",showWarnings = FALSE)
-
+dir.create("4_predict/out/random/shap",showWarnings = FALSE)
+dir.create("4_predict/out/random/shap/RF_static",showWarnings = FALSE)
+dir.create("4_predict/out/random/shap/RF_min_static",showWarnings = FALSE)
+dir.create("4_predict/out/random/shap/RF_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/random/shap/RF_min_static_dynamic",showWarnings = FALSE)
+dir.create("4_predict/out/random/shap/RF_dynamic",showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -208,6 +217,9 @@ Boruta_cores <- 70
 RF_cores <- 60
 #Cross validation folds
 cv_folds <- 10
+
+#SHAP
+SHAP_nsim = 1
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list)
