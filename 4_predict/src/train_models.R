@@ -281,7 +281,7 @@ train_models_grid <- function(brf_output, v_folds, ncores,
   cl = parallel::makeCluster(ncores)
   doParallel::registerDoParallel(cl)
   #Send variables to worker environments
-  parallel::clusterExport(cl = cl, varlist = c('target_name', 'id_cols'), 
+  parallel::clusterExport(cl = cl, varlist = c('target_name', 'id_cols', 'threads'), 
                           envir = environment())
   
   grid_result <- tune_grid(wf, 
@@ -412,6 +412,30 @@ filter_rows_date <- function(attrs, start_date){
   attrs$input_data$split$in_id <- which(!is.na(left_join(x = attrs$input_data$split$data, 
                                                          y = attrs$input_data$training, 
                                                          by = c('PRMS_segid', 'Date'))$mean_value.y))
+  #Correct the out_id (testing data IDs)
+  attrs$input_data$split$out_id <- (1:nrow(attrs$input_data$split$data))[-which(attrs$input_data$split$in_id %in% 1:nrow(attrs$input_data$split$data))]
   
   return(attrs)
+}
+
+
+#SHAP values
+compute_SHAP <- function(model, data, ncores){
+  #' 
+  #' @description computes SHAP values
+  #'
+  #' @param model the model to be used
+  #' @param data the dataset with predictor attributes
+  #' @param ncores number of parallel cores to use
+  #' 
+  #' @return Returns a dataframe of SHAP values
+
+  cl <- parallel::makeCluster(ncores)
+  doParallel::registerDoParallel(cl)
+  
+  shap <- fastshap::explain(model, X = data, pred_wrapper = pfun, nsim = 100, .parallel = TRUE)
+  
+  parallel::stopCluster(cl)
+  
+  return(shap)
 }

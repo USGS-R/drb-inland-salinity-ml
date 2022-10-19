@@ -254,7 +254,7 @@ plot_barplot <- function(attr_data, file_path,
   #' @param label_sequence the indices of labels to plot on the x-axis. NULL
   #' plots all labels, which can get crowded for some plots.
   #'
-  #' @value Returns the path to png files containing barplots of each attribute
+  #' @return Returns the path to png files containing barplots of each attribute
   
   plot_names <- vector('character', length = 0L)
   plt_lst <- list()
@@ -328,8 +328,11 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
   #' '.pred', and 'training' as output from `predict_test_data`
   #' @param network_geometry sf object containing the network flowline geometry; 
   #' must include columns "subsegid" and "geometry"
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param out_dir output directory
   #'
-  #' @value Returns the path to png files containing observed and predicted timeseries
+  #' @return Returns the path to png files containing observed and predicted timeseries
   
   #number of plots equals number of unique reaches in pred_df
   reaches <- unique(pred_df$PRMS_segid) %>%
@@ -402,4 +405,56 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
   }
   
   return(filesout)
+}
+
+
+#SHAP values
+plot_shap_global <- function(shap, model_name, out_dir){
+  #' 
+  #' @description Creates SHAP global importance plot
+  #'
+  #' @param shap SHAP value results from compute_SHAP
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param out_dir output directory
+  #'
+  #' @return Returns the paths to png files of SHAP dependence plots for each feature
+  
+  p1 <- autoplot(shap)
+  
+  return(fileout)
+}
+
+plot_shap_dependence <- function(shap, model_name, out_dir){
+  #' 
+  #' @description Creates SHAP dependence plots for each feature
+  #'
+  #' @param shap SHAP value results from compute_SHAP
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param out_dir output directory
+  #'
+  #' @return Returns the paths to png files of SHAP dependence plots for each feature
+  
+  p1 <- autoplot(shap, type = "dependence", feature = "x3", X = X, alpha = 0.5,
+                 smooth = TRUE, smooth_color = "black")
+  
+  return(filesout)
+}
+
+plot_shap_individual <- function(shap, index, model_name, out_dir){
+  #' 
+  #' @description Creates a SHAP contribution plot for an individual prediction index.
+  #'
+  #' @param shap SHAP value results from compute_SHAP
+  #' @param index row index for which to compute plot
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param out_dir output directory
+  #'
+  #' @return Returns the path to the png file of feature contributions to the index prediction
+  
+  p1 <- autoplot(shap[index,], type = "contribution")
+  
+  return(fileout)
 }

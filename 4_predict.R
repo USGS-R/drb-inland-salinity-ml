@@ -385,7 +385,8 @@ p4_targets_list <- list(
                                  range_minn = c(2,20),
                                  range_trees = c(100,500),
                                  gridsize = 3,
-                                 id_cols = c('PRMS_segid', 'Date'))
+                                 id_cols = c('PRMS_segid', 'Date'),
+                                 temporal = TRUE)
              },
              deployment = 'worker'
   ),
@@ -409,7 +410,8 @@ p4_targets_list <- list(
                                  range_minn = c(2,20),
                                  range_trees = c(100,500),
                                  gridsize = 3,
-                                 id_cols = c('PRMS_segid', 'Date'))
+                                 id_cols = c('PRMS_segid', 'Date'), 
+                                 temporal = TRUE)
              },
              deployment = 'worker'
   ),
@@ -433,7 +435,8 @@ p4_targets_list <- list(
                                  range_minn = c(2,20),
                                  range_trees = c(100,500),
                                  gridsize = 3,
-                                 id_cols = c('PRMS_segid', 'Date'))
+                                 id_cols = c('PRMS_segid', 'Date'), 
+                                 temporal = TRUE)
              },
              deployment = 'worker'
   ),
@@ -441,7 +444,7 @@ p4_targets_list <- list(
   # Refresh AWS credentials
   tar_target(
     p4_aws_credentials_9,
-    generate_credentials(dummy_var = p4_train_RF_dynamic),
+    generate_credentials(dummy_var = p4_train_RF_dynamic_temporal),
     deployment = 'main',
     cue = tar_cue('always')
   ),
@@ -681,17 +684,31 @@ p4_targets_list <- list(
   #RF Predictions
   #Static features, full dataset
   tar_target(p4_pred_RF_static,
-             predict_test_data(model_wf = p4_train_RF_static$workflow,
-                               test_data = p4_train_RF_static$best_fit$splits[[1]]$data,
-                               target_name = 'mean_value',
-                               train_ind = p4_train_RF_static$best_fit$splits[[1]]$in_id),
+             {
+               #Correct workflow problem
+               wf <- extract_workflow(p4_train_RF_static$best_fit)
+               data <- p4_train_RF_static$best_fit$splits[[1]]$data
+               data$Date <- p4_Boruta_static$input_data$split$data$Date
+               data$PRMS_segid <- p4_Boruta_static$input_data$split$data$PRMS_segid
+               predict_test_data(model_wf = wf,
+                                 test_data = data,
+                                 target_name = 'mean_value',
+                                 train_ind = p4_train_RF_static$best_fit$splits[[1]]$in_id) 
+             },
              deployment = 'main'
   ),
   #Static features, test dataset
   tar_target(p4_pred_RF_static_test,
-             predict_test_data(model_wf = p4_train_RF_static$workflow,
-                               test_data = p4_train_RF_static$best_fit$splits[[1]]$data[-p4_train_RF_static$best_fit$splits[[1]]$in_id,],
-                               target_name = 'mean_value'),
+             {
+               #Correct workflow problem
+               wf <- extract_workflow(p4_train_RF_static$best_fit)
+               data <- p4_train_RF_static$best_fit$splits[[1]]$data[-p4_train_RF_static$best_fit$splits[[1]]$in_id,]
+               data$Date <- p4_Boruta_static$input_data$testing$Date
+               data$PRMS_segid <- p4_Boruta_static$input_data$testing$PRMS_segid
+               predict_test_data(model_wf = wf,
+                                 test_data = data,
+                                 target_name = 'mean_value')
+             },
              deployment = 'main'
   ),
   #minimum static features, full dataset
