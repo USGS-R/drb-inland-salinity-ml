@@ -433,15 +433,19 @@ compute_SHAP <- function(model, data, ncores, nsim){
 
   cl <- parallel::makeCluster(ncores)
   doParallel::registerDoParallel(cl)
-  parallel::clusterExport(cl = cl, varlist = c('nsim'))
+  parallel::clusterExport(cl = cl, varlist = c('nsim', 'predict_shap_data'))
   parallel::clusterEvalQ(cl = cl, expr = library(tidyverse))
   parallel::clusterEvalQ(cl = cl, expr = library(tidymodels))
+  parallel::clusterEvalQ(cl = cl, expr = library(foreach))
+  parallel::clusterEvalQ(cl = cl, expr = library(doParallel))
   
   shap <- fastshap::explain(object = model, 
                             X = data, 
                             pred_wrapper = predict_shap_data, 
                             nsim = nsim, 
-                            .parallel = TRUE)
+                            .parallel = TRUE) %>% 
+    #suppressing <anonymous>: ... may be used in an incorrect context: ‘.fun(piece, ...)’
+    suppressWarnings()
   
   parallel::stopCluster(cl)
   

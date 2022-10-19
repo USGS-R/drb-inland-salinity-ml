@@ -381,7 +381,7 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
       }}+
       theme_bw() +
       xlab('Date') +
-      ylab(paste0('Specific Conductivity (', expression(mu), 'S/cm)')) + 
+      ylab(expression(paste0('Specific Conductivity (', mu, 'S/cm)'))) + 
       ggtitle(paste0(model_name, ', reach ', reaches[i])) +
       scale_color_discrete('', labels = plt_labs)
     
@@ -420,41 +420,77 @@ plot_shap_global <- function(shap, model_name, out_dir){
   #'
   #' @return Returns the paths to png files of SHAP dependence plots for each feature
   
-  p1 <- autoplot(shap)
+  fileout <- file.path(out_dir, 
+                       paste0('SHAP_global_', model_name, '.png'))
+  
+  p1 <- autoplot(shap) +
+    ggtitle(model_name)
+  
+  ggsave(filename = fileout, plot = p1, device = 'png')
   
   return(fileout)
 }
 
-plot_shap_dependence <- function(shap, model_name, out_dir){
+plot_shap_dependence <- function(shap, data, model_name, out_dir){
   #' 
   #' @description Creates SHAP dependence plots for each feature
   #'
   #' @param shap SHAP value results from compute_SHAP
+  #' @param data the X dataframe used to compute SHAP values
   #' @param model_name character string describing the model. Will be added 
   #' to the end of the filename before the file extension, and also be the plot title.
   #' @param out_dir output directory
   #'
   #' @return Returns the paths to png files of SHAP dependence plots for each feature
   
-  p1 <- autoplot(shap, type = "dependence", feature = "x3", X = X, alpha = 0.5,
-                 smooth = TRUE, smooth_color = "black")
+  #number of features to make plots for
+  n_plts <- ncol(shap)
+  
+  filesout <- vector('character', length = n_plts)
+  
+  for(i in 1:length(filesout)){
+    filesout[i] <- file.path(out_dir, 
+                             paste0('SHAP_dependence_', colnames(shap)[i], '_',
+                                    model_name, '.png'))
+    
+    p <- autoplot(shap, type = "dependence", feature = colnames(shap)[i], 
+                  X = data, 
+                  alpha = 0.5, smooth = TRUE, smooth_color = "black") +
+      ggtitle(model_name)
+    
+    ggsave(filename = filesout[i], plot = p, device = 'png')
+  }
   
   return(filesout)
 }
 
-plot_shap_individual <- function(shap, index, model_name, out_dir){
+plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir){
   #' 
   #' @description Creates a SHAP contribution plot for an individual prediction index.
   #'
   #' @param shap SHAP value results from compute_SHAP
-  #' @param index row index for which to compute plot
+  #' @param data dataframe with PRMS_segid and Date columns with rows in the
+  #' same order as shap
+  #' @param reach PRMS_segid of observation to plot
+  #' @param date date of observation to plot as YYYY-MM-DD
   #' @param model_name character string describing the model. Will be added 
   #' to the end of the filename before the file extension, and also be the plot title.
   #' @param out_dir output directory
   #'
   #' @return Returns the path to the png file of feature contributions to the index prediction
   
-  p1 <- autoplot(shap[index,], type = "contribution")
+  #row index for which to compute plot
+  ind_plt <- which(data$PRMS_segid == reach & data$Date == date)
+  
+  fileout <- file.path(out_dir, paste0('SHAP_individual_', model_name, 
+                                       '_reach', reach, 
+                                       '_date', date, '.png'))
+  
+  p1 <- autoplot(shap[ind_plt,], type = "contribution") +
+    ggtitle(paste0(model_name, ', reach ', reach,
+                   ', Date ', date))
+  
+  ggsave(filename = fileout, plot = p1, device = 'png')
   
   return(fileout)
 }

@@ -2079,4 +2079,158 @@ p4_targets_list <- list(
                  ncores = 35, 
                  nsim = SHAP_nsim)
   ),
+  #Global shap importance
+  tar_target(
+    p4_shap_importance_static_png,
+    plot_shap_global(shap = p4_shap_static,
+                     model_name = 'RF_static_full',
+                     out_dir = "4_predict/out/random/shap/RF_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_min_static_png,
+    plot_shap_global(shap = p4_shap_min_static,
+                    model_name = 'RF_min_static_full',
+                    out_dir = "4_predict/out/random/shap/RF_min_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_static_dynamic_png,
+    plot_shap_global(shap = p4_shap_static_dynamic,
+                    model_name = 'RF_static_dynamic_full',
+                    out_dir = "4_predict/out/random/shap/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_min_static_dynamic_png,
+    plot_shap_global(shap = p4_shap_min_static_dynamic,
+                    model_name = 'RF_min_static_dynamic_full',
+                    out_dir = "4_predict/out/random/shap/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_dynamic_png,
+    plot_shap_global(shap = p4_shap_dynamic,
+                    model_name = 'RF_dynamic_full',
+                    out_dir = "4_predict/out/random/shap/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_static_dynamic_temporal_png,
+    plot_shap_global(shap = p4_shap_static_dynamic_temporal,
+                    model_name = 'RF_static_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/shap/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_min_static_dynamic_temporal_png,
+    plot_shap_global(shap = p4_shap_min_static_dynamic_temporal,
+                    model_name = 'RF_min_static_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/shap/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_importance_dynamic_temporal_png,
+    plot_shap_global(shap = p4_shap_dynamic_temporal,
+                    model_name = 'RF_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/shap/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  #shap dependence plots
+  tar_target(
+    p4_shap_dependence_static_png,
+    plot_shap_dependence(shap = p4_shap_static,
+                         data = p4_train_RF_static$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_static_full',
+                     out_dir = "4_predict/out/random/shap/RF_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_min_static_png,
+    plot_shap_dependence(shap = p4_shap_min_static,
+                         data = p4_train_RF_min_static$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_min_static_full',
+                     out_dir = "4_predict/out/random/shap/RF_min_static"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_static_dynamic_png,
+    plot_shap_dependence(shap = p4_shap_static_dynamic,
+                         data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_static_dynamic_full',
+                     out_dir = "4_predict/out/random/shap/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_min_static_dynamic_png,
+    plot_shap_dependence(shap = p4_shap_min_static_dynamic,
+                         data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_min_static_dynamic_full',
+                     out_dir = "4_predict/out/random/shap/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_dynamic_png,
+    plot_shap_dependence(shap = p4_shap_dynamic,
+                         data = p4_train_RF_dynamic$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_dynamic_full',
+                     out_dir = "4_predict/out/random/shap/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_static_dynamic_temporal_png,
+    plot_shap_dependence(shap = p4_shap_static_dynamic_temporal,
+                         data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_static_dynamic_temporal_full',
+                     out_dir = "4_predict/out/temporal/shap/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_min_static_dynamic_temporal_png,
+    plot_shap_dependence(shap = p4_shap_min_static_dynamic_temporal,
+                         data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_min_static_dynamic_temporal_full',
+                     out_dir = "4_predict/out/temporal/shap/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_shap_dependence_dynamic_temporal_png,
+    plot_shap_dependence(shap = p4_shap_dynamic_temporal,
+                         data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+                           select(-mean_value) %>% 
+                           as.data.frame(),
+                     model_name = 'RF_dynamic_temporal_full',
+                     out_dir = "4_predict/out/temporal/shap/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  )
 )
