@@ -433,7 +433,9 @@ compute_shap <- function(model, data, ncores, nsim){
 
   cl <- parallel::makeCluster(ncores)
   doParallel::registerDoParallel(cl)
-  parallel::clusterExport(cl = cl, varlist = c('nsim', 'predict_shap_data'))
+  parallel::clusterExport(cl = cl, varlist = c('nsim'), 
+                          envir = environment())
+  parallel::clusterExport(cl = cl, varlist = c('predict_shap_data'))
   parallel::clusterEvalQ(cl = cl, expr = library(tidyverse))
   parallel::clusterEvalQ(cl = cl, expr = library(tidymodels))
   parallel::clusterEvalQ(cl = cl, expr = library(foreach))
