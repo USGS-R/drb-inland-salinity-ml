@@ -420,7 +420,7 @@ filter_rows_date <- function(attrs, start_date){
 
 
 #SHAP values
-compute_SHAP <- function(model, data, ncores, nsim){
+compute_shap <- function(model, data, ncores, nsim){
   #' 
   #' @description computes SHAP values
   #'
