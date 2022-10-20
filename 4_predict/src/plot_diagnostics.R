@@ -496,16 +496,16 @@ plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir){
 }
 
 
-plot_idp <- function(data, model_name, out_dir){
+plot_pdp <- function(data, model_name, out_dir){
   #' 
-  #' @description Creates IDP and ICE plots for each feature in data
+  #' @description Creates PDP and ICE plots for each feature in data
   #'
   #' @param data the dataframe used to make model predictions within the workflow
   #' @param model_name character string describing the model. Will be added 
   #' to the end of the filename before the file extension, and also be the plot title.
   #' @param out_dir output directory
   #'
-  #' @return Returns the paths to png files of IDP and ICE for each feature
+  #' @return Returns the paths to png files of PDP and ICE for each feature
   
   #number of features to make plots for
   n_plts <- ncol(data)
@@ -524,14 +524,16 @@ plot_idp <- function(data, model_name, out_dir){
     #PDP
     
     #get data into class partial to make plots
-    #pdp::partial(object = ..., pred.var = ..., ice = FALSE, train = ..., type = 'regression', pred.fun = predict_shap_data,
-    #             plot = TRUE, rug = TRUE, smooth = TRUE, plot.engine = 'ggplot2', )
+    pdp::partial(object = ..., pred.var = ..., ice = FALSE, train = ..., type = 'regression', pred.fun = predict_shap_data,
+                 plot = TRUE, rug = TRUE, smooth = TRUE, plot.engine = 'ggplot2', )
     
-    # p <- autoplot(shap, type = "dependence", feature = colnames(shap)[i], 
-    #               X = data, 
+    #pdp::partial(object = p4_train_RF_min_static$workflow, pred.var = colnames(p4_train_RF_min_static$best_fit$splits[[1]]$data)[1], ice = TRUE, train = p4_train_RF_min_static$best_fit$splits[[1]]$data[p4_train_RF_min_static$best_fit$splits[[1]]$in_id,], type = 'regression', pred.fun = predict_shap_data, plot = TRUE, rug = TRUE, smooth = TRUE, plot.engine = 'ggplot2', quantiles = TRUE, probs = seq(0.1,0.9,0.1), center = TRUE)
+
+    # p <- autoplot(shap, type = "dependence", feature = colnames(shap)[i],
+    #               X = data,
     #               alpha = 0.5, smooth = TRUE, smooth_color = "black") +
     #   ggtitle(model_name)
-    # 
+    #
     ggsave(filename = filesout_pdp[i], plot = p, device = 'png')
     
     #ICE

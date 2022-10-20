@@ -455,17 +455,17 @@ compute_shap <- function(model, data, ncores, nsim){
 }
 
 
-predict_shap_data <- function(model, newdata){
+predict_shap_data <- function(object, newdata){
   #' 
   #' @description uses the provided model to predict on the test dataset.
   #'
-  #' @param model model workflow containing a single model that will be used
+  #' @param object model workflow containing a single model that will be used
   #' to predict on the test_data.
   #' @param newdata dataset containing features and the metric to be predicted
   #' 
   #' @return Returns a vector of predictions
   
-  preds <- predict(model, newdata, type = 'numeric') %>% 
+  preds <- predict(object, newdata, type = 'numeric') %>% 
     pull(.pred)
   
   return(preds)
