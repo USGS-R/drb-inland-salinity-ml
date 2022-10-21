@@ -251,4 +251,5 @@ SHAP_RAM <- 7
 SHAP_cores <- 35
 
 # Return the complete list of targets
-c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list)
+c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list, 
+  p4_plot_targets_list)
