@@ -409,7 +409,7 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
 
 
 #SHAP values
-plot_shap_global <- function(shap, model_name, out_dir){
+plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
   #' 
   #' @description Creates SHAP global importance plot
   #'
@@ -423,8 +423,9 @@ plot_shap_global <- function(shap, model_name, out_dir){
   fileout <- file.path(out_dir, 
                        paste0('SHAP_global_', model_name, '.png'))
   
-  p1 <- autoplot(shap) +
-    ggtitle(model_name)
+  p1 <- autoplot(shap, num_features = num_features) +
+    ggtitle(model_name) + 
+    theme(axis.text.y = element_text(size = 5))
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
@@ -471,7 +472,8 @@ plot_shap_dependence <- function(shap, data, model_name, out_dir, ncores = 1){
   return(filesout)
 }
 
-plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir){
+plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir,
+                                 num_features = 40){
   #' 
   #' @description Creates a SHAP contribution plot for an individual prediction index.
   #'
@@ -493,9 +495,10 @@ plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir){
                                        '_reach-', reach, 
                                        '_date-', date, '.png'))
   
-  p1 <- autoplot(shap[ind_plt,], type = "contribution") +
+  p1 <- autoplot(shap[ind_plt,], type = "contribution", num_features = num_features) +
     ggtitle(model_name, subtitle = paste0('reach ', reach,
-                   ', Date ', date))
+                   ', Date ', date)) +
+    theme(axis.text.y = element_text(size = 5))
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
