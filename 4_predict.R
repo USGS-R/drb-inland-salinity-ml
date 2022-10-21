@@ -2273,96 +2273,96 @@ p4_targets_list <- list(
                      ncores = SHAP_cores),
     format = "file",
     repository = 'local'
-  ),
-  
-  
-  #PDP and ICE plots
-  tar_target(
-    p4_pdp_static_png,
-    plot_pdp(shap = p4_shap_static,
-                         data = p4_train_RF_static$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_static_full',
-                         out_dir = "4_predict/out/random/dependence/RF_static"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_min_static_png,
-    plot_pdp(shap = p4_shap_min_static,
-                         data = p4_train_RF_min_static$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_min_static_full',
-                         out_dir = "4_predict/out/random/dependence/RF_min_static"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_static_dynamic_png,
-    plot_pdp(shap = p4_shap_static_dynamic,
-                         data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_static_dynamic_full',
-                         out_dir = "4_predict/out/random/dependence/RF_static_dynamic"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_min_static_dynamic_png,
-    plot_pdp(shap = p4_shap_min_static_dynamic,
-                         data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_min_static_dynamic_full',
-                         out_dir = "4_predict/out/random/dependence/RF_min_static_dynamic"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_dynamic_png,
-    plot_pdp(shap = p4_shap_dynamic,
-                         data = p4_train_RF_dynamic$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_dynamic_full',
-                         out_dir = "4_predict/out/random/dependence/RF_dynamic"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_static_dynamic_temporal_png,
-    plot_pdp(shap = p4_shap_static_dynamic_temporal,
-                         data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_static_dynamic_temporal_full',
-                         out_dir = "4_predict/out/temporal/dependence/RF_static_dynamic"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_min_static_dynamic_temporal_png,
-    plot_pdp(shap = p4_shap_min_static_dynamic_temporal,
-                         data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_min_static_dynamic_temporal_full',
-                         out_dir = "4_predict/out/temporal/dependence/RF_min_static_dynamic"),
-    format = "file",
-    repository = 'local'
-  ),
-  tar_target(
-    p4_pdp_dynamic_temporal_png,
-    plot_pdp(shap = p4_shap_dynamic_temporal,
-                         data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>% 
-                           select(-mean_value) %>% 
-                           as.data.frame(),
-                         model_name = 'RF_dynamic_temporal_full',
-                         out_dir = "4_predict/out/temporal/dependence/RF_dynamic"),
-    format = "file",
-    repository = 'local'
   )
+  
+  
+  #PDP and ICE plots - not ready yet
+  # tar_target(
+  #   p4_pdp_static_png,
+  #   plot_pdp(shap = p4_shap_static,
+  #                        data = p4_train_RF_static$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_static_full',
+  #                        out_dir = "4_predict/out/random/dependence/RF_static"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_min_static_png,
+  #   plot_pdp(shap = p4_shap_min_static,
+  #                        data = p4_train_RF_min_static$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_min_static_full',
+  #                        out_dir = "4_predict/out/random/dependence/RF_min_static"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_static_dynamic_png,
+  #   plot_pdp(shap = p4_shap_static_dynamic,
+  #                        data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_static_dynamic_full',
+  #                        out_dir = "4_predict/out/random/dependence/RF_static_dynamic"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_min_static_dynamic_png,
+  #   plot_pdp(shap = p4_shap_min_static_dynamic,
+  #                        data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_min_static_dynamic_full',
+  #                        out_dir = "4_predict/out/random/dependence/RF_min_static_dynamic"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_dynamic_png,
+  #   plot_pdp(shap = p4_shap_dynamic,
+  #                        data = p4_train_RF_dynamic$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_dynamic_full',
+  #                        out_dir = "4_predict/out/random/dependence/RF_dynamic"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_static_dynamic_temporal_png,
+  #   plot_pdp(shap = p4_shap_static_dynamic_temporal,
+  #                        data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_static_dynamic_temporal_full',
+  #                        out_dir = "4_predict/out/temporal/dependence/RF_static_dynamic"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_min_static_dynamic_temporal_png,
+  #   plot_pdp(shap = p4_shap_min_static_dynamic_temporal,
+  #                        data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_min_static_dynamic_temporal_full',
+  #                        out_dir = "4_predict/out/temporal/dependence/RF_min_static_dynamic"),
+  #   format = "file",
+  #   repository = 'local'
+  # ),
+  # tar_target(
+  #   p4_pdp_dynamic_temporal_png,
+  #   plot_pdp(shap = p4_shap_dynamic_temporal,
+  #                        data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+  #                          select(-mean_value) %>% 
+  #                          as.data.frame(),
+  #                        model_name = 'RF_dynamic_temporal_full',
+  #                        out_dir = "4_predict/out/temporal/dependence/RF_dynamic"),
+  #   format = "file",
+  #   repository = 'local'
+  # )
 )
