@@ -229,7 +229,8 @@ train_models_grid <- function(brf_output, v_folds, ncores,
                            trees = tune()) %>% 
     set_engine(engine = "ranger", 
                verbose = FALSE, importance = 'impurity', 
-               probability = FALSE, num.threads = threads)
+               probability = FALSE, num.threads = threads,
+               keep.inbag = TRUE)
   
   #Set parameter ranges
   params <- parameters(list(mtry = mtry() %>% range_set(range_mtry), 
