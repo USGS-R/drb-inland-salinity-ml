@@ -29,6 +29,7 @@ source("1_fetch.R")
 source("2_process.R")
 source("3_visualize.R")
 source("4_predict.R")
+source("4_predict_plots.R")
 
 dir.create("1_fetch/out/", showWarnings = FALSE)
 dir.create("2_process/out/", showWarnings = FALSE)
