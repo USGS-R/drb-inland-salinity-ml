@@ -431,23 +431,23 @@ compute_shap <- function(model, data, ncores, nsim){
   #' 
   #' @return Returns a dataframe of SHAP values
 
-  cl <- parallel::makeCluster(ncores)
+  cl <- parallel::makeCluster(ncores, outfile = "")
   doParallel::registerDoParallel(cl)
   parallel::clusterExport(cl = cl, varlist = c('nsim'), 
                           envir = environment())
   parallel::clusterExport(cl = cl, varlist = c('predict_shap_data'))
-  parallel::clusterEvalQ(cl = cl, expr = library(tidyverse))
-  parallel::clusterEvalQ(cl = cl, expr = library(tidymodels))
-  parallel::clusterEvalQ(cl = cl, expr = library(foreach))
-  parallel::clusterEvalQ(cl = cl, expr = library(doParallel))
   
   shap <- fastshap::explain(object = model, 
                             X = data, 
                             pred_wrapper = predict_shap_data, 
                             nsim = nsim, 
-                            .parallel = TRUE) %>% 
-    #suppressing <anonymous>: ... may be used in an incorrect context: ‘.fun(piece, ...)’
-    suppressWarnings()
+                            .parallel = TRUE, 
+                            .inform = TRUE,
+                            .paropts = list(.packages = c('tidyverse', 'tidymodels')))
+  
+  #For some reason, I cannot suppress the warnings of this function. It throws
+  #an error with that tacked on. So, I'm allowing this warning to appear for now.
+  #suppressing <anonymous>: ... may be used in an incorrect context: ‘.fun(piece, ...)’
   
   parallel::stopCluster(cl)
   
@@ -469,4 +469,27 @@ predict_shap_data <- function(object, newdata){
     pull(.pred)
   
   return(preds)
+}
+
+
+get_maxcores_by_RAM <- function(RAM_per_core){
+  #' 
+  #' @description determines the maximum number of cores to use in a parallel
+  #' job based on the available RAM. Developed on Linux machines.
+  #'
+  #' @param RAM_per_core RAM in GB that is needed per core. Estimated from a 
+  #' test run.
+  #' 
+  #' @return Returns the maximum cores as an integer
+  
+  RAM_avail <- system2('free', args='-m', stdout=TRUE)
+  RAM_avail <- strsplit(RAM_avail[2], " +")[[1]][4] %>%
+    as.numeric()
+  
+  #Convert to GB
+  RAM_avail <- RAM_avail/2^10
+  
+  maxcores <- floor(RAM_avail / RAM_per_core)
+  
+  return(maxcores)
 }

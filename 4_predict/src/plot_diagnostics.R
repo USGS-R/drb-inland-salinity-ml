@@ -381,8 +381,8 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
       }}+
       theme_bw() +
       xlab('Date') +
-      ylab(expression(paste0('Specific Conductivity (', mu, 'S/cm)'))) + 
-      ggtitle(paste0(model_name, ', reach ', reaches[i])) +
+      ylab(expression(paste('Specific Conductivity (', mu, 'S/cm)', sep = ''))) + 
+      ggtitle(model_name, subtitle = paste0('reach ', reaches[i])) +
       scale_color_discrete('', labels = plt_labs)
     
     #spatial location indicator
@@ -431,7 +431,7 @@ plot_shap_global <- function(shap, model_name, out_dir){
   return(fileout)
 }
 
-plot_shap_dependence <- function(shap, data, model_name, out_dir){
+plot_shap_dependence <- function(shap, data, model_name, out_dir, ncores = 1){
   #' 
   #' @description Creates SHAP dependence plots for each feature
   #'
@@ -440,16 +440,19 @@ plot_shap_dependence <- function(shap, data, model_name, out_dir){
   #' @param model_name character string describing the model. Will be added 
   #' to the end of the filename before the file extension, and also be the plot title.
   #' @param out_dir output directory
+  #' @param ncores number of cores to use for parallel plot creation
   #'
   #' @return Returns the paths to png files of SHAP dependence plots for each feature
   
   #number of features to make plots for
   n_plts <- ncol(shap)
   
-  filesout <- vector('character', length = n_plts)
+  cl = parallel::makeCluster(ncores)
+  doParallel::registerDoParallel(cl)
   
-  for(i in 1:length(filesout)){
-    filesout[i] <- file.path(out_dir, 
+  filesout <- foreach(i = 1:n_plts, .inorder = TRUE, .combine = c, 
+                      .packages = c('ggplot2', 'fastshap')) %dopar% {
+    fileout <- file.path(out_dir, 
                              paste0('SHAP_dependence_', colnames(shap)[i], '_',
                                     model_name, '.png'))
     
@@ -458,8 +461,12 @@ plot_shap_dependence <- function(shap, data, model_name, out_dir){
                   alpha = 0.5, smooth = TRUE, smooth_color = "black") +
       ggtitle(model_name)
     
-    ggsave(filename = filesout[i], plot = p, device = 'png')
+    ggsave(filename = fileout, plot = p, device = 'png')
+    
+    fileout
   }
+  
+  parallel::stopCluster(cl)
   
   return(filesout)
 }
@@ -483,11 +490,11 @@ plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir){
   ind_plt <- which(data$PRMS_segid == reach & data$Date == date)
   
   fileout <- file.path(out_dir, paste0('SHAP_individual_', model_name, 
-                                       '_reach', reach, 
-                                       '_date', date, '.png'))
+                                       '_reach-', reach, 
+                                       '_date-', date, '.png'))
   
   p1 <- autoplot(shap[ind_plt,], type = "contribution") +
-    ggtitle(paste0(model_name, ', reach ', reach,
+    ggtitle(model_name, subtitle = paste0('reach ', reach,
                    ', Date ', date))
   
   ggsave(filename = fileout, plot = p1, device = 'png')
