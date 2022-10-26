@@ -1436,11 +1436,17 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_static,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
-      compute_shap(model = p4_train_RF_static$workflow,
-                   data = p4_train_RF_static$best_fit$splits[[1]]$data %>%
-                     select(-mean_value) %>%
-                     as.data.frame(),
+      #Correct workflow problem
+      wf <- extract_workflow(p4_train_RF_static$best_fit)
+      data <- p4_train_RF_static$best_fit$splits[[1]]$data %>%
+        select(-mean_value) %>%
+        as.data.frame()
+      data$Date <- p4_Boruta_static$input_data$split$data$Date
+      data$PRMS_segid <- p4_Boruta_static$input_data$split$data$PRMS_segid
+      
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
+      compute_shap(model = wf,
+                   data = data,
                    ncores = min(maxcores, SHAP_cores),
                    nsim = SHAP_nsim)
     }
@@ -1448,7 +1454,7 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_min_static,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
     compute_shap(model = p4_train_RF_min_static$workflow,
                  data = p4_train_RF_min_static$best_fit$splits[[1]]$data %>%
                    select(-mean_value) %>%
@@ -1457,10 +1463,19 @@ p4_plot_targets_list <- list(
                  nsim = SHAP_nsim)
     }
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_10,
+    generate_credentials(dummy_var = p4_shap_min_static),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   tar_target(
     p4_shap_static_dynamic,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
     compute_shap(model = p4_train_RF_static_dynamic$workflow,
                  data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>%
                    select(-mean_value) %>%
@@ -1472,7 +1487,7 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_min_static_dynamic,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
     compute_shap(model = p4_train_RF_min_static_dynamic$workflow,
                  data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>%
                    select(-mean_value) %>%
@@ -1481,10 +1496,19 @@ p4_plot_targets_list <- list(
                  nsim = SHAP_nsim)
     }
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_11,
+    generate_credentials(dummy_var = p4_shap_min_static_dynamic),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   tar_target(
     p4_shap_dynamic,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
     compute_shap(model = p4_train_RF_dynamic$workflow,
                  data = p4_train_RF_dynamic$best_fit$splits[[1]]$data %>%
                    select(-mean_value) %>%
@@ -1496,7 +1520,7 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_static_dynamic_temporal,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
     compute_shap(model = p4_train_RF_static_dynamic_temporal$workflow,
                  data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
                    select(-mean_value) %>%
@@ -1505,10 +1529,19 @@ p4_plot_targets_list <- list(
                  nsim = SHAP_nsim)
     }
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_12,
+    generate_credentials(dummy_var = p4_shap_static_dynamic_temporal),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   tar_target(
     p4_shap_min_static_dynamic_temporal,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
       compute_shap(model = p4_train_RF_min_static_dynamic_temporal$workflow,
                    data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
                      select(-mean_value) %>%
@@ -1520,7 +1553,7 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_dynamic_temporal,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM)
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
     compute_shap(model = p4_train_RF_dynamic_temporal$workflow,
                  data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>%
                    select(-mean_value) %>%
@@ -1528,6 +1561,14 @@ p4_plot_targets_list <- list(
                  ncores = min(maxcores, SHAP_cores),
                  nsim = SHAP_nsim)
     }
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_13,
+    generate_credentials(dummy_var = p4_shap_dynamic_temporal),
+    deployment = 'main',
+    cue = tar_cue('always')
   ),
   
   
@@ -1609,13 +1650,20 @@ p4_plot_targets_list <- list(
   #shap dependence plots
   tar_target(
     p4_shap_dependence_static_png,
-    plot_shap_dependence(shap = p4_shap_static,
-                         data = p4_train_RF_static$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
-                           as.data.frame(),
-                     model_name = 'RF_static_full',
-                     out_dir = "4_predict/out/random/shap/RF_static",
-                     ncores = SHAP_cores),
+    {
+      #Correct workflow problem
+      data <- p4_train_RF_static$best_fit$splits[[1]]$data %>%
+        select(-mean_value) %>%
+        as.data.frame()
+      data$Date <- p4_Boruta_static$input_data$split$data$Date
+      data$PRMS_segid <- p4_Boruta_static$input_data$split$data$PRMS_segid
+      
+      plot_shap_dependence(shap = p4_shap_static,
+                           data = data,
+                           model_name = 'RF_static_full',
+                           out_dir = "4_predict/out/random/shap/RF_static",
+                           ncores = SHAP_cores)
+    },
     format = "file",
     repository = 'local'
   ),

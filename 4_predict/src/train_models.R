@@ -473,22 +473,26 @@ predict_shap_data <- function(object, newdata){
 }
 
 
-get_maxcores_by_RAM <- function(RAM_per_core){
+get_maxcores_by_RAM <- function(RAM_per_core, RAM_avail = NULL){
   #' 
   #' @description determines the maximum number of cores to use in a parallel
   #' job based on the available RAM. Developed on Linux machines.
   #'
   #' @param RAM_per_core RAM in GB that is needed per core. Estimated from a 
   #' test run.
+  #' @param RAM_avail optional specification of available RAM in GB. If not provided,
+  #' then an estimate will be made by detecting available RAM.
   #' 
   #' @return Returns the maximum cores as an integer
   
-  RAM_avail <- system2('free', args='-m', stdout=TRUE)
-  RAM_avail <- strsplit(RAM_avail[2], " +")[[1]][4] %>%
-    as.numeric()
-  
-  #Convert to GB
-  RAM_avail <- RAM_avail/2^10
+  if(is.null(RAM_avail)){
+    RAM_avail <- system2('free', args='-m', stdout=TRUE)
+    RAM_avail <- strsplit(RAM_avail[2], " +")[[1]][4] %>%
+      as.numeric()
+    
+    #Convert to GB
+    RAM_avail <- RAM_avail/2^10
+  }
   
   maxcores <- floor(RAM_avail / RAM_per_core)
   

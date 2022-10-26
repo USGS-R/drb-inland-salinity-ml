@@ -248,7 +248,8 @@ cv_folds <- 10
 
 #SHAP
 SHAP_nsim <- 10
-SHAP_RAM <- 7
+SHAP_RAM <- 9
+RAM_set <- 180
 SHAP_cores <- 35
 
 # Return the complete list of targets
