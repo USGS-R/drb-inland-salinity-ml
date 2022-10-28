@@ -433,7 +433,7 @@ plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
   fileout <- file.path(out_dir, 
                        paste0('SHAP_global_', model_name, '.png'))
   
-  p1 <- fastshap::autoplot(shap, num_features = num_features) +
+  p1 <- autoplot(shap, type = "importance", num_features = num_features) +
     ggtitle(model_name) + 
     theme(axis.text.y = element_text(size = 5))
   
@@ -467,7 +467,7 @@ plot_shap_dependence <- function(shap, data, model_name, out_dir, ncores = 1){
                              paste0('SHAP_dependence_', colnames(shap)[i], '_',
                                     model_name, '.png'))
     
-    p <- fastshap::autoplot(shap, type = "dependence", feature = colnames(shap)[i], 
+    p <- autoplot(shap, type = "dependence", feature = colnames(shap)[i], 
                   X = data, 
                   alpha = 0.5, smooth = TRUE, smooth_color = "black") +
       ggtitle(model_name)
@@ -505,7 +505,7 @@ plot_shap_individual <- function(shap, data, reach, date, model_name, out_dir,
                                        '_reach-', reach, 
                                        '_date-', date, '.png'))
   
-  p1 <- fastshap::autoplot(shap[ind_plt,], type = "contribution", num_features = num_features) +
+  p1 <- autoplot(shap[ind_plt,], type = "contribution", num_features = num_features) +
     ggtitle(model_name, subtitle = paste0('reach ', reach,
                    ', Date ', date)) +
     theme(axis.text.y = element_text(size = 5))
