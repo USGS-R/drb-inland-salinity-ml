@@ -35,14 +35,13 @@ plot_hyperparam_opt_results_RF <- function(opt_result, model_name, out_dir){
   
   p1 <- opt_result %>% 
     tune::collect_metrics() %>%
-    #mtry specifies the number of attributes to randomly sample at each split in the tree
-    #min_n is the minimum node size
     ggplot(aes(mtry, mean, color = min_n)) +
     geom_line(size = 1.5, alpha = 0.6) +
     geom_point(size = 2) +
     facet_wrap(~ .metric, scales = "free", nrow = 2) +
     scale_color_viridis_c(option = "plasma", begin = .9, end = 0) +
-    ggtitle(model_name)
+    ggtitle(model_name, 
+            subtitle = 'min_n: minimum node size\nmtry: number of attributes to randomly sample in each tree split')
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
@@ -92,8 +91,8 @@ plot_vip <- function(RF_model, model_name, num_features, out_dir){
   p1 <- vip::vip(RF_model %>% extract_fit_parsnip(), 
             num_features = num_features, aesthetics = list(width = 0.6)) +
     ggtitle(model_name) +
-    theme(axis.title.x = element_text(size = 18),
-          axis.text.y = element_text(size = 12))
+    theme(axis.title.x = element_text(size = 16),
+          axis.text.y = element_text(size = 10))
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
@@ -182,7 +181,7 @@ plot_metric_boxplot <- function(data_split, model_name, pred_var, out_dir){
   boxplot(data_split$training[[pred_var]],
           data_split$testing[[pred_var]], 
           names = c('Training', 'Testing'),
-          ylab = expression(paste('Specific Conductivity (', mu, 'S/cm)', sep = ''))
+          ylab = expression(paste('Specific Conductivity (', mu, 'S/cm)', sep = '')),
           main = paste0('Model: ', model_name),
           cex.main = 0.8, log = 'y')
   dev.off()
@@ -221,7 +220,7 @@ barplot_compare_RF <- function(mod, model_name, pred_var, perf_metric, out_dir){
     geom_errorbar(aes(ymin = perf - 2*sd, ymax = perf + 2*sd), width = .2,
                   position = position_dodge(0.6)) +
     xlab('') +
-    ylab(expression(paste(perf_metric, ' (', mu, 'S/cm)', sep = ''))) + 
+    ylab(bquote(.(perf_metric) ~ (mu * S/cm))) + 
     scale_x_discrete(limits = model_name) +
     theme(axis.title.y = element_text(size = 14),
           axis.text.x = element_text(size = 14)) +
@@ -288,7 +287,7 @@ plot_barplot <- function(attr_data, file_path,
             axis.title = element_text(size = 12)) +
       ggtitle(model_name) +
       ylim(plt_lim) +
-      ylab(expression(paste(cols[2], ' (', mu, 'S/cm)', sep = ''))) + 
+      ylab(bquote(.(cols[2]) ~ (mu * S/cm))) + 
       if (plot_month_names){
         if(!is.null(label_sequence)){
           scale_x_continuous(breaks = dat_subset[[1]][label_sequence], 
@@ -405,8 +404,8 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
               mapping = aes(color='red'),
               size = 1) + 
       theme_bw() + 
-      theme(plot.margin = unit(c(0,0,0,2), "cm"),
-            axis.text = element_text(size = 6),
+      theme(plot.margin = unit(c(0,0,0,0), "cm"),
+            axis.text = element_text(size = 4),
             legend.position = "none")
     
     # create combined plot showing timeseries plot and spatial location
