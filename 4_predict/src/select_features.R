@@ -1,4 +1,5 @@
-drop_high_corr_attrs <- function(features, drop_columns = NULL, drop_exact = NULL,
+drop_high_corr_attrs <- function(features, drop_columns_contains = NULL, 
+                                 drop_columns_select = NULL,
                                  dynamic_contains,
                                  threshold_corr, first_drop_var_prefix = NULL,
                                  cor_method){
@@ -7,9 +8,9 @@ drop_high_corr_attrs <- function(features, drop_columns = NULL, drop_exact = NUL
   #' highly correlated with other attributes. 
   #'
   #' @param features table of features (columns) for each prediction point (rows).
-  #' @param drop_columns character vector of column names to remove from features. 
+  #' @param drop_columns_contains character vector of column names to remove from features. 
   #' This is passed to dplyr::contains()
-  #' @param drop_exact character vector of exact column names to drop.
+  #' @param drop_columns_select character vector of exact column names to remove from features.
   #' This is passed to dplyr::select()
   #' @param dynamic_contains character vector of column name formats that indicate
   #' an attribute is dynamic. This is passed to dplyr::contains()
@@ -22,11 +23,15 @@ drop_high_corr_attrs <- function(features, drop_columns = NULL, drop_exact = NUL
   #' 
   #' @return character vector of features that are retained
   
-  if (!is.null(drop_columns)){
-    features <- select(features, !contains(drop_columns))
+  if (!is.null(drop_columns_contains)){
+    print(paste('Removing feature:', select(features, contains(drop_columns_contains)) %>% 
+              colnames()))
+    features <- select(features, !contains(drop_columns_contains))
   }
-  if (!is.null(drop_exact)){
-    features <- select(features, !all_of(drop_exact))
+  if (!is.null(drop_columns_select)){
+    print(paste('Removing feature:', select(features, all_of(drop_columns_select)) %>% 
+                  colnames()))
+    features <- select(features, !all_of(drop_columns_select))
   }
   
   #Drop rows with NAs
@@ -60,10 +65,13 @@ drop_high_corr_attrs <- function(features, drop_columns = NULL, drop_exact = NUL
     high_corr_features <- get_high_corr_features(features, cor_method, threshold_corr)
   }
   
-  #Method used to manually check hydrologic properties for preferential inclusion/removal
+  #Methods used to manually check hydrologic properties for preferential inclusion/removal
   #sort(unique(rownames(high_corr_features)))
+  #get names of features that are highly correlated with selected feature
   #colnames(features[,as.numeric(high_corr_features[rownames(high_corr_features) == 'CAT_LSTFZ6190_area_wtd',2])])
+  #look at scatterplot
   #plot(p2_all_attr_SC_obs$TOT_MAJOR_0, p2_all_attr_SC_obs$TOT_BASIN_AREA, log = 'y')
+  #see what the correlation is
   #abs(cor(p2_all_attr_SC_obs$sph_0_1days_mean, p2_all_attr_SC_obs$sph_0, method = cor_method))
   
   #Automatic removal of all other highly correlated features
@@ -213,13 +221,12 @@ convert_to_days <- function(string_vec, pattern){
 
 get_high_corr_features <- function(features, cor_method, threshold_corr){
   #' 
-  #' @description Function to convert a string from #days #months, #weeks, #years to 
-  #' equivalent number of days 
+  #' @description Function to get the indices of highly correlated features.
   #'
   #' @param features table of features (columns) for each prediction point (rows).
+  #' @param cor_method correlation method for cor function.
   #' @param threshold_corr correlation threshold used to drop attributes.
   #' Absolute value of correlation is used.
-  #' @param cor_method correlation method for cor function. 
   #' 
   #' @return matrix of features that have correlation greater than threshold_corr.
   #' row and column indicies listed in the matrix correspond to the columns in features.
