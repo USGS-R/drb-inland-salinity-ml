@@ -10,12 +10,15 @@ options(tidyverse.quiet = TRUE,
         #Use multiprocess on Windows, multicore in container (Linux).
         clustermq.scheduler = "multicore")
 library(clustermq)
+library(tidyverse)
 
 tar_option_set(packages = c("tidyverse", "lubridate",
                             "rmarkdown","dataRetrieval",
                             "knitr","leaflet","sf",
                             "purrr", "sbtools", "terra",
-                            "patchwork", "glue",'nhdplusTools'),
+                            "patchwork", "glue", "nhdplusTools",
+                            "Boruta", "ranger", "vip", "tidymodels",
+                            "doParallel", "fastshap", "pdp"),
                resources = tar_resources(
                  aws = tar_resources_aws(bucket = "drb-inland-salinity")),
                repository = "aws",
@@ -26,6 +29,8 @@ tar_option_set(packages = c("tidyverse", "lubridate",
 source("1_fetch.R")
 source("2_process.R")
 source("3_visualize.R")
+source("4_predict.R")
+source("4_predict_plots.R")
 
 dir.create("1_fetch/out/", showWarnings = FALSE)
 dir.create("2_process/out/", showWarnings = FALSE)
@@ -35,6 +40,34 @@ dir.create("3_visualize/out/daily_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/hourly_timeseries_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/nhdv2_attr_png/",showWarnings = FALSE)
 dir.create("3_visualize/out/nhdv2_attr_png/refined",showWarnings = FALSE)
+#Predict phase:
+# create directories for each of the following combinations of data splits,
+# feature sets and results:
+predict_dir <- "4_predict/out"
+train_test_other <- c("vip","hypopt")
+train_test_splits <- c("temporal","random")
+train_test_features <- c("RF_static", "RF_min_static", "RF_static_dynamic", 
+                         "RF_min_static_dynamic","RF_dynamic")
+train_test_res <- c("pred_obs","spatial_res","monthly_res","annual_res","temporal_res")
+rf_xai_plot_types <- c("shap","dependence") 
+rf_xai_dep_options <- c("pdp","ice")
+#directory paths
+p4_dirs <- bind_rows(
+  expand.grid(predict_dir, train_test_splits, train_test_res, train_test_features),
+  expand.grid(predict_dir, train_test_splits, train_test_other),
+  expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "shap"], 
+              train_test_features),
+  expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "dependence"], 
+              train_test_features, rf_xai_dep_options)) %>%
+  mutate(file_path = case_when(is.na(Var4) ~ file.path(Var1, Var2, Var3),
+                               is.na(Var5) ~ file.path(Var1, Var2, Var3, Var4),
+                               TRUE ~ file.path(Var1, Var2, Var3, Var4, Var5))) %>%
+  pull(file_path)
+# create the directories
+for(i in seq_along(p4_dirs)){
+  dir.create(p4_dirs[i], recursive = TRUE, showWarnings = FALSE)
+}
+
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
@@ -133,5 +166,24 @@ NADP_sb_id <- '57e2ac2fe4b0908250045981'
 ## FORESCE list of FORESCE years
 FORESCE_years <- c('1940', '1950', '1960', '1970', '1980', '1990', '2000')
 
+
+#Boruta Random Forest Parameters
+#maximum number of runs for Boruta feature screening algorithm
+Boruta_runs <- 300
+#number of trees
+Boruta_trees <- 500
+#number of cores
+Boruta_cores <- 70
+RF_cores <- 60
+#Cross validation folds
+cv_folds <- 10
+
+#SHAP
+SHAP_nsim <- 10
+SHAP_RAM <- 9
+RAM_set <- 180
+SHAP_cores <- 35
+
 # Return the complete list of targets
-c(p1_targets_list, p2_targets_list, p3_targets_list)
+c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list, 
+  p4_plot_targets_list)

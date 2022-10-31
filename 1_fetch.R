@@ -10,6 +10,7 @@ source("1_fetch/src/fetch_sb_data.R")
 source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
+source("1_fetch/src/generate_credentials.R")
 
 # tar_cue for downloading NWIS sites and data.
 # change to 'thorough' to download, and 'never' to prevent downloading.
@@ -30,17 +31,7 @@ p1_targets_list <- list(
   # AWS credentials target
   tar_target(
     p1_aws_credentials_1,
-    {if (!file.exists('~/saml2aws-files/pass.txt')){
-      stop('please add pass.txt file to ~/saml2aws-files. See README.')
-     }
-     pass <- read_table('~/saml2aws-files/pass.txt', col_names = FALSE, show_col_types = FALSE) %>%
-       as.character()
-     system(paste0("~/saml2aws-files/saml2aws login --skip-prompt --role='arn:aws:iam::807615458658:role/adfs-wma-developer' --profile='dev' --force --session-duration=28800 --credentials-file='./credentials' --quiet --password='", pass, "'")) %>%
-       suppressWarnings()
-     rm(pass)
-     #return 0
-     0
-    },
+    generate_credentials(),
     deployment = 'main',
     cue = tar_cue('always'),
     priority = 0.99 # default priority (0.8) is set globally in _targets.R
