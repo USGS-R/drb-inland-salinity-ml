@@ -545,6 +545,9 @@ p2_targets_list <- list(
     p2_all_attr_SC_obs,
     left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid', 'Date')) %>%
       rename(PRMS_segid = subsegid) %>%
-      filter(Date >= earliest_date)
+      filter(Date >= earliest_date) %>%
+      #remove bad sample (explained here https://github.com/USGS-R/drb-inland-salinity-ml/issues/190)
+      #This filter works to remove this point if mean_value is NA or > 25000 for this Date and PRMS_segid.
+      filter(!(Date == '1999-03-30' & PRMS_segid == '111_1' & mean_value > 25000))
   )  
 )
