@@ -94,7 +94,9 @@ p1_targets_list <- list(
   tar_target(
     p1_daily_data,
     get_daily_nwis_data(p1_nwis_sites_daily, parameter, stat_cd_select,
-                        start_date = earliest_date, end_date = latest_date),
+                        start_date = earliest_date, end_date = latest_date) %>%
+      #add column to identify the data source as daily
+      mutate(data_type = 'd'),
     pattern = map(p1_nwis_sites_daily),
     deployment = 'main',
     cue = tar_cue(mode = NWIS_cue),

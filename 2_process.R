@@ -50,13 +50,23 @@ p2_targets_list <- list(
   tar_target(
     p2_inst_data_daily,
     aggregate_data_to_daily(p1_inst_data,p1_daily_data, min_daily_coverage=0.5, 
-                            output_tz="America/New_York")
+                            output_tz="America/New_York") %>%
+      #add column to identify the data source as continuous
+      mutate(data_type = 'u')
   ),
   
   # Combine 1) daily SC data and 2) instantaneous SC data that has been aggregated to daily 
   tar_target(
     p2_daily_combined,
-    bind_rows(p1_daily_data, p2_inst_data_daily)
+    {
+      #handling p1_daily_data data_type column here as well because of our
+      #current tar_cue = never for that target.
+      #add column to identify the data source as daily
+      daily_only <- p1_daily_data
+      daily_only$data_type <- 'd'
+      
+      bind_rows(daily_only, p2_inst_data_daily)
+    }
   ),
   
   # Create a list of unique site id's with SC data  
@@ -390,7 +400,9 @@ p2_targets_list <- list(
   # Filter discrete samples from sites thought to be influenced by tidal extent
   tar_target(
     p2_wqp_SC_filtered,
-    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal)
+    subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal) %>%
+      #add data source type as daily estimate
+      mutate(data_type = 'd')
   ),
   
   # Filter SC site list
