@@ -35,8 +35,7 @@ combine_wq_data <- function(wqp_data, nwis_data){
               Value_Max_cd = NA_character_,
               Value_Min = min(resultVal2, na.rm = TRUE),
               Value_Min_cd = NA_character_,
-              #using max to select 'u', which is greater than 'd'.
-              data_type = max(data_type),
+              data_type = unique(data_type),
               .groups = "keep") %>%
     ungroup() %>%
     # pare down columns of interest and specify the data source

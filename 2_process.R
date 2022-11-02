@@ -59,11 +59,11 @@ p2_targets_list <- list(
   tar_target(
     p2_daily_combined,
     {
-      #handling p1_daily_data data_type column here as well because of our
-      #current tar_cue = never for that target.
-      #add column to identify the data source as daily
+      #handling p1_daily_data data_type column here because of our
+      #current tar_cue = never for p1_daily_data.
+      #add column to identify the data source as continuous
       daily_only <- p1_daily_data
-      daily_only$data_type <- 'd'
+      daily_only$data_type <- 'u'
       
       bind_rows(daily_only, p2_inst_data_daily)
     }
@@ -401,8 +401,13 @@ p2_targets_list <- list(
   tar_target(
     p2_wqp_SC_filtered,
     subset_wqp_nontidal(p2_wqp_SC_data,p2_sites_w_segs,mainstem_reaches_tidal) %>%
-      #add data source type as daily estimate
-      mutate(data_type = 'd')
+      #add data source type as discrete estimate
+      mutate(data_type = 'd') %>%
+      #remove bad sample (explained here https://github.com/USGS-R/drb-inland-salinity-ml/issues/190)
+      #only remove if equal to the exact value
+      filter(!(ActivityStartDate == '1999-03-30' & 
+                 MonitoringLocationIdentifier == 'USGS-01421618' & 
+                 resultVal2 == 30200))
   ),
   
   # Filter SC site list
@@ -557,9 +562,6 @@ p2_targets_list <- list(
     p2_all_attr_SC_obs,
     left_join(p2_SC_observations, p2_all_attr, by = c('subsegid' = 'PRMS_segid', 'Date')) %>%
       rename(PRMS_segid = subsegid) %>%
-      filter(Date >= earliest_date) %>%
-      #remove bad sample (explained here https://github.com/USGS-R/drb-inland-salinity-ml/issues/190)
-      #This filter works to remove this point if mean_value is NA or > 25000 for this Date and PRMS_segid.
-      filter(!(Date == '1999-03-30' & PRMS_segid == '111_1' & mean_value > 25000))
-  )  
+      filter(Date >= earliest_date)
+  )
 )
