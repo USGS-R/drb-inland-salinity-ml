@@ -35,11 +35,12 @@ combine_wq_data <- function(wqp_data, nwis_data){
               Value_Max_cd = NA_character_,
               Value_Min = min(resultVal2, na.rm = TRUE),
               Value_Min_cd = NA_character_,
+              data_type = unique(data_type),
               .groups = "keep") %>%
     ungroup() %>%
     # pare down columns of interest and specify the data source
     select(agency_cd, site_no, Date, Parameter, Value, Value_cd, 
-           Value_Max, Value_Max_cd, Value_Min, Value_Min_cd) %>%
+           Value_Max, Value_Max_cd, Value_Min, Value_Min_cd, data_type) %>%
     mutate(dat_src = "WQP")
   
   # Combine wqp_data and nwis_data into a single data frame
@@ -122,6 +123,8 @@ aggregate_observations <- function(wqp_data, nwis_data, sites_w_segs,
               sd_value = round(sd(Value, na.rm = TRUE), 2),
               n_value = length(!is.na(Value)),
               site_ids = paste0(unique(site_no), collapse = ","),
+              #using max to select 'u', which is greater than 'd'.
+              data_type = max(data_type),
               .groups = "keep") %>%
     # suppress any warnings related to taking min/max summaries
     # when no non-NA data exist for a reach-date; in these cases, 
@@ -132,7 +135,8 @@ aggregate_observations <- function(wqp_data, nwis_data, sites_w_segs,
   
   # Format aggregated data and replace any values of Inf with NA
   vars_to_keep <- c("subsegid","lat","lon","Date","mean_value","min_value",
-                    "max_value","n_value","sd_value","cv_value","site_ids")
+                    "max_value","n_value","sd_value","cv_value","site_ids",
+                    "data_type")
   obs_data_aggr_out <- obs_data_aggr %>%
     select(any_of(vars_to_keep)) %>%
     mutate(across(where(is.numeric), ~na_if(., "Inf"))) 
@@ -140,4 +144,3 @@ aggregate_observations <- function(wqp_data, nwis_data, sites_w_segs,
   return(obs_data_aggr_out)
   
 }
-
