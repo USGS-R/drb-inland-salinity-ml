@@ -1,5 +1,8 @@
 # drb-inland-salinity-ml
-This repository contains a pipeline for data gathering, processing, modeling, and visualizing results for machine learning models that predict salinity in inland reaches of the Delaware River Basin (DRB).
+This repository contains a pipeline for data gathering, processing, modeling, and visualizing results for machine learning models that predict salinity in inland reaches of the Delaware River Basin (DRB). This pipeline is built with targets version 0.11.0 and may not work with earlier versions.
+
+# New Users and Reviewers
+Follow the steps below to build the pipeline with S3 within the singularity container on Tallgrass. For reviews, the code developer should provide the directory of the code to review, the name of the container used, and the slurm script to run the targets or to inspect the generated data.
 
 # Building the pipeline with S3 (default)
 The default behavior is to build the pipeline with S3 as a shared data repository. To build the pipeline with the S3 storage, you will need to provide AWS credentials. We have been doing this using the [`saml2aws` tool](https://github.com/Versent/saml2aws). See also @amsnyder's [post on this](https://github.com/amsnyder/s3_demo/blob/main/usgs_access.md). 
