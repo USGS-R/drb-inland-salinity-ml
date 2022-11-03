@@ -416,6 +416,20 @@ p1_targets_list <- list(
   tar_target(
     p1_gridmet,
     read_csv(p1_gridmet_csv, show_col_types = FALSE)
+  ),
+  
+  # Reservoirs shapefile for plotting locations on maps
+  # list of dams (points) and reservoirs (polygons).
+  # dams includes the reservoir outlet points.
+  tar_target(
+    p1_reservoirs_rds,
+    "1_fetch/in/filtered_dams_reservoirs.rds",
+    format = "file",
+    repository = "local"
+  ),
+  tar_target(
+    p1_reservoirs_sf,
+    readRDS(p1_reservoirs_rds)
   )
 
 )
