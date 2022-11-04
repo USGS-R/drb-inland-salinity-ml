@@ -20,6 +20,7 @@
 # descended from it (e.g. rocker/geospatial).                                  #
 #                                                                              #
 # https://www.rocker-project.org/use/singularity/                              #
+# https://rocker-project.org/use/singularity.html#slurm-job-script             #
 #                                                                              #
 # RStudio Server is an evolving product, and if new versions break our setup,  #
 # then this documentation is a good place to look for what changes may be      #
@@ -54,7 +55,7 @@ cat > ${workdir}/rsession.sh <<END
 #!/bin/sh
 export OMP_NUM_THREADS=${SLURM_JOB_CPUS_PER_NODE}
 export R_LIBS_USER=${HOME}/R/rocker-rstudio/4.0
-exec rsession "\${@}"
+exec /usr/lib/rstudio-server/bin/rsession "\${@}"
 END
 
 chmod +x ${workdir}/rsession.sh
