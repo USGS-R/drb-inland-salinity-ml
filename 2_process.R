@@ -570,19 +570,19 @@ p2_targets_list <- list(
   tar_target(
     p2_all_attr_zarr,
     #Save only the attributes after correlation screening to cut down total saved
-    write_df_to_zarr(p2_all_attr %>% 
-                       select(PRMS_segid, Date, 
-                              all_of(p4_screened_attrs)), 
-                     index_cols = c("Date", "PRMS_segid"), 
+    write_df_to_zarr(p2_all_attr %>%
+                       select(PRMS_segid, Date,
+                              all_of(p4_screened_attrs)),
+                     index_cols = c("Date", "PRMS_segid"),
                      "2_process/out/drb_attrs_PRMS.zarr"),
     format = "file",
     repository = "local"
-  ),
+    ),
   tar_target(
     p2_SC_obs_zarr,
-    write_df_to_zarr(p2_all_attr_SC_obs %>% 
-                       select(PRMS_segid, Date, mean_value), 
-                     index_cols = c("Date", "PRMS_segid"), 
+    write_df_to_zarr(p2_all_attr_SC_obs %>%
+                       select(PRMS_segid, Date, mean_value),
+                     index_cols = c("Date", "PRMS_segid"),
                      "2_process/out/drb_SC_obs_PRMS.zarr"),
     format = "file",
     repository = "local"
