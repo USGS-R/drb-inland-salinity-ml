@@ -430,6 +430,25 @@ p1_targets_list <- list(
   tar_target(
     p1_reservoirs_sf,
     readRDS(p1_reservoirs_rds)
+  ),
+  
+  # Read in .rds file containing the DRB adjacency matrix, referenced to
+  # subseg_id (PRMS_segid). subseg_distance_matrix.rds was created as part
+  # of the delaware-model-prep pipeline and was downloaded on 11/3/2022.
+  # https://github.com/USGS-R/delaware-model-prep/blob/main/1_network.yml#L69
+  tar_target(
+    p1_drb_distance_matrix_rds,
+    "1_fetch/in/subseg_distance_matrix.rds",
+    format = "file",
+    repository = "local"
+  ),
+  tar_target(
+    p1_drb_distance_matrix,
+    readRDS(p1_drb_distance_matrix_rds)
+  ),
+  tar_target(
+    p1_drb_distance_matrix_updown,
+    p1_drb_distance_matrix$updown
   )
 )
   
