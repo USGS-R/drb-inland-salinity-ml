@@ -13,7 +13,7 @@ p4_targets_list <- list(
                                     #remove unused columns
                                     select(-c("mean_value", "PRMS_segid","Date", "min_value", 
                                               "max_value", "n_value", "sd_value", 
-                                              "cv_value", "site_ids")), 
+                                              "cv_value", "site_ids", "data_type")), 
                                   threshold_corr = 0.9,
                                   first_drop_var_prefix = 'TOT',
                                   drop_columns_contains = c(#Keeping shallow and deep soil info. Dropping middle 2.
