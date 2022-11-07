@@ -449,6 +449,18 @@ p1_targets_list <- list(
   tar_target(
     p1_drb_distance_matrix_updown,
     p1_drb_distance_matrix$updown
+  ),
+  #save as csv for use in Python
+  tar_target(
+    p1_drb_distance_matrix_updown_csv,
+    {
+      write.csv(x = as.data.frame(p1_drb_distance_matrix$updown), 
+              file = "1_fetch/out/drb_distance_matrix_updown.csv",
+              row.names = TRUE)
+      "1_fetch/out/drb_distance_matrix_updown.csv"
+    },
+    format = 'file', 
+    repository = 'local'
   )
 )
   
