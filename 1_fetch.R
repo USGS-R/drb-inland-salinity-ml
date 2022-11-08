@@ -11,6 +11,7 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 source("1_fetch/src/generate_credentials.R")
+source('2_process/src/write_data.R')
 
 # tar_cue for downloading NWIS sites and data.
 # change to 'thorough' to download, and 'never' to prevent downloading.
@@ -450,7 +451,7 @@ p1_targets_list <- list(
     p1_drb_distance_matrix_updown,
     p1_drb_distance_matrix$updown
   ),
-  #save as csv for use in Python
+  #save as csv for readability
   tar_target(
     p1_drb_distance_matrix_updown_csv,
     {
@@ -460,6 +461,14 @@ p1_targets_list <- list(
               row.names = TRUE)
       fileout
     },
+    format = 'file', 
+    repository = 'local'
+  ),
+  #save as npz for use in Python
+  tar_target(
+    p1_drb_distance_matrix_npz,
+    write_dist_matrix_npz(p1_drb_distance_matrix,
+                          "1_fetch/out/drb_distance_matrix.npz"),
     format = 'file', 
     repository = 'local'
   )
