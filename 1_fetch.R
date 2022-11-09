@@ -11,6 +11,7 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 source("1_fetch/src/generate_credentials.R")
+source('2_process/src/write_data.R')
 
 # tar_cue for downloading NWIS sites and data.
 # change to 'thorough' to download, and 'never' to prevent downloading.
@@ -430,6 +431,46 @@ p1_targets_list <- list(
   tar_target(
     p1_reservoirs_sf,
     readRDS(p1_reservoirs_rds)
+  ),
+  
+  # Read in .rds file containing the DRB adjacency matrix, referenced to
+  # subseg_id (PRMS_segid). subseg_distance_matrix.rds was created as part
+  # of the delaware-model-prep pipeline and was downloaded on 11/3/2022.
+  # https://github.com/USGS-R/delaware-model-prep/blob/main/1_network.yml#L69
+  tar_target(
+    p1_drb_distance_matrix_rds,
+    "1_fetch/in/subseg_distance_matrix.rds",
+    format = "file",
+    repository = "local"
+  ),
+  tar_target(
+    p1_drb_distance_matrix,
+    readRDS(p1_drb_distance_matrix_rds)
+  ),
+  tar_target(
+    p1_drb_distance_matrix_updown,
+    p1_drb_distance_matrix$updown
+  ),
+  #save as csv for readability
+  tar_target(
+    p1_drb_distance_matrix_updown_csv,
+    {
+      fileout <- "1_fetch/out/drb_distance_matrix_updown.csv"
+      write.csv(x = as.data.frame(p1_drb_distance_matrix$updown), 
+              file = fileout,
+              row.names = TRUE)
+      fileout
+    },
+    format = 'file', 
+    repository = 'local'
+  ),
+  #save as npz for use in Python
+  tar_target(
+    p1_drb_distance_matrix_npz,
+    write_dist_matrix_npz(p1_drb_distance_matrix,
+                          "1_fetch/out/drb_distance_matrix.npz"),
+    format = 'file', 
+    repository = 'local'
   )
 )
   
