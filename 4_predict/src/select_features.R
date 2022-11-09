@@ -60,6 +60,7 @@ drop_high_corr_attrs <- function(features, drop_columns_contains = NULL,
     
     #Drop all of the remove_vars
     features <- select(features, -{{remove_vars}})
+    print(paste('Removing feature:', remove_vars))
     
     #Correlation matrix for features without the remove_vars
     high_corr_features <- get_high_corr_features(features, cor_method, threshold_corr)
@@ -81,8 +82,8 @@ drop_high_corr_attrs <- function(features, drop_columns_contains = NULL,
   #Correlation matrix for only static features
   high_corr_features <- get_high_corr_features(static_check, cor_method, threshold_corr)
   while (nrow(high_corr_features) > 0){
-    #randomly select an attribute and remove all correlated attributes
-    tmp_col <- sample(unique(rownames(high_corr_features)), size = 1)
+    #select an attribute and remove all correlated attributes
+    tmp_col <- unique(rownames(high_corr_features))[1]
     tmp_rm <- static_check[, high_corr_features[rownames(high_corr_features) == tmp_col,2] %>%
                              as.numeric()] %>%
       colnames()
@@ -103,9 +104,9 @@ drop_high_corr_attrs <- function(features, drop_columns_contains = NULL,
   #In this loop, we'll retain all unique prefixes
   checked_vars <- vector('character', length = 0L)
   while (nrow(high_corr_features) > 0){
-    #randomly select an attribute and gather all of its correlated attributes
+    #select an attribute and gather all of its correlated attributes
     # all of these are candidates for removal
-    tmp_col <- sample(unique(rownames(high_corr_features)), size = 1)
+    tmp_col <- unique(rownames(high_corr_features))[1]
     tmp_rm <- dynamic_check_vars[, high_corr_features[rownames(high_corr_features) == tmp_col,2] %>%
                              as.numeric()] %>%
       colnames()
@@ -159,6 +160,7 @@ drop_high_corr_attrs <- function(features, drop_columns_contains = NULL,
         var_select <- tmp_rm_prefix[tmp_rm_prefix %in% colnames(dynamic_check)]
         if (length(var_select) > 0){
           dynamic_check <- dynamic_check %>% select(-{{var_select}})
+          print(paste('Removing feature:', var_select))
         }
       }
     }
