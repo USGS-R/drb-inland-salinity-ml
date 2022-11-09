@@ -566,6 +566,14 @@ p2_targets_list <- list(
       filter(Date >= earliest_date)
   ),
   
+  #Save a table indicating number of observations for each reach by data type
+  tar_target(
+    p2_reach_data_type,
+    summarize(group_by(p2_all_attr_SC_obs, PRMS_segid, data_type), 
+              data_type = unique(data_type),
+              n_obs = n())
+  ),
+  
   #Save attributes and observations as zarr file for use in river-dl
   tar_target(
     p2_all_attr_zarr,

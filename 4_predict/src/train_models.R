@@ -196,6 +196,50 @@ make_temporal_split <- function(attrs_df, train_prop){
   return(attrs_df)
 }
 
+make_spatial_split <- function(attrs, train_prop){
+  #' 
+  #' @description creates spatial splits for the training and testing dataset.
+  #'
+  #' @param attrs output from select_attrs. Must have "PRMS_segid" and 
+  #' "data_type" columns (characters). Splits are stratified by the data_type
+  #' (proportional amount of 'u' and 'd' reaches in each split)
+  #' @param train_prop proportion of the reaches to use as training. The number
+  #' of observations in repeated runs of this function can differ because each
+  #' reach has a different number of observations.
+  #' 
+  #' @return Returns attrs_df with an updated training and testing dataset based
+  #' on the data_type (spatial split).
+  
+  #get indicator for if a reach has any continuous data ('u') or not ('d')
+  reach_data_type <- summarize(group_by(attrs_df$input_data$split$data, PRMS_segid), 
+                               data_type = max(data_type))
+  
+  #get a split of the data by reach using strata sampling 
+  reach_split <- rsample::initial_split(data = reach_data_type,
+                                        prop = train_prop, 
+                                        strata = data_type)
+  
+  #get the attrs_df into a training an testing split based on the reach_split
+  training_reaches <- reach_split$data$PRMS_segid[reach_split$in_id]
+  
+  #training indices
+  ind_train <- which(attrs_df$input_data$split$data$PRMS_segid %in% training_reaches)
+  ind_test <- which(!(attrs_df$input_data$split$data$PRMS_segid %in% training_reaches))
+  
+  training <- attrs_df$input_data$split$data[ind_train,]
+  testing <- attrs_df$input_data$split$data[ind_test,]
+  
+  #get the split list into expected format
+  split <- reach_split
+  split$data <- attrs_df$input_data$split$data
+  split$in_id <- ind_train
+  split$out_id <- ind_test
+  
+  attrs_df$input_data <- list(split = split, training = training, testing = testing)
+  
+  return(attrs_df)
+}
+
 train_models_grid <- function(brf_output, v_folds, ncores,
                               range_mtry, range_minn, range_trees,
                               gridsize, id_cols, temporal = FALSE){
