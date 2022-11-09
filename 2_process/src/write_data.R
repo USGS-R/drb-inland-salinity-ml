@@ -38,7 +38,8 @@ write_dist_matrix_npz <- function(mat_list, out_npz) {
   #' @description This function uses {reticulate} to write an R list of matrices to a numpy data
   #' store (the file format river-dl currently takes). 
   #'
-  #' @param mat_list list of matrices. Columns and rows must all be the same order in each matrix
+  #' @param mat_list list of matrices. Columns and rows must all be the same order in each matrix.
+  #' The list must have 4 matrices that are named "complete", "downstream", "upstream", and "updown"
   #' @param out_npz character string indicating the name of the saved file, 
   #' including file path and extension.
   #'
@@ -53,7 +54,8 @@ write_dist_matrix_npz <- function(mat_list, out_npz) {
   py_nparr <- reticulate::py_dict(keys = names(mat_list), 
                                   values = mat_list)
   
-  np$savez_compressed(out_npz, complete = py_nparr$complete, 
+  np$savez_compressed(out_npz,
+                      complete = py_nparr$complete,
                       downstream = py_nparr$downstream,
                       upstream = py_nparr$upstream,
                       updown = py_nparr$updown, 
