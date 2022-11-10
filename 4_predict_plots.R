@@ -1436,17 +1436,17 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_static,
     {
-      #Correct workflow problem
-      wf <- extract_workflow(p4_train_RF_static$best_fit)
-      data <- p4_train_RF_static$best_fit$splits[[1]]$data %>%
-        select(-mean_value) %>%
-        as.data.frame()
-      data$Date <- p4_Boruta_static$input_data$split$data$Date
-      data$PRMS_segid <- p4_Boruta_static$input_data$split$data$PRMS_segid
-      
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-      compute_shap(model = wf,
-                   data = data,
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_static$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_static$workflow,
+                   data = p4_train_RF_static$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
                    nsim = SHAP_nsim)
     }
@@ -1455,15 +1455,21 @@ p4_plot_targets_list <- list(
     p4_shap_min_static,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-    compute_shap(model = p4_train_RF_min_static$workflow,
-                 data = p4_train_RF_min_static$best_fit$splits[[1]]$data %>%
-                   select(-mean_value) %>%
-                   as.data.frame(),
-                 ncores = min(maxcores, SHAP_cores),
-                 nsim = SHAP_nsim)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_min_static$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_min_static$workflow,
+                   data = p4_train_RF_min_static$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
+                   ncores = min(maxcores, SHAP_cores),
+                   nsim = SHAP_nsim)
     }
   ),
-  
+
   # Refresh AWS credentials
   tar_target(
     p4_aws_credentials_10,
@@ -1471,32 +1477,44 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
-  
+
   tar_target(
     p4_shap_static_dynamic,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-    compute_shap(model = p4_train_RF_static_dynamic$workflow,
-                 data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>%
-                   select(-mean_value) %>%
-                   as.data.frame(),
-                 ncores = min(maxcores, SHAP_cores),
-                 nsim = SHAP_nsim)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_static_dynamic$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_static_dynamic$workflow,
+                   data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
+                   ncores = min(maxcores, SHAP_cores),
+                   nsim = SHAP_nsim)
     }
   ),
   tar_target(
     p4_shap_min_static_dynamic,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-    compute_shap(model = p4_train_RF_min_static_dynamic$workflow,
-                 data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>%
-                   select(-mean_value) %>%
-                   as.data.frame(),
-                 ncores = min(maxcores, SHAP_cores),
-                 nsim = SHAP_nsim)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_min_static_dynamic$workflow,
+                   data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
+                   ncores = min(maxcores, SHAP_cores),
+                   nsim = SHAP_nsim)
     }
   ),
-  
+
   # Refresh AWS credentials
   tar_target(
     p4_aws_credentials_11,
@@ -1504,32 +1522,44 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
-  
+
   tar_target(
     p4_shap_dynamic,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-    compute_shap(model = p4_train_RF_dynamic$workflow,
-                 data = p4_train_RF_dynamic$best_fit$splits[[1]]$data %>%
-                   select(-mean_value) %>%
-                   as.data.frame(),
-                 ncores = min(maxcores, SHAP_cores),
-                 nsim = SHAP_nsim)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_dynamic$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_dynamic$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_dynamic$workflow,
+                   data = p4_train_RF_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
+                   ncores = min(maxcores, SHAP_cores),
+                   nsim = SHAP_nsim)
     }
   ),
   tar_target(
     p4_shap_static_dynamic_temporal,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-    compute_shap(model = p4_train_RF_static_dynamic_temporal$workflow,
-                 data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
-                   select(-mean_value) %>%
-                   as.data.frame(),
-                 ncores = min(maxcores, SHAP_cores),
-                 nsim = SHAP_nsim)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_static_dynamic_temporal$workflow,
+                   data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
+                   ncores = min(maxcores, SHAP_cores),
+                   nsim = SHAP_nsim)
     }
   ),
-  
+
   # Refresh AWS credentials
   tar_target(
     p4_aws_credentials_12,
@@ -1537,13 +1567,19 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
-  
+
   tar_target(
     p4_shap_min_static_dynamic_temporal,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
       compute_shap(model = p4_train_RF_min_static_dynamic_temporal$workflow,
-                   data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
+                   data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
@@ -1554,15 +1590,21 @@ p4_plot_targets_list <- list(
     p4_shap_dynamic_temporal,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-    compute_shap(model = p4_train_RF_dynamic_temporal$workflow,
-                 data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>%
-                   select(-mean_value) %>%
-                   as.data.frame(),
-                 ncores = min(maxcores, SHAP_cores),
-                 nsim = SHAP_nsim)
+      
+      #sample random subset to reduce computation and RAM demand
+      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data), 1), 
+                            size = nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
+                            replace = FALSE)
+      
+      compute_shap(model = p4_train_RF_dynamic_temporal$workflow,
+                   data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
+                     select(-mean_value) %>%
+                     as.data.frame(),
+                   ncores = min(maxcores, SHAP_cores),
+                   nsim = SHAP_nsim)
     }
   ),
-  
+
   # Refresh AWS credentials
   tar_target(
     p4_aws_credentials_13,
@@ -1570,8 +1612,8 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
-  
-  
+
+
   #Global shap importance
   tar_target(
     p4_shap_importance_static_png,
@@ -1645,25 +1687,18 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
-  
-  
+
+
   #shap dependence plots
   tar_target(
     p4_shap_dependence_static_png,
-    {
-      #Correct workflow problem
-      data <- p4_train_RF_static$best_fit$splits[[1]]$data %>%
-        select(-mean_value) %>%
-        as.data.frame()
-      data$Date <- p4_Boruta_static$input_data$split$data$Date
-      data$PRMS_segid <- p4_Boruta_static$input_data$split$data$PRMS_segid
-      
-      plot_shap_dependence(shap = p4_shap_static,
-                           data = data,
-                           model_name = 'RF_static_full',
-                           out_dir = "4_predict/out/random/shap/RF_static",
-                           ncores = SHAP_cores)
-    },
+    plot_shap_dependence(shap = p4_shap_static,
+                         data = p4_train_RF_static$best_fit$splits[[1]]$data %>%
+                           select(-mean_value) %>%
+                           as.data.frame(),
+                         model_name = 'RF_static_full',
+                         out_dir = "4_predict/out/random/shap/RF_static",
+                         ncores = SHAP_cores),
     format = "file",
     repository = 'local'
   ),
