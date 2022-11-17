@@ -1443,12 +1443,17 @@ p4_plot_targets_list <- list(
                             size = nrow(p4_train_RF_static$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_static$workflow,
+      shap <- compute_shap(model = p4_train_RF_static$workflow,
                    data = p4_train_RF_static$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_static$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_static$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_static$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
   tar_target(
@@ -1461,12 +1466,17 @@ p4_plot_targets_list <- list(
                             size = nrow(p4_train_RF_min_static$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_min_static$workflow,
+      shap <- compute_shap(model = p4_train_RF_min_static$workflow,
                    data = p4_train_RF_min_static$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_min_static$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_min_static$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_min_static$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
 
@@ -1481,19 +1491,24 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_shap_static_dynamic,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
+      maxcores <- get_maxcores_by_RAM(10, RAM_avail = RAM_set)
       
       #sample random subset to reduce computation and RAM demand
       sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic$best_fit$splits[[1]]$data), 1), 
                             size = nrow(p4_train_RF_static_dynamic$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_static_dynamic$workflow,
+      shap <- compute_shap(model = p4_train_RF_static_dynamic$workflow,
                    data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
   tar_target(
@@ -1506,12 +1521,17 @@ p4_plot_targets_list <- list(
                             size = nrow(p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_min_static_dynamic$workflow,
+      shap <- compute_shap(model = p4_train_RF_min_static_dynamic$workflow,
                    data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
 
@@ -1533,30 +1553,40 @@ p4_plot_targets_list <- list(
                             size = nrow(p4_train_RF_dynamic$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_dynamic$workflow,
+      shap <- compute_shap(model = p4_train_RF_dynamic$workflow,
                    data = p4_train_RF_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_dynamic$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_dynamic$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_dynamic$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
   tar_target(
     p4_shap_static_dynamic_temporal,
     {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
+      maxcores <- get_maxcores_by_RAM(10, RAM_avail = RAM_set)
       
       #sample random subset to reduce computation and RAM demand
       sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data), 1), 
                             size = nrow(p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_static_dynamic_temporal$workflow,
+      shap <- compute_shap(model = p4_train_RF_static_dynamic_temporal$workflow,
                    data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
 
@@ -1578,12 +1608,17 @@ p4_plot_targets_list <- list(
                             size = nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_min_static_dynamic_temporal$workflow,
+      shap <- compute_shap(model = p4_train_RF_min_static_dynamic_temporal$workflow,
                    data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
-                   nsim = SHAP_nsim)
+                   nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
   tar_target(
@@ -1596,12 +1631,17 @@ p4_plot_targets_list <- list(
                             size = nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      compute_shap(model = p4_train_RF_dynamic_temporal$workflow,
+      shap <- compute_shap(model = p4_train_RF_dynamic_temporal$workflow,
                    data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
                    ncores = min(maxcores, SHAP_cores),
                    nsim = SHAP_nsim)
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+      shap$Date <- p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$Date
+      shap$data_type <- p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap
     }
   ),
 
@@ -1617,7 +1657,9 @@ p4_plot_targets_list <- list(
   #Global shap importance
   tar_target(
     p4_shap_importance_static_png,
-    plot_shap_global(shap = p4_shap_static,
+    plot_shap_global(shap = p4_shap_static[,
+                    -which(colnames(p4_shap_static) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                      model_name = 'RF_static_full',
                      out_dir = "4_predict/out/random/shap/RF_static",
                      num_features = 40),
@@ -1626,7 +1668,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_min_static_png,
-    plot_shap_global(shap = p4_shap_min_static,
+    plot_shap_global(shap = p4_shap_min_static[,
+                    -which(colnames(p4_shap_min_static) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_min_static_full',
                     out_dir = "4_predict/out/random/shap/RF_min_static",
                     num_features = 40),
@@ -1635,7 +1679,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_static_dynamic_png,
-    plot_shap_global(shap = p4_shap_static_dynamic,
+    plot_shap_global(shap = p4_shap_static_dynamic[,
+                    -which(colnames(p4_shap_static_dynamic) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_static_dynamic_full',
                     out_dir = "4_predict/out/random/shap/RF_static_dynamic",
                     num_features = 40),
@@ -1644,7 +1690,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_min_static_dynamic_png,
-    plot_shap_global(shap = p4_shap_min_static_dynamic,
+    plot_shap_global(shap = p4_shap_min_static_dynamic[,
+                    -which(colnames(p4_shap_min_static_dynamic) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_min_static_dynamic_full',
                     out_dir = "4_predict/out/random/shap/RF_min_static_dynamic",
                     num_features = 40),
@@ -1653,7 +1701,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_dynamic_png,
-    plot_shap_global(shap = p4_shap_dynamic,
+    plot_shap_global(shap = p4_shap_dynamic[,
+                    -which(colnames(p4_shap_dynamic) %in%
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_dynamic_full',
                     out_dir = "4_predict/out/random/shap/RF_dynamic",
                     num_features = 40),
@@ -1662,7 +1712,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_static_dynamic_temporal_png,
-    plot_shap_global(shap = p4_shap_static_dynamic_temporal,
+    plot_shap_global(shap = p4_shap_static_dynamic_temporal[,
+                    -which(colnames(p4_shap_static_dynamic_temporal) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_static_dynamic_temporal_full',
                     out_dir = "4_predict/out/temporal/shap/RF_static_dynamic",
                     num_features = 40),
@@ -1671,7 +1723,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_min_static_dynamic_temporal_png,
-    plot_shap_global(shap = p4_shap_min_static_dynamic_temporal,
+    plot_shap_global(shap = p4_shap_min_static_dynamic_temporal[,
+                    -which(colnames(p4_shap_min_static_dynamic_temporal) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_min_static_dynamic_temporal_full',
                     out_dir = "4_predict/out/temporal/shap/RF_min_static_dynamic",
                     num_features = 40),
@@ -1680,7 +1734,9 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_importance_dynamic_temporal_png,
-    plot_shap_global(shap = p4_shap_dynamic_temporal,
+    plot_shap_global(shap = p4_shap_dynamic_temporal[,
+                    -which(colnames(p4_shap_dynamic_temporal) %in% 
+                             c('PRMS_segid', 'Date', 'data_type', 'group'))],
                     model_name = 'RF_dynamic_temporal_full',
                     out_dir = "4_predict/out/temporal/shap/RF_dynamic",
                     num_features = 40),
@@ -1692,9 +1748,16 @@ p4_plot_targets_list <- list(
   #shap dependence plots
   tar_target(
     p4_shap_dependence_static_png,
-    plot_shap_dependence(shap = p4_shap_static,
-                         data = p4_train_RF_static$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_static[,
+                        -which(colnames(p4_shap_static) %in% 
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         #This join is needed when a subset of the data are
+                         #used to compute SHAP values
+                         data = left_join(as.data.frame(p4_shap_static) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_static$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                          model_name = 'RF_static_full',
                          out_dir = "4_predict/out/random/shap/RF_static",
@@ -1704,9 +1767,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_min_static_png,
-    plot_shap_dependence(shap = p4_shap_min_static,
-                         data = p4_train_RF_min_static$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_min_static[,
+                        -which(colnames(p4_shap_min_static) %in% 
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_min_static) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_min_static$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_min_static_full',
                      out_dir = "4_predict/out/random/shap/RF_min_static",
@@ -1716,9 +1784,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_static_dynamic_png,
-    plot_shap_dependence(shap = p4_shap_static_dynamic,
-                         data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_static_dynamic[,
+                        -which(colnames(p4_shap_static_dynamic) %in% 
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_static_dynamic) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_static_dynamic_full',
                      out_dir = "4_predict/out/random/shap/RF_static_dynamic",
@@ -1728,9 +1801,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_min_static_dynamic_png,
-    plot_shap_dependence(shap = p4_shap_min_static_dynamic,
-                         data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_min_static_dynamic[,
+                        -which(colnames(p4_shap_min_static_dynamic) %in% 
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_min_static_dynamic) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_min_static_dynamic_full',
                      out_dir = "4_predict/out/random/shap/RF_min_static_dynamic",
@@ -1740,9 +1818,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_dynamic_png,
-    plot_shap_dependence(shap = p4_shap_dynamic,
-                         data = p4_train_RF_dynamic$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_dynamic[,
+                        -which(colnames(p4_shap_dynamic) %in% 
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_dynamic) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_dynamic$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_dynamic_full',
                      out_dir = "4_predict/out/random/shap/RF_dynamic",
@@ -1752,9 +1835,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_static_dynamic_temporal_png,
-    plot_shap_dependence(shap = p4_shap_static_dynamic_temporal,
-                         data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_static_dynamic_temporal[,
+                        -which(colnames(p4_shap_static_dynamic_temporal) %in%
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_static_dynamic_temporal) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_static_dynamic_temporal_full',
                      out_dir = "4_predict/out/temporal/shap/RF_static_dynamic",
@@ -1764,9 +1852,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_min_static_dynamic_temporal_png,
-    plot_shap_dependence(shap = p4_shap_min_static_dynamic_temporal,
-                         data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_min_static_dynamic_temporal[,
+                        -which(colnames(p4_shap_min_static_dynamic_temporal) %in%
+                                 c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_min_static_dynamic_temporal) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_min_static_dynamic_temporal_full',
                      out_dir = "4_predict/out/temporal/shap/RF_min_static_dynamic",
@@ -1776,9 +1869,14 @@ p4_plot_targets_list <- list(
   ),
   tar_target(
     p4_shap_dependence_dynamic_temporal_png,
-    plot_shap_dependence(shap = p4_shap_dynamic_temporal,
-                         data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>%
-                           select(-mean_value) %>%
+    plot_shap_dependence(shap = p4_shap_dynamic_temporal[,
+                          -which(colnames(p4_shap_dynamic_temporal) %in% 
+                            c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                         data = left_join(as.data.frame(p4_shap_dynamic_temporal) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
                            as.data.frame(),
                      model_name = 'RF_dynamic_temporal_full',
                      out_dir = "4_predict/out/temporal/shap/RF_dynamic",

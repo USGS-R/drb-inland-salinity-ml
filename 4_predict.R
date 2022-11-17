@@ -396,6 +396,31 @@ p4_targets_list <- list(
     cue = tar_cue('always')
   ),
   
+  tar_target(p4_train_RF_static_dynamic_temporal_fulltune,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_temporal,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = RF_cores,
+                                 v_folds = cv_folds,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 30,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'),
+                                 temporal = TRUE)
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_14,
+    generate_credentials(dummy_var = p4_train_RF_static_dynamic_temporal_fulltune),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   
   #RF Predictions
   #Static features, full dataset
