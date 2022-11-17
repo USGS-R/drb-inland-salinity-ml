@@ -175,15 +175,15 @@ Boruta_runs <- 300
 Boruta_trees <- 500
 #number of cores
 Boruta_cores <- 70
-RF_cores <- 60
+RF_cores <- 50
 #Cross validation folds
-cv_folds <- 10
+cv_folds <- 5
 
 #SHAP
-SHAP_nsim <- 10
-SHAP_RAM <- 9
-RAM_set <- 180
-SHAP_cores <- 35
+SHAP_nsim <- 20
+SHAP_RAM <- 6
+RAM_set <- 300
+SHAP_cores <- 50
 
 # Return the complete list of targets
 c(p1_targets_list, p2_targets_list, p3_targets_list, p4_targets_list, 
