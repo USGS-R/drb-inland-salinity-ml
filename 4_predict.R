@@ -232,7 +232,8 @@ p4_targets_list <- list(
                                gridsize = 3,
                                id_cols = c('PRMS_segid', 'Date', 'data_type')
              ),
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -257,7 +258,8 @@ p4_targets_list <- list(
                                gridsize = 3,
                                id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -282,7 +284,8 @@ p4_targets_list <- list(
                                  gridsize = 3,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -307,7 +310,8 @@ p4_targets_list <- list(
                                gridsize = 3,
                                id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -332,7 +336,8 @@ p4_targets_list <- list(
                                  gridsize = 3,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -358,7 +363,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'),
                                  temporal = TRUE)
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -383,7 +389,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'), 
                                  temporal = TRUE)
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -408,7 +415,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'), 
                                  temporal = TRUE)
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -433,7 +441,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'),
                                  temporal = TRUE)
              },
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   # Refresh AWS credentials
@@ -444,6 +453,107 @@ p4_targets_list <- list(
     cue = tar_cue('always')
   ),
   
+  #Spatial train/test split and CV splits
+  tar_target(p4_train_RF_static_dynamic_spatial,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_spatial,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 35,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'),
+                                 spatial = TRUE)
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_15,
+    generate_credentials(dummy_var = p4_train_RF_static_dynamic_spatial),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  tar_target(p4_train_RF_min_static_dynamic_spatial,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs_spatial,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 35,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'), 
+                                 spatial = TRUE)
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_16,
+    generate_credentials(dummy_var = p4_train_RF_min_static_dynamic_spatial),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  tar_target(p4_train_RF_dynamic_spatial,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_dynamic_attrs_spatial,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 35,
+                                 v_folds = 2,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 3,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'), 
+                                 spatial = TRUE)
+             },
+             deployment = 'worker'
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_17,
+    generate_credentials(dummy_var = p4_train_RF_dynamic_spatial),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  tar_target(p4_train_RF_static_dynamic_spatial_fulltune,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_spatial,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = RF_cores,
+                                 v_folds = cv_folds,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 30,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'),
+                                 spatial = TRUE)
+             },
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
+  ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_18,
+    generate_credentials(dummy_var = p4_train_RF_static_dynamic_spatial_fulltune),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
   
   #RF Predictions
   #Static features, full dataset
@@ -564,6 +674,52 @@ p4_targets_list <- list(
   tar_target(p4_pred_RF_dynamic_temporal_test,
              predict_test_data(model_wf = p4_train_RF_dynamic_temporal$workflow,
                                test_data = p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$data[-p4_train_RF_dynamic_temporal$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #Spatial train test split
+  #Static and dynamic features, full dataset
+  tar_target(p4_pred_RF_static_dynamic_spatial,
+             predict_test_data(model_wf = p4_train_RF_static_dynamic_spatial$workflow,
+                               test_data = p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$in_id),
+             deployment = 'main'
+  ),
+  #Static and dynamic features, test dataset
+  tar_target(p4_pred_RF_static_dynamic_spatial_test,
+             predict_test_data(model_wf = p4_train_RF_static_dynamic_spatial$workflow,
+                               test_data = p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[-p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #minimum static and dynamic features, full dataset
+  tar_target(p4_pred_RF_min_static_dynamic_spatial,
+             predict_test_data(model_wf = p4_train_RF_min_static_dynamic_spatial$workflow,
+                               test_data = p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$in_id),
+             deployment = 'main'
+  ),
+  #minimum static and dynamic features, test dataset
+  tar_target(p4_pred_RF_min_static_dynamic_spatial_test,
+             predict_test_data(model_wf = p4_train_RF_min_static_dynamic_spatial$workflow,
+                               test_data = p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data[-p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$in_id,],
+                               target_name = 'mean_value'),
+             deployment = 'main'
+  ),
+  #dynamic features, full dataset
+  tar_target(p4_pred_RF_dynamic_spatial,
+             predict_test_data(model_wf = p4_train_RF_dynamic_spatial$workflow,
+                               test_data = p4_train_RF_dynamic_spatial$best_fit$splits[[1]]$data,
+                               target_name = 'mean_value',
+                               train_ind = p4_train_RF_dynamic_spatial$best_fit$splits[[1]]$in_id),
+             deployment = 'main'
+  ),
+  #dynamic features, test dataset
+  tar_target(p4_pred_RF_dynamic_spatial_test,
+             predict_test_data(model_wf = p4_train_RF_dynamic_spatial$workflow,
+                               test_data = p4_train_RF_dynamic_spatial$best_fit$splits[[1]]$data[-p4_train_RF_dynamic_spatial$best_fit$splits[[1]]$in_id,],
                                target_name = 'mean_value'),
              deployment = 'main'
   )
