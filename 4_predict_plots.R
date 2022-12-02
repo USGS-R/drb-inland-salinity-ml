@@ -91,6 +91,33 @@ p4_plot_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  tar_target(p4_vip_static_dynamic_spatial_png,
+             plot_vip(RF_model = p4_train_RF_static_dynamic_spatial$best_fit,
+                      model_name = 'daily_SC_RF_static_dynamic_spatial',
+                      num_features = 20,
+                      out_dir = '4_predict/out/spatial/vip'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_vip_min_static_dynamic_spatial_png,
+             plot_vip(RF_model = p4_train_RF_min_static_dynamic_spatial$best_fit,
+                      model_name = 'daily_SC_RF_min_static_dynamic_spatial',
+                      num_features = 20,
+                      out_dir = '4_predict/out/spatial/vip'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_vip_dynamic_spatial_png,
+             plot_vip(RF_model = p4_train_RF_dynamic_spatial$best_fit,
+                      model_name = 'daily_SC_RF_dynamic_spatial',
+                      num_features = 20,
+                      out_dir = '4_predict/out/spatial/vip'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
   
   # RF hyperparameter optimization
   tar_target(p4_hypopt_static_png,
@@ -233,6 +260,60 @@ p4_plot_targets_list <- list(
                                            plt_type = "marginals",
                                            perf_metric = NULL,
                                            out_dir = '4_predict/out/temporal/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_static_dynamic_spatial_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_static_dynamic_spatial$grid_params,
+                                            model_name = 'daily_SC_RF_static_dynamic_spatial',
+                                            out_dir = '4_predict/out/spatial/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_marginals_static_dynamic_spatial_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_static_dynamic_spatial$grid_params,
+                                           model_name = 'daily_SC_RF_static_dynamic_spatial',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/spatial/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_min_static_dynamic_spatial_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_min_static_dynamic_spatial$grid_params,
+                                            model_name = 'daily_SC_RF_min_static_dynamic_spatial',
+                                            out_dir = '4_predict/out/spatial/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_marginals_min_static_dynamic_spatial_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_min_static_dynamic_spatial$grid_params,
+                                           model_name = 'daily_SC_RF_min_static_dynamic_spatial',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/spatial/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_dynamic_spatial_png,
+             plot_hyperparam_opt_results_RF(p4_train_RF_dynamic_spatial$grid_params,
+                                            model_name = 'daily_SC_RF_dynamic_spatial',
+                                            out_dir = '4_predict/out/spatial/hypopt'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_hypopt_marginals_dynamic_spatial_png,
+             plot_hyperparam_opt_marginals(p4_train_RF_dynamic_spatial$grid_params,
+                                           model_name = 'daily_SC_RF_dynamic_spatial',
+                                           plt_type = "marginals",
+                                           perf_metric = NULL,
+                                           out_dir = '4_predict/out/spatial/hypopt'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -385,6 +466,60 @@ p4_plot_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  tar_target(p4_pred_obs_static_dynamic_spatial_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_static_dynamic_spatial$pred,
+                           model_name = 'daily_SC_RF_static_dynamic_spatial',
+                           out_dir = '4_predict/out/spatial/pred_obs/RF_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_static_dynamic_spatial_test_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_static_dynamic_spatial_test$pred,
+                           model_name = 'daily_SC_RF_static_dynamic_spatial_test',
+                           out_dir = '4_predict/out/spatial/pred_obs/RF_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_min_static_dynamic_spatial_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_dynamic_spatial$pred,
+                           model_name = 'daily_SC_RF_min_static_dynamic_spatial',
+                           out_dir = '4_predict/out/spatial/pred_obs/RF_min_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_min_static_dynamic_spatial_test_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_min_static_dynamic_spatial_test$pred,
+                           model_name = 'daily_SC_RF_min_static_dynamic_spatial_test',
+                           out_dir = '4_predict/out/spatial/pred_obs/RF_min_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_dynamic_spatial_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_dynamic_spatial$pred,
+                           model_name = 'daily_SC_RF_dynamic_spatial',
+                           out_dir = '4_predict/out/spatial/pred_obs/RF_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_pred_obs_dynamic_spatial_test_png,
+             plot_pred_obs(df_pred_obs = p4_pred_RF_dynamic_spatial_test$pred,
+                           model_name = 'daily_SC_RF_dynamic_spatial_test',
+                           out_dir = '4_predict/out/spatial/pred_obs/RF_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
   
   
   #Train test boxplot coverage of SC data
@@ -402,6 +537,15 @@ p4_plot_targets_list <- list(
                                  model_name = 'daily_SC_RF',
                                  pred_var = 'mean_value',
                                  out_dir = '4_predict/out/temporal/pred_obs'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_boxplot_coverage_spatial_png,
+             plot_metric_boxplot(data_split = p4_selected_static_dynamic_attrs_spatial$input_data,
+                                 model_name = 'daily_SC_RF',
+                                 pred_var = 'mean_value',
+                                 out_dir = '4_predict/out/spatial/pred_obs'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -485,6 +629,36 @@ p4_plot_targets_list <- list(
                                 pred_var = 'mean_value',
                                 perf_metric = 'rmse',
                                 out_dir = '4_predict/out/temporal/pred_obs/RF_dynamic'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_CV_static_dynamic_spatial_png,
+             barplot_compare_RF(mod = p4_train_RF_static_dynamic_spatial,
+                                model_name = 'daily_SC_RF_static_dynamic_spatial',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/spatial/pred_obs/RF_static_dynamic'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_CV_min_static_dynamic_spatial_png,
+             barplot_compare_RF(mod = p4_train_RF_min_static_dynamic_spatial,
+                                model_name = 'daily_SC_RF_min_static_dynamic_spatial',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/spatial/pred_obs/RF_min_static_dynamic'),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_train_test_CV_dynamic_spatial_png,
+             barplot_compare_RF(mod = p4_train_RF_dynamic_spatial,
+                                model_name = 'daily_SC_RF_dynamic_spatial',
+                                pred_var = 'mean_value',
+                                perf_metric = 'rmse',
+                                out_dir = '4_predict/out/spatial/pred_obs/RF_dynamic'),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -727,6 +901,96 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_static_dynamic_spatial_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_spatial$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_spatial_test$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_min_static_dynamic_spatial_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_min_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial_test$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_dynamic_spatial_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_spatial$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_spatial_res_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_spatial_test$pred, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
                       filename_end = '_test')
     },
     format = "file",
@@ -1008,6 +1272,108 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
+  tar_target(
+    p4_monthly_res_static_dynamic_spatial_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_dynamic_spatial$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_spatial_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_static_dynamic_spatial_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_spatial_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_dynamic_spatial_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_spatial_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_min_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_spatial_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_dynamic_spatial_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_dynamic_spatial$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RF_dynamic",
+                   model_name = 'RF_dynamic_spatial_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_monthly_res_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_pred_RF_dynamic_spatial_test$pred, Month),
+                              RMSE = sqrt(mean(errsq)),
+                              Bias = mean(err)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RF_dynamic",
+                   model_name = 'RF_dynamic_spatial_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
   
   #Annual RMSE and Bias over time, aggregated over all reaches
   tar_target(
@@ -1282,6 +1648,108 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
+  tar_target(
+    p4_annual_res_static_dynamic_spatial_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_spatial$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_spatial_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_spatial_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RF_static_dynamic",
+                   model_name = 'RF_static_dynamic_spatial_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_dynamic_spatial_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_spatial_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_min_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RF_min_static_dynamic",
+                   model_name = 'RF_min_static_dynamic_spatial_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_dynamic_spatial_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_spatial$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RF_dynamic",
+                   model_name = 'RF_dynamic_spatial_full',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_annual_res_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_spatial_test$pred, Year),
+                            RMSE = sqrt(mean(errsq)),
+                            Bias = mean(err)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RF_dynamic",
+                   model_name = 'RF_dynamic_spatial_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
   
   
   #Timeseries of predictions for each reach
@@ -1426,6 +1894,60 @@ p4_plot_targets_list <- list(
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_dynamic_temporal_test',
                     out_dir = "4_predict/out/temporal/temporal_res/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_dynamic_spatial_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_dynamic_spatial$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_dynamic_spatial_full',
+                    out_dir = "4_predict/out/spatial/temporal_res/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_static_dynamic_spatial_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_static_dynamic_spatial_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_static_dynamic_spatial_test',
+                    out_dir = "4_predict/out/spatial/temporal_res/RF_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_dynamic_spatial_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic_spatial$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_dynamic_spatial_full',
+                    out_dir = "4_predict/out/spatial/temporal_res/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_min_static_dynamic_spatial_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_min_static_dynamic_spatial_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_min_static_dynamic_spatial_test',
+                    out_dir = "4_predict/out/spatial/temporal_res/RF_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_dynamic_spatial_png,
+    plot_timeseries(pred_df = p4_pred_RF_dynamic_spatial$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_dynamic_spatial_full',
+                    out_dir = "4_predict/out/spatial/temporal_res/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_temporal_res_dynamic_spatial_test_png,
+    plot_timeseries(pred_df = p4_pred_RF_dynamic_spatial_test$pred,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RF_dynamic_spatial_test',
+                    out_dir = "4_predict/out/spatial/temporal_res/RF_dynamic"),
     format = "file",
     repository = 'local'
   ),
