@@ -46,7 +46,7 @@ dir.create("3_visualize/out/nhdv2_attr_png/refined",showWarnings = FALSE)
 # feature sets and results:
 predict_dir <- "4_predict/out"
 train_test_other <- c("vip","hypopt")
-train_test_splits <- c("temporal","random")
+train_test_splits <- c("temporal","random","spatial")
 train_test_features <- c("RF_static", "RF_min_static", "RF_static_dynamic", 
                          "RF_min_static_dynamic","RF_dynamic")
 train_test_res <- c("pred_obs","spatial_res","monthly_res","annual_res","temporal_res")
