@@ -165,7 +165,8 @@ p3_targets_list <- list(
                                  dynamic = p4_pred_RF_dynamic_temporal_test$pred)
       model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
       model_results
-    }
+    },
+    repository = "local"
   ),
   
   # Plot empirical CDFs of model performance
@@ -176,7 +177,9 @@ p3_targets_list <- list(
               fileout = "3_visualize/out/ecdf_all_reaches.png",
               log_x_axis = TRUE,
               plot_points = FALSE,
-              plot_width_in = 6, plot_height_in = 4)
+              plot_width_in = 6, plot_height_in = 4),
+    repository = "local",
+    format = "file"
   )
   
 )
