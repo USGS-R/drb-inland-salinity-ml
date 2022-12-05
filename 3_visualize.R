@@ -152,6 +152,20 @@ p3_targets_list <- list(
     summarize_catchment_nhdv2_attr_missing(p2_nhdv2_attr_catchment,"3_visualize/out/nhdv2_attr_missing_data.csv"),
     format = "file",
     repository = 'local'
+  ),
+  
+  # Create a list of model results that will be passed to model performance
+  # plotting functions.
+  tar_target(
+    p3_model_results,
+    {
+      model_results_list <- list(static_dynamic = p4_pred_RF_static_dynamic_temporal_test$pred,
+                                 min_static_dynamic = p4_pred_RF_min_static_dynamic_temporal_test$pred,
+                                 dynamic = p4_pred_RF_dynamic_temporal_test$pred)
+      model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
+      model_results
+    }
   )
+  
 )
 
