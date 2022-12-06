@@ -9,14 +9,14 @@
 #' columns "model", "PRMS_segid", "Date", and "errsq".
 #' @param plot_type character string indicating the type of eCDF plot to return.
 #' Options include 1) "all_reaches" to plot one CDF over all reaches; 
-#' 2) "select_reaches" to return one CDF for each reach within `segid_select`; and
+#' 2) "select_reaches" to return one CDF for each reach within `segids_select`; and
 #' 3) "select_times" to return a grid of CDF plots for each month and year in 
 #' `months_select` and `years_select`, respectively. Defaults to "all_reaches".
 #' @param fileout character string with the name of the saved cdf plot, including
 #' the file path and extension. 
 #' @param log_x_axis logical; should the CDF plot include a logged x axis?
 #' Defaults to TRUE.
-#' @param seg_id_select character string indicating which segment identifiers to 
+#' @param segids_select character string indicating which segment identifiers to 
 #' include in the CDF plot. Only used if `plot_type` is "select_reaches".
 #' @param months_select character string or character vector indicating which months
 #' to include in the CDF plots. Format is 2-digit integer months (e.g. "01" for January). 
