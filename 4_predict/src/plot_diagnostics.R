@@ -441,6 +441,39 @@ plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
   
   return(fileout)
 }
+plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 40,
+                                sv_kind = 'beeswarm', drop_columns){
+  #' 
+  #' @description Creates SHAP global importance plot using the shapviz package
+  #'
+  #' @param shap SHAP value results from compute_SHAP
+  #' @param data attributes data for the columns within shap
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param out_dir output directory
+  #' @param sv_kind kind of shapviz plot. bar, beeswarm, or both.
+  #' @param drop_columns character vector of columns to remove 
+  #' (e.g., because they're identifiers or dates)
+  #'
+  #' @return Returns the paths to png files of SHAP dependence plots for each feature
+  
+  #remove desired columns
+  shap <- shap[,-which(colnames(shap) %in% drop_columns)]
+  data <- select(data, -all_of(drop_columns))
+  
+  filesout <- file.path(out_dir, 
+                        paste0('SHAP_global_', model_name, '_vars', num_features, '.png'))
+  
+  p1 <- sv_importance(shapviz(shap, X = data), 
+                      kind = sv_kind, max_display = num_features, fill = 'black',
+                      alpha = 0.5) +
+    ggtitle(model_name)
+  
+  ggsave(filename = filesout, plot = p1, device = 'png')
+  
+  return(filesout)
+}
+
 
 plot_shap_dependence <- function(shap, data, model_name, out_dir, ncores = 1){
   #' 
@@ -469,13 +502,58 @@ plot_shap_dependence <- function(shap, data, model_name, out_dir, ncores = 1){
     
     p <- autoplot(shap, type = "dependence", feature = colnames(shap)[i], 
                   X = data, 
-                  alpha = 0.5, smooth = TRUE, smooth_color = "black") +
+                  alpha = 0.5, smooth = TRUE, smooth_color = "blue") +
       ggtitle(model_name)
     
     ggsave(filename = fileout, plot = p, device = 'png')
     
     fileout
   }
+  
+  parallel::stopCluster(cl)
+  
+  return(filesout)
+}
+plot_shap_dependence_sv <- function(shap, data, model_name, out_dir, ncores = 1){
+  #' 
+  #' @description Creates SHAP dependence plots for each feature using the shapviz package
+  #'
+  #' @param shap SHAP value results from compute_SHAP
+  #' @param data the X dataframe used to compute SHAP values
+  #' @param model_name character string describing the model. Will be added 
+  #' to the end of the filename before the file extension, and also be the plot title.
+  #' @param out_dir output directory
+  #' @param ncores number of cores to use for parallel plot creation
+  #'
+  #' @return Returns the paths to png files of SHAP dependence plots for each feature
+  
+  cl = parallel::makeCluster(ncores)
+  doParallel::registerDoParallel(cl)
+  
+  #number of features to make plots for
+  n_plts <- ncol(shap)
+  
+  #convert to shapviz object
+  shap <- shapviz(shap, X = data)
+  
+  filesout <- foreach(i = 1:n_plts, .inorder = TRUE, .combine = c, 
+                      .packages = c('ggplot2', 'fastshap', 'shapviz')) %dopar% {
+                        fileout <- file.path(out_dir, 
+                                             paste0(model_name, '_', 
+                                                    'SHAP_dependence_', 
+                                                    colnames(shap$X)[i], 
+                                                    '.png'))
+                        
+                        p <- sv_dependence(shap, 
+                                           v = colnames(shap$X)[i],
+                                           alpha = 0.5) +
+                          geom_smooth(method = 'loess', se = FALSE, show.legend = FALSE) +
+                          ggtitle(model_name)
+                        
+                        ggsave(filename = fileout, plot = p, device = 'png')
+                        
+                        fileout
+              }
   
   parallel::stopCluster(cl)
   
