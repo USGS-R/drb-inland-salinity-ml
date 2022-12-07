@@ -5,6 +5,7 @@ source("3_visualize/src/summarize_site_list.R")
 source("3_visualize/src/summarize_timeseries.R")
 source("3_visualize/src/plot_nhdv2_attr.R")
 source("3_visualize/src/summarize_nhdv2_attr.R")
+source("3_visualize/src/plot_ecdf.R")
 
 p3_targets_list <- list(
   
@@ -152,6 +153,34 @@ p3_targets_list <- list(
     summarize_catchment_nhdv2_attr_missing(p2_nhdv2_attr_catchment,"3_visualize/out/nhdv2_attr_missing_data.csv"),
     format = "file",
     repository = 'local'
+  ),
+  
+  # Create a list of model results that will be passed to model performance
+  # plotting functions.
+  tar_target(
+    p3_model_results,
+    {
+      model_results_list <- list(static_dynamic = p4_pred_RF_static_dynamic_temporal_test$pred,
+                                 min_static_dynamic = p4_pred_RF_min_static_dynamic_temporal_test$pred,
+                                 dynamic = p4_pred_RF_dynamic_temporal_test$pred)
+      model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
+      model_results
+    },
+    repository = "local"
+  ),
+  
+  # Plot empirical CDFs of model performance
+  tar_target(
+    p3_ecdf_all_reaches_png,
+    plot_ecdf(model_results = p3_model_results, 
+              plot_type = "all_reaches", 
+              fileout = "3_visualize/out/ecdf_all_reaches.png",
+              log_x_axis = TRUE,
+              plot_points = FALSE,
+              plot_width_in = 6, plot_height_in = 4),
+    repository = "local",
+    format = "file"
   )
+  
 )
 
