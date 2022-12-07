@@ -19,7 +19,7 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                             "patchwork", "glue", "nhdplusTools",
                             "Boruta", "ranger", "vip", "tidymodels",
                             "doParallel", "fastshap", "pdp",
-                            "reticulate"),
+                            "reticulate", "shapviz"),
                resources = tar_resources(
                  aws = tar_resources_aws(bucket = "drb-inland-salinity")),
                repository = "aws",
