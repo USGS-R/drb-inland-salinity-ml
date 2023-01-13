@@ -1,5 +1,5 @@
 plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
-                            filename_end = NULL){
+                            filename_end = NULL, boundary = drb_shp){
   #' 
   #' @description This function visualizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
@@ -10,6 +10,7 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
   #' @param file_path a character string that indicates the location of the saved plot
   #' @param filename_end optional character string to add to the end of the filename
   #' before the file extension.
+  #' @param boundary sf polygon defining the boundary of the DRB to plot
   #'
   #' @value Returns a png file containing a violin plot showing distribution of each NHDv2 attribute variable
   
@@ -39,6 +40,9 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
       #full network (in case there are reaches without data)
       geom_sf(data = network_geometry, 
               size = 0.3, color = 'gray') +
+      #DRB boundary
+      geom_sf(data = boundary, fill = NA,
+              size = 0.3, color = 'black') +
       #attribute data
       geom_sf(data = dat_subset %>% 
                 left_join(.,network_geometry[,c("subsegid","geometry")],
