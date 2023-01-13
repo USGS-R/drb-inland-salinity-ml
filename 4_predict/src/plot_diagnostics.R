@@ -363,14 +363,18 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
       #add training column. Data are all testing.
       plt_df$training <- 0
       plt_labs <- c('testing', 'observed', 'predicted')
+      plt_colors <- c('0' = "#F8766D", observed = 'gray20', predicted = "#C77CFF")
     }else{
       if(all(plt_df$training == 0)){
         plt_labs <- c('testing', 'observed', 'predicted')
+        plt_colors <- c('0' = "#F8766D", observed = 'gray20', predicted = "#C77CFF")
       }else if (all(plt_df$training == 1)){
         plt_labs <- c('training', 'observed', 'predicted')
+        plt_colors <- c('1' = "#7CAE00", observed = 'gray20', predicted = "#C77CFF")
       }else{
         plt_labs <- c('testing', 'training', 'observed', 'predicted')
-      }
+        plt_colors <- c('0' = "#F8766D", '1' = "#7CAE00", observed = 'gray20', predicted = "#C77CFF")
+      }  
     }
     
     #timeseries lineplot
@@ -393,7 +397,7 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
       xlab('Date') +
       ylab(expression(paste('Specific Conductivity (', mu, 'S/cm)', sep = ''))) + 
       ggtitle(model_name, subtitle = paste0('reach ', reaches[i])) +
-      scale_color_discrete('', labels = plt_labs)
+      scale_color_manual('', values = plt_colors, labels = plt_labs)
     
     #spatial location indicator
     p_space <- attr_plot_spatial <- ggplot() + 
