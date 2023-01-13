@@ -50,7 +50,8 @@ plot_ecdf <- function(model_results, plot_type = "all_reaches", fileout,
                 .groups = "drop")
     
     p <- ggplot(preds, aes(x = rmse, color = model)) + 
-      stat_ecdf(geom = "step", pad = FALSE, size = line_size)
+      stat_ecdf(geom = "step", pad = FALSE, size = line_size) +
+      scale_color_scico_d(palette = 'berlin')
     
     if(plot_points){
       p1 <- p + stat_ecdf(geom = "point", pad = FALSE, size = points_size)
