@@ -19,7 +19,7 @@ tar_option_set(packages = c("tidyverse", "lubridate",
                             "patchwork", "glue", "nhdplusTools",
                             "Boruta", "ranger", "vip", "tidymodels",
                             "doParallel", "fastshap", "pdp",
-                            "reticulate", "shapviz"),
+                            "reticulate", "shapviz", "scico"),
                resources = tar_resources(
                  aws = tar_resources_aws(bucket = "drb-inland-salinity")),
                repository = "aws",
@@ -94,6 +94,15 @@ parameter <- "00095"
 # Lower Delaware: 0204 subregion (for now, exclude New Jersey Coastal (https://water.usgs.gov/GIS/huc_name.html)
 drb_huc8s <- c("02040101","02040102","02040103","02040104","02040105","02040106",
                "02040201","02040202","02040203","02040204","02040205","02040206","02040207")
+#get the boundary of the DRB based on these HUCs
+drb_shp <- drb_huc8s %>%
+  lapply(.,function(x){
+    # Create spatial object of huc8 basin
+    huc8_basin <- suppressMessages(nhdplusTools::get_huc8(id=x))}) %>%
+  bind_rows() %>%
+  # create one polygon from multiple huc8 basins
+  sf::st_union() %>%
+  sf::st_make_valid()
 
 # Define USGS site types for which to download specific conductance data (include "Stream","Stream:Canal", and "Spring" sites)
 site_tp_select <- c("ST","ST-CA","SP") 
