@@ -206,16 +206,16 @@ p4_targets_list <- list(
   ),
   #minimum static and dynamic
   tar_target(p4_selected_min_static_dynamic_attrs_spatial,
-             make_spatial_split(attrs = filter_rows_date(p4_selected_min_static_dynamic_attrs,
+             assign_spatial_split(attrs = filter_rows_date(p4_selected_min_static_dynamic_attrs,
                                                          '1984-09-30'),
-                                 train_prop = 0.8),
+                                  split_template_testing = p4_selected_static_dynamic_attrs_spatial$input_data$testing),
              deployment = 'worker'
   ),
   #dynamic only
   tar_target(p4_dynamic_attrs_spatial,
-             make_spatial_split(attrs = filter_rows_date(p4_dynamic_attrs,
+             assign_spatial_split(attrs = filter_rows_date(p4_dynamic_attrs,
                                                          '1984-09-30'),
-                                 train_prop = 0.8),
+                                  split_template_testing = p4_selected_static_dynamic_attrs_spatial$input_data$testing),
              deployment = 'worker'
   ),
   

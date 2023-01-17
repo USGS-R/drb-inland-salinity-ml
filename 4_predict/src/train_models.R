@@ -269,6 +269,36 @@ make_spatial_split_CVtraining <- function(attrs_df, train_prop){
   
   return(ind_train)
 }
+assign_spatial_split <- function(attrs, split_template_testing){
+  #' 
+  #' @description creates spatial splits for the training and testing dataset
+  #' based on a provided split_template.
+  #'
+  #' @param attrs output from select_attrs. Must have "PRMS_segid" and 
+  #' "data_type" columns (characters). Splits are stratified by the data_type
+  #' (proportional amount of 'u' and 'd' reaches in each split)
+  #' @param split_template_testing test set from make_spatial_split. This test
+  #' set will also be used for the attrs. Must have PRMS_segid column.
+  #' 
+  #' @return Returns attrs with an updated training and testing dataset based
+  #' on the split_template_testing.
+  
+  #training indices
+  ind_test <- which(attrs$input_data$split$data$PRMS_segid %in% split_template_testing$PRMS_segid)
+  ind_train <- which(!(attrs$input_data$split$data$PRMS_segid %in% split_template_testing$PRMS_segid))
+  
+  training <- attrs$input_data$split$data[ind_train,]
+  testing <- attrs$input_data$split$data[ind_test,]
+  
+  #get the split list into expected format
+  split <- attrs$input_data$split
+  split$in_id <- ind_train
+  split$out_id <- ind_test
+  
+  attrs$input_data <- list(split = split, training = training, testing = testing)
+  
+  return(attrs)
+}
 
 train_models_grid <- function(brf_output, v_folds, ncores,
                               range_mtry, range_minn, range_trees,
