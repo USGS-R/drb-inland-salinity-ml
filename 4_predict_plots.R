@@ -2174,39 +2174,37 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
+   tar_target(
+     p4_shap_static_dynamic_spatial,
+     {
+       maxcores <- get_maxcores_by_RAM(20, RAM_avail = RAM_set)
+       
+       #sample random subset to reduce computation and RAM demand
+       sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data), 1), 
+                             size = nrow(p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data)*0.25, 
+                             replace = FALSE)
+       
+       shap <- compute_shap(model = p4_train_RF_static_dynamic_spatial$workflow,
+                            data = p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,] %>%
+                              select(-mean_value) %>%
+                              as.data.frame(),
+                            ncores = min(maxcores, SHAP_cores),
+                            nsim = SHAP_nsim) 
+       #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+       shap$PRMS_segid <- p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
+       shap$Date <- p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$Date
+       shap$data_type <- p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$data_type
+       shap
+     }
+   ),
   
-  #commenting out because of odd error
-  # tar_target(
-  #   p4_shap_static_dynamic_spatial,
-  #   {
-  #     maxcores <- get_maxcores_by_RAM(10, RAM_avail = RAM_set)
-  #     
-  #     #sample random subset to reduce computation and RAM demand
-  #     sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data), 1), 
-  #                           size = nrow(p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data)*0.25, 
-  #                           replace = FALSE)
-  #     
-  #     shap <- compute_shap(model = p4_train_RF_static_dynamic_spatial$workflow,
-  #                          data = p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,] %>%
-  #                            select(-mean_value) %>%
-  #                            as.data.frame(),
-  #                          ncores = min(maxcores, SHAP_cores),
-  #                          nsim = SHAP_nsim) 
-  #     #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
-  #     shap$PRMS_segid <- p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
-  #     shap$Date <- p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$Date
-  #     shap$data_type <- p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$data_type
-  #     shap
-  #   }
-  # ),
-  
-  # Refresh AWS credentials
-  # tar_target(
-  #   p4_aws_credentials_20,
-  #   generate_credentials(dummy_var = p4_shap_static_dynamic_spatial),
-  #   deployment = 'main',
-  #   cue = tar_cue('always')
-  # ),
+   #Refresh AWS credentials
+   tar_target(
+     p4_aws_credentials_20,
+     generate_credentials(dummy_var = p4_shap_static_dynamic_spatial),
+     deployment = 'main',
+     cue = tar_cue('always')
+   ),
   
   tar_target(
     p4_shap_min_static_dynamic_spatial,
@@ -2353,17 +2351,17 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
-  # tar_target(
-  #   p4_shap_importance_static_dynamic_spatial_png,
-  #   plot_shap_global(shap = p4_shap_static_dynamic_spatial[,
-  #                                                           -which(colnames(p4_shap_static_dynamic_spatial) %in% 
-  #                                                                    c('PRMS_segid', 'Date', 'data_type', 'group'))],
-  #                    model_name = 'RF_static_dynamic_spatial_full',
-  #                    out_dir = "4_predict/out/spatial/shap/RF_static_dynamic",
-  #                    num_features = 40),
-  #   format = "file",
-  #   repository = 'local'
-  # ),
+   tar_target(
+     p4_shap_importance_static_dynamic_spatial_png,
+     plot_shap_global(shap = p4_shap_static_dynamic_spatial[,
+                                                             -which(colnames(p4_shap_static_dynamic_spatial) %in% 
+                                                                      c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                      model_name = 'RF_static_dynamic_spatial_full',
+                      out_dir = "4_predict/out/spatial/shap/RF_static_dynamic",
+                      num_features = 40),
+     format = "file",
+     repository = 'local'
+   ),
   tar_target(
     p4_shap_importance_min_static_dynamic_spatial_png,
     plot_shap_global(shap = p4_shap_min_static_dynamic_spatial[,
@@ -2527,23 +2525,23 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
-  # tar_target(
-  #   p4_shap_dependence_static_dynamic_spatial_png,
-  #   plot_shap_dependence(shap = p4_shap_static_dynamic_spatial[,
-  #                                                               -which(colnames(p4_shap_static_dynamic_spatial) %in%
-  #                                                                        c('PRMS_segid', 'Date', 'data_type', 'group'))],
-  #                        data = left_join(as.data.frame(p4_shap_static_dynamic_spatial) %>% 
-  #                                           select(PRMS_segid, Date), 
-  #                                         p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data %>% 
-  #                                           select(-mean_value), 
-  #                                         by = c('PRMS_segid', 'Date')) %>%
-  #                          as.data.frame(),
-  #                        model_name = 'RF_static_dynamic_spatial_full',
-  #                        out_dir = "4_predict/out/spatial/shap/RF_static_dynamic",
-  #                        ncores = SHAP_cores),
-  #   format = "file",
-  #   repository = 'local'
-  # ),
+   tar_target(
+     p4_shap_dependence_static_dynamic_spatial_png,
+     plot_shap_dependence(shap = p4_shap_static_dynamic_spatial[,
+                                                                 -which(colnames(p4_shap_static_dynamic_spatial) %in%
+                                                                          c('PRMS_segid', 'Date', 'data_type', 'group'))],
+                          data = left_join(as.data.frame(p4_shap_static_dynamic_spatial) %>% 
+                                             select(PRMS_segid, Date), 
+                                           p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data %>% 
+                                             select(-mean_value), 
+                                           by = c('PRMS_segid', 'Date')) %>%
+                            as.data.frame(),
+                          model_name = 'RF_static_dynamic_spatial_full',
+                          out_dir = "4_predict/out/spatial/shap/RF_static_dynamic",
+                          ncores = SHAP_cores),
+     format = "file",
+     repository = 'local'
+   ),
   tar_target(
     p4_shap_dependence_min_static_dynamic_spatial_png,
     plot_shap_dependence(shap = p4_shap_min_static_dynamic_spatial[,
@@ -2708,22 +2706,22 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
-  # tar_target(
-  #   p4_shap_beeswarm_static_dynamic_spatial_png,
-  #   plot_shap_global_sv(shap = p4_shap_static_dynamic_spatial,
-  #                       data = left_join(as.data.frame(p4_shap_static_dynamic_spatial) %>% 
-  #                                          select(PRMS_segid, Date), 
-  #                                        p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data %>% 
-  #                                          select(-mean_value), 
-  #                                        by = c('PRMS_segid', 'Date')) %>%
-  #                         as.data.frame(),
-  #                       model_name = 'RF_static_dynamic_spatial_full',
-  #                       out_dir = '4_predict/out/spatial/shap/RF_static_dynamic',
-  #                       num_features = 40,
-  #                       drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
-  #   format = "file",
-  #   repository = 'local'
-  # ),
+   tar_target(
+     p4_shap_beeswarm_static_dynamic_spatial_png,
+     plot_shap_global_sv(shap = p4_shap_static_dynamic_spatial,
+                         data = left_join(as.data.frame(p4_shap_static_dynamic_spatial) %>% 
+                                            select(PRMS_segid, Date), 
+                                          p4_train_RF_static_dynamic_spatial$best_fit$splits[[1]]$data %>% 
+                                            select(-mean_value), 
+                                          by = c('PRMS_segid', 'Date')) %>%
+                           as.data.frame(),
+                         model_name = 'RF_static_dynamic_spatial_full',
+                         out_dir = '4_predict/out/spatial/shap/RF_static_dynamic',
+                         num_features = 40,
+                         drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+     format = "file",
+     repository = 'local'
+   ),
   tar_target(
     p4_shap_beeswarm_min_static_dynamic_spatial_png,
     plot_shap_global_sv(shap = p4_shap_min_static_dynamic_spatial,
