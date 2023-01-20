@@ -158,7 +158,20 @@ p3_targets_list <- list(
   # Create a list of model results that will be passed to model performance
   # plotting functions.
   tar_target(
-    p3_model_results,
+    p3_model_results_random,
+    {
+      model_results_list <- list(static_dynamic = p4_pred_RF_static_dynamic_test$pred,
+                                 min_static_dynamic = p4_pred_RF_min_static_dynamic_test$pred,
+                                 dynamic = p4_pred_RF_dynamic_test$pred,
+                                 static = p4_pred_RF_static_test$pred,
+                                 min_static = p4_pred_RF_min_static_test$pred)
+      model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
+      model_results
+    },
+    repository = "local"
+  ),
+  tar_target(
+    p3_model_results_temporal,
     {
       model_results_list <- list(static_dynamic = p4_pred_RF_static_dynamic_temporal_test$pred,
                                  min_static_dynamic = p4_pred_RF_min_static_dynamic_temporal_test$pred,
@@ -168,13 +181,46 @@ p3_targets_list <- list(
     },
     repository = "local"
   ),
+  tar_target(
+    p3_model_results_spatial,
+    {
+      model_results_list <- list(static_dynamic = p4_pred_RF_static_dynamic_spatial_test$pred,
+                                 min_static_dynamic = p4_pred_RF_min_static_dynamic_spatial_test$pred,
+                                 dynamic = p4_pred_RF_dynamic_spatial_test$pred)
+      model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
+      model_results
+    },
+    repository = "local"
+  ),
   
   # Plot empirical CDFs of model performance
   tar_target(
-    p3_ecdf_all_reaches_png,
-    plot_ecdf(model_results = p3_model_results, 
+    p3_ecdf_all_reaches_random_png,
+    plot_ecdf(model_results = p3_model_results_random, 
               plot_type = "all_reaches", 
-              fileout = "3_visualize/out/ecdf_all_reaches.png",
+              fileout = "4_predict/out/random/ecdf_all_reaches_random.png",
+              log_x_axis = TRUE,
+              plot_points = FALSE,
+              plot_width_in = 6, plot_height_in = 4),
+    repository = "local",
+    format = "file"
+  ),
+  tar_target(
+    p3_ecdf_all_reaches_temporal_png,
+    plot_ecdf(model_results = p3_model_results_temporal, 
+              plot_type = "all_reaches", 
+              fileout = "4_predict/out/temporal/ecdf_all_reaches_temporal.png",
+              log_x_axis = TRUE,
+              plot_points = FALSE,
+              plot_width_in = 6, plot_height_in = 4),
+    repository = "local",
+    format = "file"
+  ),
+  tar_target(
+    p3_ecdf_all_reaches_spatial_png,
+    plot_ecdf(model_results = p3_model_results_spatial, 
+              plot_type = "all_reaches", 
+              fileout = "4_predict/out/spatial/ecdf_all_reaches_spatial.png",
               log_x_axis = TRUE,
               plot_points = FALSE,
               plot_width_in = 6, plot_height_in = 4),
@@ -183,4 +229,3 @@ p3_targets_list <- list(
   )
   
 )
-

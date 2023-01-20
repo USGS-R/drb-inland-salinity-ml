@@ -196,9 +196,114 @@ make_temporal_split <- function(attrs_df, train_prop){
   return(attrs_df)
 }
 
+make_spatial_split <- function(attrs, train_prop){
+  #' 
+  #' @description creates spatial splits for the training and testing dataset.
+  #'
+  #' @param attrs output from select_attrs. Must have "PRMS_segid" and 
+  #' "data_type" columns (characters). Splits are stratified by the data_type
+  #' (proportional amount of 'u' and 'd' reaches in each split)
+  #' @param train_prop proportion of the reaches to use as training. The number
+  #' of observations in repeated runs of this function can differ because each
+  #' reach has a different number of observations.
+  #' 
+  #' @return Returns attrs with an updated training and testing dataset based
+  #' on the data_type (spatial split).
+  
+  #get indicator for if a reach has any continuous data ('u') or not ('d')
+  reach_data_type <- summarize(group_by(attrs$input_data$split$data, PRMS_segid), 
+                               data_type = max(data_type))
+  
+  #get a split of the data by reach using strata sampling 
+  reach_split <- rsample::initial_split(data = reach_data_type,
+                                        prop = train_prop, 
+                                        strata = data_type)
+  
+  #get the attrs into a training and testing split based on the reach_split
+  training_reaches <- reach_split$data$PRMS_segid[reach_split$in_id]
+  
+  #training indices
+  ind_train <- which(attrs$input_data$split$data$PRMS_segid %in% training_reaches)
+  ind_test <- which(!(attrs$input_data$split$data$PRMS_segid %in% training_reaches))
+  
+  training <- attrs$input_data$split$data[ind_train,]
+  testing <- attrs$input_data$split$data[ind_test,]
+  
+  #get the split list into expected format
+  split <- reach_split
+  split$data <- attrs$input_data$split$data
+  split$in_id <- ind_train
+  split$out_id <- ind_test
+  
+  attrs$input_data <- list(split = split, training = training, testing = testing)
+  
+  return(attrs)
+}
+make_spatial_split_CVtraining <- function(attrs_df, train_prop){
+  #' 
+  #' @description creates spatial splits for cross validation groups.
+  #'
+  #' @param attrs_df training dataframe to be split. Must have "PRMS_segid" and 
+  #' "data_type" columns (characters). Splits are stratified by the data_type
+  #' (proportional amount of 'u' and 'd' reaches in each split)
+  #' @param train_prop proportion of the reaches to use as training. The number
+  #' of observations in repeated runs of this function can differ because each
+  #' reach has a different number of observations.
+  #' 
+  #' @return Returns the indicies to use for CV group labels
+  
+  #get indicator for if a reach has any continuous data ('u') or not ('d')
+  reach_data_type <- summarize(group_by(attrs_df, PRMS_segid), 
+                               data_type = max(data_type))
+  
+  #get a split of the data by reach using strata sampling 
+  reach_split <- rsample::initial_split(data = reach_data_type,
+                                        prop = train_prop, 
+                                        strata = data_type)
+  
+  #get the attrs into a training and testing split based on the reach_split
+  training_reaches <- reach_split$data$PRMS_segid[reach_split$in_id]
+  
+  #training indices
+  ind_train <- which(attrs_df$PRMS_segid %in% training_reaches)
+  
+  return(ind_train)
+}
+assign_spatial_split <- function(attrs, split_template_testing){
+  #' 
+  #' @description creates spatial splits for the training and testing dataset
+  #' based on a provided split_template.
+  #'
+  #' @param attrs output from select_attrs. Must have "PRMS_segid" and 
+  #' "data_type" columns (characters). Splits are stratified by the data_type
+  #' (proportional amount of 'u' and 'd' reaches in each split)
+  #' @param split_template_testing test set from make_spatial_split. This test
+  #' set will also be used for the attrs. Must have PRMS_segid column.
+  #' 
+  #' @return Returns attrs with an updated training and testing dataset based
+  #' on the split_template_testing.
+  
+  #training indices
+  ind_test <- which(attrs$input_data$split$data$PRMS_segid %in% split_template_testing$PRMS_segid)
+  ind_train <- which(!(attrs$input_data$split$data$PRMS_segid %in% split_template_testing$PRMS_segid))
+  
+  training <- attrs$input_data$split$data[ind_train,]
+  testing <- attrs$input_data$split$data[ind_test,]
+  
+  #get the split list into expected format
+  split <- attrs$input_data$split
+  split$in_id <- ind_train
+  split$out_id <- ind_test
+  
+  attrs$input_data <- list(split = split, training = training, testing = testing)
+  
+  return(attrs)
+}
+
 train_models_grid <- function(brf_output, v_folds, ncores,
                               range_mtry, range_minn, range_trees,
-                              gridsize, id_cols, temporal = FALSE){
+                              gridsize, id_cols, temporal = FALSE,
+                              spatial = FALSE){
   #' 
   #' @description optimizes hyperparameters using a grid search
   #'
@@ -216,6 +321,8 @@ train_models_grid <- function(brf_output, v_folds, ncores,
   #' and not used to predict
   #' @param temporal logical indicating if the cross validation should be completed
   #' using a temporal holdout instead of a random holdout
+  #' @param spatial logical indicating if the cross validation should be completed
+  #' using a spatial holdout instead of a random holdout
   #' 
   #' @return Returns a list of the evaluated grid parameters, the 
   #' best fit parameters, and the workflow for those parameters.
@@ -260,6 +367,33 @@ train_models_grid <- function(brf_output, v_folds, ncores,
       }
       #assign group index only to rows that have not yet been assigned a group index
       brf_output$input_data$training$group[inds_grp][brf_output$input_data$training$group[inds_grp] == 0] <- i
+    }
+    
+    #add group to the id_cols vector so it's not used for prediction
+    id_cols <- c(id_cols, 'group')
+    
+    #make 1 fold per group
+    cv_folds <- group_vfold_cv(data = brf_output$input_data$training, group = 'group')
+  }else if (spatial){
+    #add group variable to dataset based on spatial splits
+    brf_output$input_data$training$group <- 0
+    brf_output$input_data$testing$group <- NA
+    brf_output$input_data$split[[1]]$group <- NA
+    for (i in 1:v_folds){
+      if(i == v_folds){
+        ind_i <- which(brf_output$input_data$training$group == 0)
+        inds_grp <- seq(1,length(ind_i),1)
+      }else{
+        #only use data that haven't been assigned to a group
+        ind_i <- which(brf_output$input_data$training$group == 0)
+        #get the correct training proportion to use for a reduced dataset
+        train_prop_i <- nrow(brf_output$input_data$training)/v_folds/nrow(brf_output$input_data$training[ind_i,])
+        #group row indices
+        inds_grp <- make_spatial_split_CVtraining(attrs_df = brf_output$input_data$training[ind_i,], 
+                                                  train_prop = train_prop_i)
+      }
+      #assign group index
+      brf_output$input_data$training$group[ind_i][inds_grp] <- i
     }
     
     #add group to the id_cols vector so it's not used for prediction
