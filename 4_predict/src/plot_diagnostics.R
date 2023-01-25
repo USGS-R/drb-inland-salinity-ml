@@ -446,7 +446,8 @@ plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
   return(fileout)
 }
 plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 40,
-                                sv_kind = 'beeswarm', drop_columns){
+                                sv_kind = 'beeswarm', drop_columns, scale_shap = NULL,
+                                xlims = NULL){
   #' 
   #' @description Creates SHAP global importance plot using the shapviz package
   #'
@@ -458,6 +459,10 @@ plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 
   #' @param sv_kind kind of shapviz plot. bar, beeswarm, or both.
   #' @param drop_columns character vector of columns to remove 
   #' (e.g., because they're identifiers or dates)
+  #' @param scale_shap if not NULL, scales the SHAP value by raising to the power of
+  #' scale_shap. Can be useful when SHAP values span orders of magnitude, but
+  #' this may change the order of variables due to nonlinear scaling
+  #' @param xlims if not NULL, a vector containing the desired x and y axis limits
   #'
   #' @return Returns the paths to png files of SHAP dependence plots for each feature
   
@@ -465,12 +470,26 @@ plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 
   shap <- shap[,-which(colnames(shap) %in% drop_columns)]
   data <- select(data, -all_of(drop_columns))
   
+  #scale SHAP values so that distributions are visible along the x-axis
+  if(!is.null(scale_shap)){
+    shap <- as.matrix(shap)
+    #get indices of negative values
+    ind_neg <- which(shap < 0)
+    shap[ind_neg] <- shap[ind_neg]*-1
+    shap <- shap^scale_shap %>%
+      as.matrix()
+    shap[ind_neg] <- shap[ind_neg]*-1
+  }
+  
   filesout <- file.path(out_dir, 
                         paste0('SHAP_global_', model_name, '_vars', num_features, '.png'))
   
   p1 <- sv_importance(shapviz(shap, X = data), 
                       kind = sv_kind, max_display = num_features, fill = 'black',
                       alpha = 0.5) +
+    #Note, sv_importance flips the x and y axes internally, so the plotted x-axis
+    # initially is the y-axis.
+    {if(!is.null(xlims)){ylim(xlims)}} +
     ggtitle(model_name)
   
   ggsave(filename = filesout, plot = p1, device = 'png')
