@@ -2590,7 +2590,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_static_full',
                         out_dir = '4_predict/out/random/shap/RF_static',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2606,7 +2607,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_min_static_full',
                         out_dir = '4_predict/out/random/shap/RF_min_static',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2622,7 +2624,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_static_dynamic_full',
                         out_dir = '4_predict/out/random/shap/RF_static_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2638,7 +2641,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_min_static_dynamic_full',
                         out_dir = '4_predict/out/random/shap/RF_min_static_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2654,7 +2658,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_dynamic_full',
                         out_dir = '4_predict/out/random/shap/RF_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2670,7 +2675,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_static_dynamic_temporal_full',
                         out_dir = '4_predict/out/temporal/shap/RF_static_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2686,7 +2692,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_min_static_dynamic_temporal_full',
                         out_dir = '4_predict/out/temporal/shap/RF_min_static_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2702,7 +2709,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_dynamic_temporal_full',
                         out_dir = '4_predict/out/temporal/shap/RF_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2718,7 +2726,8 @@ p4_plot_targets_list <- list(
                          model_name = 'RF_static_dynamic_spatial_full',
                          out_dir = '4_predict/out/spatial/shap/RF_static_dynamic',
                          num_features = 40,
-                         drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+                         drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type'),
+                         xlims = c(-1000, 1000)),
      format = "file",
      repository = 'local'
    ),
@@ -2734,7 +2743,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_min_static_dynamic_spatial_full',
                         out_dir = '4_predict/out/spatial/shap/RF_min_static_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   ),
@@ -2750,7 +2760,8 @@ p4_plot_targets_list <- list(
                         model_name = 'RF_dynamic_spatial_full',
                         out_dir = '4_predict/out/spatial/shap/RF_dynamic',
                         num_features = 40,
-                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type')),
+                        drop_columns = c('PRMS_segid', 'Date', 'group', 'data_type'),
+                        xlims = c(-1000, 1000)),
     format = "file",
     repository = 'local'
   )
