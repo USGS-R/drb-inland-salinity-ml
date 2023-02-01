@@ -51,18 +51,29 @@ train_test_features <- c("RF_static", "RF_min_static", "RF_static_dynamic",
                          "RF_min_static_dynamic","RF_dynamic")
 train_test_res <- c("pred_obs","spatial_res","monthly_res","annual_res","temporal_res")
 rf_xai_plot_types <- c("shap","dependence") 
+rf_xai_shap_options <- c("seasonal","lulc", "physio")
+rf_xai_shap_lulc_options <- c("high_forest", "high_urban")
+rf_xai_shap_physio_options <- c("appalachian", "coastal", "interior")
+rf_xai_shap_seasonal_options <- c("OND", "JFM", "AMJ", "JAS")
+rf_xai_shap_seasonal_suboptions <- c(rf_xai_shap_lulc_options, rf_xai_shap_physio_options)
 rf_xai_dep_options <- c("pdp","ice")
 #directory paths
 p4_dirs <- bind_rows(
   expand.grid(predict_dir, train_test_splits, train_test_res, train_test_features),
   expand.grid(predict_dir, train_test_splits, train_test_other),
   expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "shap"], 
-              train_test_features),
+              train_test_features, rf_xai_shap_options[rf_xai_shap_options == "lulc"], rf_xai_shap_lulc_options),
+  expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "shap"], 
+              train_test_features, rf_xai_shap_options[rf_xai_shap_options == "physio"], rf_xai_shap_physio_options),
+  expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "shap"], 
+              train_test_features, rf_xai_shap_options[rf_xai_shap_options == "seasonal"], rf_xai_shap_seasonal_options, rf_xai_shap_seasonal_suboptions),
   expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "dependence"], 
               train_test_features, rf_xai_dep_options)) %>%
   mutate(file_path = case_when(is.na(Var4) ~ file.path(Var1, Var2, Var3),
                                is.na(Var5) ~ file.path(Var1, Var2, Var3, Var4),
-                               TRUE ~ file.path(Var1, Var2, Var3, Var4, Var5))) %>%
+                               is.na(Var6) ~ file.path(Var1, Var2, Var3, Var4, Var5),
+                               is.na(Var7) ~ file.path(Var1, Var2, Var3, Var4, Var5, Var6),
+                               TRUE ~ file.path(Var1, Var2, Var3, Var4, Var5, Var6, Var7))) %>%
   pull(file_path)
 # create the directories
 for(i in seq_along(p4_dirs)){
