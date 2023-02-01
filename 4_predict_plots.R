@@ -1954,6 +1954,23 @@ p4_plot_targets_list <- list(
 
 
   #SHAP values and plots
+  tar_target(
+    p4_shap_data_splits,
+    #models may use a different data subset based on the attributes selected.
+    #this sets up the full dataset by the season, lulc, and physio region
+    setup_shap_data(data = p2_TOT_lc_physio_attrs %>% 
+                      select(PRMS_segid, Date),
+                    seasonal = TRUE,
+                    physio = TRUE,
+                    lulc = TRUE,
+                    lulc_prop = 0.75,
+                    lulc_data = p2_TOT_lc_physio_attrs %>% 
+                      select(PRMS_segid, Date, lowurban, midurban, forest),
+                    physio_data = p2_TOT_lc_physio_attrs %>% 
+                      select(PRMS_segid, Date, AP, BR, VR, CP, PD)
+                    )
+  ),
+  
   #computation is RAM-limited, so determine number of cores based on available RAM.
   tar_target(
     p4_shap_static,
@@ -2260,6 +2277,38 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
+  
+  #SHAP values for lulc, physio, season
+  tar_target(
+    p4_shap_min_static_subsets,
+    {
+      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
+      
+      #get the sample indices for this branch
+      sample_inds <- left_join(p4_shap_data_splits, p4_train_RF_min_static$best_fit$splits[[1]]$data,
+                               by = c('PRMS_segid', 'Date')) %>%
+        select(-mean_value) %>%
+        as.data.frame()
+      
+      #change the number of threads to 1 for this calculation
+      model <- p4_train_RF_min_static$workflow
+      model$fit$fit$spec <- set_args(model$fit$fit$spec, num.threads = 1)
+      model$fit$actions$model$spec <- set_args(model$fit$actions$model$spec, num.threads = 1)
+      
+      shap <- compute_shap(model = model,
+                           data = sample_inds,
+                           ncores = min(maxcores, SHAP_cores),
+                           nsim = SHAP_nsim) 
+      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+      shap$PRMS_segid <- sample_inds$PRMS_segid
+      shap$Date <- sample_inds$Date
+      shap$data_type <- sample_inds$data_type
+      shap
+    },
+    pattern = map(p4_shap_data_splits[26:27]),
+    iteration = 'list'
+  ),
+  
 
 
   #Global shap importance

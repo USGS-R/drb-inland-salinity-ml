@@ -555,6 +555,134 @@ filter_rows_date <- function(attrs, start_date){
 
 
 #SHAP values
+setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
+                            lulc_prop = 0.75, lulc_data = NULL, physio_data = NULL){
+  #' @description prepares data for SHAP computation based on the provided split
+  #'
+  #' @param data the dataset with predictor attributes
+  #' @param seasonal logical for splitting data by water year season
+  #' @param physio logical for splitting data by physiographic region
+  #' @param lulc logical for splitting data by lulc, as defined into 2 groups:
+  #' high urban land cover and high forest land cover
+  #' @param lulc_prop threshold defining "high" proportion land cover on [0,1]
+  #' @param lulc_data land cover data for total upstream urban and forest. Must
+  #' also have the PRMS_segid and Date columns
+  #' @param physio_data physiographic region data. 
+  #' Must also have the PRMS_segid and Date columns
+  #' 
+  #' @return Returns a list with the different data splits
+  
+  data_lst <- list()
+  data_lst_names <- c()
+  
+  if(seasonal){
+    #split data by water year season (4 elements in list)
+    data$months <- lubridate::month(data$Date)
+    OND <- filter(data, months %in% c(10,11,12)) %>%
+      select(PRMS_segid, Date)
+    JFM <- filter(data, months %in% c(1,2,3)) %>%
+      select(PRMS_segid, Date)
+    AMJ <- filter(data, months %in% c(4,5,6)) %>%
+      select(PRMS_segid, Date)
+    JAS <- filter(data, months %in% c(7,8,9)) %>%
+      select(PRMS_segid, Date)
+    
+    data_lst <- c(data_lst, list(OND), list(JFM), list(AMJ), list(JAS))
+    #names for list elements
+    data_lst_names <- c(data_lst_names, paste0('seas_', c('OND', 'JFM', 'AMJ', 'JAS')))
+    
+    if(lulc){
+      #split each season by lulc
+      ind_seasons <- grep('^seas_', data_lst_names)
+      for(i in 1:4){
+        data_s <- left_join(data_lst[[ind_seasons[i]]], 
+                            lulc_data, by = c('PRMS_segid', 'Date'))
+        
+        high_forest <- filter(data_s, forest >= lulc_prop) %>%
+          select(PRMS_segid, Date)
+        high_urban <- filter(data_s, midurban + lowurban >= lulc_prop) %>%
+          select(PRMS_segid, Date)
+        
+        data_lst <- c(data_lst, list(high_forest), list(high_urban))
+        #name list elements
+        data_lst_names <- c(data_lst_names, paste0('seaslc_', data_lst_names[ind_seasons[i]], 
+                                                   '_', c('highForest', 'highUrban')))
+      }
+    }
+    
+    if(physio){
+      #split each season by physiographic region
+      ind_seasons <- grep('^seas_', data_lst_names)
+      for(i in 1:4){
+        data_s <- left_join(data_lst[[ind_seasons[i]]], 
+                            physio_data, by = c('PRMS_segid', 'Date'))
+        
+        #appalachian plateau
+        AP <- filter(data_s, AP == 1) %>%
+          select(PRMS_segid, Date)
+        #coastal plain
+        CP <- filter(data_s, CP == 1) %>%
+          select(PRMS_segid, Date)
+        #all other (interior)
+        IN <- filter(data_s, BR == 1 | VR == 1 | PD == 1) %>%
+          select(PRMS_segid, Date)
+        
+        data_lst <- c(data_lst, list(AP), list(CP), list(IN))
+        
+        #name list elements
+        data_lst_names <- c(data_lst_names, paste0('seasphysio_', data_lst_names[ind_seasons[i]], 
+                                                   '_', c('AP', 'CP', 'IN')))
+      }
+    }
+    #drop season data
+    data <- select(data, -months)
+  }
+  
+  if(lulc){
+    #split by lulc
+    data <- left_join(data, lulc_data, by = c('PRMS_segid', 'Date'))
+    
+    high_forest <- filter(data, forest >= lulc_prop) %>%
+      select(PRMS_segid, Date)
+    high_urban <- filter(data, midurban + lowurban >= lulc_prop) %>%
+      select(PRMS_segid, Date)
+    
+    data_lst <- c(data_lst, list(high_forest), list(high_urban))
+    #name list elements
+    data_lst_names <- c(data_lst_names, 'highForest', 'highUrban')
+    
+    #drop lulc data
+    data <- select(data, -lowurban, -midurban, -forest)
+  }
+  
+  if(physio){
+    #split by physiographic region
+    data <- left_join(data, physio_data, by = c('PRMS_segid', 'Date'))
+    
+    #appalachian plateau
+    AP <- filter(data, AP == 1) %>%
+      select(PRMS_segid, Date)
+    #coastal plain
+    CP <- filter(data, CP == 1) %>%
+      select(PRMS_segid, Date)
+    #all other (interior)
+    IN <- filter(data, BR == 1 | VR == 1 | PD == 1) %>%
+      select(PRMS_segid, Date)
+    
+    data_lst <- c(data_lst, list(AP), list(CP), list(IN))
+    #name list elements
+    data_lst_names <- c(data_lst_names, 'AP', 'CP', 'IN')
+    
+    #drop physio data
+    data <- select(data, -AP, -BR, -VR, -CP, -PD)
+  }
+  
+  #name list elements
+  names(data_lst) <- data_lst_names
+  
+  return(data_lst)
+}
+
 compute_shap <- function(model, data, ncores, nsim){
   #' 
   #' @description computes SHAP values
