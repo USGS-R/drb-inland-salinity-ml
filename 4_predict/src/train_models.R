@@ -649,7 +649,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     
     data_lst <- c(data_lst, list(high_forest), list(high_urban))
     #name list elements
-    data_lst_names <- c(data_lst_names, 'highForest', 'highUrban')
+    data_lst_names <- c(data_lst_names, paste0('lc_', c('highForest', 'highUrban')))
     
     #drop lulc data
     data <- select(data, -lowurban, -midurban, -forest)
@@ -671,7 +671,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     
     data_lst <- c(data_lst, list(AP), list(CP), list(IN))
     #name list elements
-    data_lst_names <- c(data_lst_names, 'AP', 'CP', 'IN')
+    data_lst_names <- c(data_lst_names, paste0('physio_', c('AP', 'CP', 'IN')))
     
     #drop physio data
     data <- select(data, -AP, -BR, -VR, -CP, -PD)
@@ -681,6 +681,101 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
   names(data_lst) <- data_lst_names
   
   return(data_lst)
+}
+
+get_shap_subset <- function(split, shap, split_name){
+  #' 
+  #' @description filters the SHAP dataframe based on the split PRMS_segid and Date
+  #'
+  #' @param split dataframe with 2 columns: PRMS_segid and Date
+  #' @param shap SHAP dataframe with class explain. This will be filtered.
+  #' @param split_name the name of the split
+  #' 
+  #' @return Returns a filtered dataframe of SHAP values with the explain class
+  
+  #get the row indices for this split
+  #because shap has a special class, get the row inds, then filter, then drop the ind column
+  shap$ind <- seq(1, nrow(shap), 1)
+  sample_inds <- left_join(split, shap,
+                           by = c('PRMS_segid', 'Date')) %>%
+    #the data in the split may not be in the model dataset. Drop NA data
+    drop_na()
+  
+  sample <- shap[shap$ind %in% sample_inds$ind, 
+                 -which(colnames(shap) == 'ind')]
+  
+  #add the name of the list to this and create a list
+  lst <- c(list(name = split_name), list(shap = sample))
+  
+  return(lst)
+}
+
+get_shap_dir <- function(main_dir, subdir_name){
+  #' 
+  #' @description returns the full path to the storage directory based on a main directory
+  #' and the name of a data split that will be used to find the corresponding subdirectory
+  #'
+  #' @param main_dir character string providing the path to the contents that is fixed for
+  #' all SHAP computations
+  #' @param subdir_name the name of the data split used to compute the SHAP values. The names
+  #' will be in the format of seas_, seaslc_, seasphysio_, lc_, or physio_
+  #' 
+  #' @return Returns a filtered dataframe of SHAP values with the explain class
+  
+  #get the text before the _
+  category <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[1]
+
+  if(category == 'seas'){
+    sub_category <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
+    filepath <- file.path(main_dir, 'seasonal', sub_category)
+  }else if(category == 'seaslc'){
+    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
+    sub_category2 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[3]
+    if(sub_category2 == 'highUrban'){
+      filepath <- file.path(main_dir, 'seasonal', sub_category1, 'high_urban')
+    }else if(sub_category2 == 'highForest'){
+      filepath <- file.path(main_dir, 'seasonal', sub_category1, 'high_forest')
+    }else{
+      stop('land cover class is not highUrban or highForest')
+    }
+  }else if(category == 'seasphysio'){
+    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
+    sub_category2 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[3]
+    if(sub_category2 == 'IN'){
+      filepath <- file.path(main_dir, 'seasonal', sub_category1, 'interior')
+    }else if(sub_category2 == 'AP'){
+      filepath <- file.path(main_dir, 'seasonal', sub_category1, 'appalachian')
+    }else if(sub_category2 == 'CP'){
+      filepath <- file.path(main_dir, 'seasonal', sub_category1, 'coastal')
+    }else{
+      stop('physio class is not IN, AP, or CP')
+    }
+    filepath <- file.path(main_dir, 'seasonal', sub_category1, sub_category2)
+  }else if(category == 'lc'){
+    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
+    if(sub_category1 == 'highUrban'){
+      filepath <- file.path(main_dir, 'lulc', 'high_urban')
+    }else if(sub_category1 == 'highForest'){
+      filepath <- file.path(main_dir, 'lulc', 'high_forest')
+    }else{
+      stop('land cover class is not highUrban or highForest')
+    }
+  }else if(category == 'physio'){
+    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
+    if(sub_category1 == 'IN'){
+      filepath <- file.path(main_dir, 'physio', 'interior')
+    }else if(sub_category1 == 'AP'){
+      filepath <- file.path(main_dir, 'physio', 'appalachian')
+    }else if(sub_category1 == 'CP'){
+      filepath <- file.path(main_dir, 'physio', 'coastal')
+    }else{
+      stop('physio class is not IN, AP, or CP')
+    }
+  }else{
+    stop('category name is not one of seas, seaslc, seasphysio, lc, or physio')
+  }
+  
+  return(filepath)
 }
 
 compute_shap <- function(model, data, ncores, nsim){
