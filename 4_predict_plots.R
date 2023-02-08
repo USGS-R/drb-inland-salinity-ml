@@ -2026,30 +2026,38 @@ p4_plot_targets_list <- list(
     deployment = 'main',
     cue = tar_cue('always')
   ),
-
+  
+  #Doing this calculation differently - using full dataset, manually specifying cores
   tar_target(
     p4_shap_static_dynamic,
     {
-      maxcores <- get_maxcores_by_RAM(10, RAM_avail = RAM_set)
+      #change the number of threads to 1 for this calculation
+      model <- p4_train_RF_static_dynamic$workflow
+      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
       
-      #sample random subset to reduce computation and RAM demand
-      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic$best_fit$splits[[1]]$data), 1), 
-                            size = nrow(p4_train_RF_static_dynamic$best_fit$splits[[1]]$data)*0.25, 
-                            replace = FALSE)
-      
-      shap <- compute_shap(model = p4_train_RF_static_dynamic$workflow,
-                   data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
-                     select(-mean_value) %>%
+      shap <- compute_shap(model = model,
+                   data = p4_train_RF_static_dynamic$best_fit$splits[[1]]$data %>%
+                     select(-mean_value, -PRMS_segid, -Date, -data_type) %>%
                      as.data.frame(),
-                   ncores = min(maxcores, SHAP_cores),
+                   ncores = min(7, SHAP_cores),
                    nsim = SHAP_nsim) 
       #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
-      shap$PRMS_segid <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
-      shap$Date <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$Date
-      shap$data_type <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap$PRMS_segid <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data$PRMS_segid
+      shap$Date <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data$Date
+      shap$data_type <- p4_train_RF_static_dynamic$best_fit$splits[[1]]$data$data_type
       shap
     }
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_11,
+    generate_credentials(dummy_var = p4_shap_static_dynamic),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   tar_target(
     p4_shap_min_static_dynamic,
     {
@@ -2073,15 +2081,6 @@ p4_plot_targets_list <- list(
       shap
     }
   ),
-
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_11,
-    generate_credentials(dummy_var = p4_shap_min_static_dynamic),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-
   tar_target(
     p4_shap_dynamic,
     {
@@ -2105,26 +2104,34 @@ p4_plot_targets_list <- list(
       shap
     }
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_11b,
+    generate_credentials(dummy_var = p4_shap_dynamic),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
+  #Doing this calculation differently - using full dataset, manually specifying cores
   tar_target(
     p4_shap_static_dynamic_temporal,
     {
-      maxcores <- get_maxcores_by_RAM(10, RAM_avail = RAM_set)
+      #change the number of threads to 1 for this calculation
+      model <- p4_train_RF_static_dynamic_temporal$workflow
+      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
       
-      #sample random subset to reduce computation and RAM demand
-      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data), 1), 
-                            size = nrow(p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
-                            replace = FALSE)
-      
-      shap <- compute_shap(model = p4_train_RF_static_dynamic_temporal$workflow,
-                   data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
-                     select(-mean_value) %>%
+      shap <- compute_shap(model = model,
+                   data = p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data %>%
+                     select(-mean_value, -PRMS_segid, -Date, -data_type, -group) %>%
                      as.data.frame(),
-                   ncores = min(maxcores, SHAP_cores),
+                   ncores = min(7, SHAP_cores),
                    nsim = SHAP_nsim) 
       #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
-      shap$PRMS_segid <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
-      shap$Date <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$Date
-      shap$data_type <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap$PRMS_segid <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data$PRMS_segid
+      shap$Date <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data$Date
+      shap$data_type <- p4_train_RF_static_dynamic_temporal$best_fit$splits[[1]]$data$data_type
       shap
     }
   ),
@@ -2223,29 +2230,37 @@ p4_plot_targets_list <- list(
      cue = tar_cue('always')
    ),
   
+  #Doing this calculation differently - using full dataset, manually specifying cores
   tar_target(
     p4_shap_min_static_dynamic_spatial,
     {
-      maxcores <- get_maxcores_by_RAM(10, RAM_avail = RAM_set)
+      #change the number of threads to 1 for this calculation
+      model <- p4_train_RF_min_static_dynamic_spatial$workflow
+      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
       
-      #sample random subset to reduce computation and RAM demand
-      sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data), 1), 
-                            size = nrow(p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data)*0.25, 
-                            replace = FALSE)
-      
-      shap <- compute_shap(model = p4_train_RF_min_static_dynamic_spatial$workflow,
-                           data = p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,] %>%
-                             select(-mean_value) %>%
+      shap <- compute_shap(model = model,
+                           data = p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data %>%
+                             select(-mean_value, -PRMS_segid, -Date, -data_type, group) %>%
                              as.data.frame(),
-                           ncores = min(maxcores, SHAP_cores),
+                           ncores = min(10, SHAP_cores),
                            nsim = SHAP_nsim) 
       #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
-      shap$PRMS_segid <- p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
-      shap$Date <- p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$Date
-      shap$data_type <- p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data[sample_inds,]$data_type
+      shap$PRMS_segid <- p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data$PRMS_segid
+      shap$Date <- p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data$Date
+      shap$data_type <- p4_train_RF_min_static_dynamic_spatial$best_fit$splits[[1]]$data$data_type
       shap
     }
   ),
+  
+  # Refresh AWS credentials
+  tar_target(
+    p4_aws_credentials_20b,
+    generate_credentials(dummy_var = p4_shap_min_static_dynamic_spatial),
+    deployment = 'main',
+    cue = tar_cue('always')
+  ),
+  
   tar_target(
     p4_shap_dynamic_spatial,
     {
@@ -2279,33 +2294,42 @@ p4_plot_targets_list <- list(
   ),
   
   #SHAP values for lulc, physio, season
+  #I think this should just subset the p4_shap_<model>_subsets instead of 
+  #recomputing SHAP values for all of the points in each subset. Would be good
+  #to check in with Jeremy about this.
+  #want to show SHAP global importance and dependence in different seasons
   tar_target(
     p4_shap_min_static_subsets,
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
       
       #get the sample indices for this branch
-      sample_inds <- left_join(p4_shap_data_splits, p4_train_RF_min_static$best_fit$splits[[1]]$data,
+      sample_inds <- left_join(p4_shap_data_splits[[1]], p4_train_RF_min_static$best_fit$splits[[1]]$data,
                                by = c('PRMS_segid', 'Date')) %>%
         select(-mean_value) %>%
+        #the data in the split may not be in the model dataset. Drop NA data
+        drop_na() %>%
         as.data.frame()
       
       #change the number of threads to 1 for this calculation
       model <- p4_train_RF_min_static$workflow
-      model$fit$fit$spec <- set_args(model$fit$fit$spec, num.threads = 1)
-      model$fit$actions$model$spec <- set_args(model$fit$actions$model$spec, num.threads = 1)
+      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
       
       shap <- compute_shap(model = model,
-                           data = sample_inds,
+                           data = sample_inds[,-which(colnames(sample_inds) %in% c('PRMS_segid', 'Date', 'data_type'))],
                            ncores = min(maxcores, SHAP_cores),
                            nsim = SHAP_nsim) 
       #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
       shap$PRMS_segid <- sample_inds$PRMS_segid
       shap$Date <- sample_inds$Date
       shap$data_type <- sample_inds$data_type
-      shap
+      #add the name of the list to this and create a list
+      lst <- list()
+      lst <- c(lst, list(names(p4_shap_data_splits)), list(shap))
+      lst
     },
-    pattern = map(p4_shap_data_splits[26:27]),
+    pattern = map(p4_shap_data_splits),
     iteration = 'list'
   ),
   
