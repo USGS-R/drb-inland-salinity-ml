@@ -2298,40 +2298,40 @@ p4_plot_targets_list <- list(
   #recomputing SHAP values for all of the points in each subset. Would be good
   #to check in with Jeremy about this.
   #want to show SHAP global importance and dependence in different seasons
-  tar_target(
-    p4_shap_min_static_subsets,
-    {
-      maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
-      
-      #get the sample indices for this branch
-      sample_inds <- left_join(p4_shap_data_splits[[1]], p4_train_RF_min_static$best_fit$splits[[1]]$data,
-                               by = c('PRMS_segid', 'Date')) %>%
-        select(-mean_value) %>%
-        #the data in the split may not be in the model dataset. Drop NA data
-        drop_na() %>%
-        as.data.frame()
-      
-      #change the number of threads to 1 for this calculation
-      model <- p4_train_RF_min_static$workflow
-      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
-      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
-      
-      shap <- compute_shap(model = model,
-                           data = sample_inds[,-which(colnames(sample_inds) %in% c('PRMS_segid', 'Date', 'data_type'))],
-                           ncores = min(maxcores, SHAP_cores),
-                           nsim = SHAP_nsim) 
-      #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
-      shap$PRMS_segid <- sample_inds$PRMS_segid
-      shap$Date <- sample_inds$Date
-      shap$data_type <- sample_inds$data_type
-      #add the name of the list to this and create a list
-      lst <- list()
-      lst <- c(lst, list(names(p4_shap_data_splits)), list(shap))
-      lst
-    },
-    pattern = map(p4_shap_data_splits),
-    iteration = 'list'
-  ),
+  # tar_target(
+  #   p4_shap_min_static_subsets,
+  #   {
+  #     maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
+  #     
+  #     #get the sample indices for this branch
+  #     sample_inds <- left_join(p4_shap_data_splits[[1]], p4_train_RF_min_static$best_fit$splits[[1]]$data,
+  #                              by = c('PRMS_segid', 'Date')) %>%
+  #       select(-mean_value) %>%
+  #       #the data in the split may not be in the model dataset. Drop NA data
+  #       drop_na() %>%
+  #       as.data.frame()
+  #     
+  #     #change the number of threads to 1 for this calculation
+  #     model <- p4_train_RF_min_static$workflow
+  #     model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+  #     model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
+  #     
+  #     shap <- compute_shap(model = model,
+  #                          data = sample_inds[,-which(colnames(sample_inds) %in% c('PRMS_segid', 'Date', 'data_type'))],
+  #                          ncores = min(maxcores, SHAP_cores),
+  #                          nsim = SHAP_nsim) 
+  #     #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
+  #     shap$PRMS_segid <- sample_inds$PRMS_segid
+  #     shap$Date <- sample_inds$Date
+  #     shap$data_type <- sample_inds$data_type
+  #     #add the name of the list to this and create a list
+  #     lst <- list()
+  #     lst <- c(lst, list(names(p4_shap_data_splits)), list(shap))
+  #     lst
+  #   },
+  #   pattern = map(p4_shap_data_splits),
+  #   iteration = 'list'
+  # ),
   
 
 

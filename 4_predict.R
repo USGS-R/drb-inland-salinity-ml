@@ -95,7 +95,8 @@ p4_targets_list <- list(
                            by_time = FALSE,
                            num_data_splits = 20
              ),
-             deployment = 'worker'
+             deployment = 'worker',
+             cue = tar_cue(mode = "never")
   ),
   
   # Refresh AWS credentials
