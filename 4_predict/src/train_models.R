@@ -729,8 +729,8 @@ get_shap_dir <- function(main_dir, subdir_name){
     sub_category <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
     filepath <- file.path(main_dir, 'seasonal', sub_category)
   }else if(category == 'seaslc'){
-    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
-    sub_category2 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[3]
+    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[3]
+    sub_category2 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[4]
     if(sub_category2 == 'highUrban'){
       filepath <- file.path(main_dir, 'seasonal', sub_category1, 'high_urban')
     }else if(sub_category2 == 'highForest'){
@@ -739,8 +739,8 @@ get_shap_dir <- function(main_dir, subdir_name){
       stop('land cover class is not highUrban or highForest')
     }
   }else if(category == 'seasphysio'){
-    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
-    sub_category2 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[3]
+    sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[3]
+    sub_category2 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[4]
     if(sub_category2 == 'IN'){
       filepath <- file.path(main_dir, 'seasonal', sub_category1, 'interior')
     }else if(sub_category2 == 'AP'){
@@ -750,7 +750,6 @@ get_shap_dir <- function(main_dir, subdir_name){
     }else{
       stop('physio class is not IN, AP, or CP')
     }
-    filepath <- file.path(main_dir, 'seasonal', sub_category1, sub_category2)
   }else if(category == 'lc'){
     sub_category1 <- str_split(pattern = '_', string = subdir_name, simplify = TRUE)[2]
     if(sub_category1 == 'highUrban'){
