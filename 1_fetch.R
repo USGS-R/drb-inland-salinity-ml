@@ -489,14 +489,7 @@ p1_targets_list <- list(
   # Unzip DRB ecoregion / physioregion
   tar_target(
     p1_drb_ecoreg_shp,
-    {
-      unzip(zipfile = grep("physiographic_regions_DRB",p1_drb_ecoreg_zip,value=TRUE), 
-            exdir = "1_fetch/out", overwrite = TRUE)
-      paste0("1_fetch/out/", 
-             unzip(zipfile = grep("physiographic_regions_DRB",p1_drb_ecoreg_zip,value=TRUE), 
-            exdir = "1_fetch/out", overwrite = TRUE, list = TRUE)$Name
-            )
-    },
+    unzip(zipfile = p1_drb_ecoreg_zip, exdir = "1_fetch/out", overwrite = TRUE),
     format = "file",
     deployment = 'main',
     repository = "local"
