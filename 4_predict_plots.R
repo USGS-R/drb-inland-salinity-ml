@@ -1960,9 +1960,9 @@ p4_plot_targets_list <- list(
     #this sets up the full dataset by the season, lulc, and physio region
     setup_shap_data(data = p2_TOT_lc_physio_attrs %>% 
                       select(PRMS_segid, Date),
-                    seasonal = TRUE,
-                    physio = TRUE,
-                    lulc = TRUE,
+                    split_by_season = TRUE,
+                    split_by_physio = TRUE,
+                    split_by_lulc = TRUE,
                     lulc_prop = 0.75,
                     lulc_data = p2_TOT_lc_physio_attrs %>% 
                       select(PRMS_segid, Date, lowurban, midurban, forest),
