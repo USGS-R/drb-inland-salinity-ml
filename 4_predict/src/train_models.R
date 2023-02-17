@@ -594,8 +594,9 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     if(lulc){
       #split each season by lulc
       ind_seasons <- grep('^seas_', data_lst_names)
-      for(i in 1:4){
-        data_s <- left_join(data_lst[[ind_seasons[i]]], 
+      stopifnot(length(ind_seasons) == 4)
+      for(i in ind_seasons){
+        data_s <- left_join(data_lst[[i]], 
                             lulc_data, by = c('PRMS_segid', 'Date'))
         
         high_forest <- filter(data_s, forest >= lulc_prop) %>%
@@ -605,7 +606,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
         
         data_lst <- c(data_lst, list(high_forest), list(high_urban))
         #name list elements
-        data_lst_names <- c(data_lst_names, paste0('seaslc_', data_lst_names[ind_seasons[i]], 
+        data_lst_names <- c(data_lst_names, paste0('seaslc_', data_lst_names[i], 
                                                    '_', c('highForest', 'highUrban')))
       }
     }
@@ -613,8 +614,9 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     if(physio){
       #split each season by physiographic region
       ind_seasons <- grep('^seas_', data_lst_names)
-      for(i in 1:4){
-        data_s <- left_join(data_lst[[ind_seasons[i]]], 
+      stopifnot(length(ind_seasons) == 4)
+      for(i in ind_seasons){
+        data_s <- left_join(data_lst[[i]], 
                             physio_data, by = c('PRMS_segid', 'Date'))
         
         #appalachian plateau
@@ -630,7 +632,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
         data_lst <- c(data_lst, list(AP), list(CP), list(IN))
         
         #name list elements
-        data_lst_names <- c(data_lst_names, paste0('seasphysio_', data_lst_names[ind_seasons[i]], 
+        data_lst_names <- c(data_lst_names, paste0('seasphysio_', data_lst_names[i], 
                                                    '_', c('AP', 'CP', 'IN')))
       }
     }
