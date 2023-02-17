@@ -555,14 +555,14 @@ filter_rows_date <- function(attrs, start_date){
 
 
 #SHAP values
-setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
+setup_shap_data <- function(data, split_by_season = TRUE, split_by_physio = TRUE, split_by_lulc = TRUE,
                             lulc_prop = 0.75, lulc_data = NULL, physio_data = NULL){
   #' @description prepares data for SHAP computation based on the provided split
   #'
   #' @param data the dataset with predictor attributes
-  #' @param seasonal logical for splitting data by water year season
-  #' @param physio logical for splitting data by physiographic region
-  #' @param lulc logical for splitting data by lulc, as defined into 2 groups:
+  #' @param split_by_season logical for splitting data by water year season
+  #' @param split_by_physio logical for splitting data by physiographic region
+  #' @param split_by_lulc logical for splitting data by lulc, as defined into 2 groups:
   #' high urban land cover and high forest land cover
   #' @param lulc_prop threshold defining "high" proportion land cover on [0,1]
   #' @param lulc_data land cover data for total upstream urban and forest. Must
@@ -575,7 +575,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
   data_lst <- list()
   data_lst_names <- c()
   
-  if(seasonal){
+  if(split_by_season){
     #split data by water year season (4 elements in list)
     data$months <- lubridate::month(data$Date)
     OND <- filter(data, months %in% c(10,11,12)) %>%
@@ -591,7 +591,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     #names for list elements
     data_lst_names <- c(data_lst_names, paste0('seas_', c('OND', 'JFM', 'AMJ', 'JAS')))
     
-    if(lulc){
+    if(split_by_lulc){
       #split each season by lulc
       ind_seasons <- grep('^seas_', data_lst_names)
       stopifnot(length(ind_seasons) == 4)
@@ -611,7 +611,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
       }
     }
     
-    if(physio){
+    if(split_by_physio){
       #split each season by physiographic region
       ind_seasons <- grep('^seas_', data_lst_names)
       stopifnot(length(ind_seasons) == 4)
@@ -640,7 +640,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     data <- select(data, -months)
   }
   
-  if(lulc){
+  if(split_by_lulc){
     #split by lulc
     data <- left_join(data, lulc_data, by = c('PRMS_segid', 'Date'))
     
@@ -657,7 +657,7 @@ setup_shap_data <- function(data, seasonal = TRUE, physio = TRUE, lulc = TRUE,
     data <- select(data, -lowurban, -midurban, -forest)
   }
   
-  if(physio){
+  if(split_by_physio){
     #split by physiographic region
     data <- left_join(data, physio_data, by = c('PRMS_segid', 'Date'))
     
