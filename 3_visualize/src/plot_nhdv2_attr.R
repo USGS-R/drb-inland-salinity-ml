@@ -71,3 +71,55 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
 }
 
 
+plot_data_splits <- function(split, split_name, full_df, network_geometry, out_dir, boundary = drb_shp){
+  #' 
+  #' @description This function maps the reaches in the data split as blue
+  #' and the outher reaches in gray.
+  #'
+  #' @param split data frame containing a column for "PRMS_segid"
+  #' @param split_name name of the data split for the plot title
+  #' @param full_df the full dataframe of reaches that have data. Only needs a column for "PRMS_segid"
+  #' @param network_geometry sf object containing the network flowline geometry; 
+  #' must include columns "subsegid" and "geometry"
+  #' @param out_dir a character string that indicates the location of the saved plot
+  #' @param boundary sf polygon defining the boundary of the DRB to plot
+  #'
+  #' @value Returns a png file containing a map
+  
+  #Get the split data to only unique PRMS_segid to be plotted
+  split <- distinct(split, PRMS_segid)
+  full_df <- distinct(full_df, PRMS_segid)
+  
+  attr_plot_spatial <- ggplot() + 
+    #full network (in case there are reaches without data in split or full_df)
+    geom_sf(data = network_geometry, 
+            size = 0.3, color = 'gray') +
+    #DRB boundary
+    geom_sf(data = boundary, fill = NA,
+            size = 0.3, color = 'black') +
+    #full data
+    geom_sf(data = full_df %>% 
+              left_join(.,network_geometry[,c("subsegid","geometry")],
+                        by=c("PRMS_segid"="subsegid")) %>%
+              sf::st_as_sf(),
+            size = 0.3, 
+            color = 'lightblue') +
+    #split data
+    geom_sf(data = split %>% 
+              left_join(.,network_geometry[,c("subsegid","geometry")],
+                        by=c("PRMS_segid"="subsegid")) %>%
+              sf::st_as_sf(),
+            size = 0.3, 
+            color = 'blue') +
+    theme_bw() + 
+    theme(plot.margin = unit(c(0,0,0,2), "cm"),
+          axis.text.x = element_text(size = 6),
+          legend.title = element_text(size = 10)) +
+    ggtitle(split_name)
+  
+  plot_name <- file.path(out_dir, paste0(split_name,".png"))
+  
+  suppressWarnings(ggsave(plot_name, plot = attr_plot_spatial, device = "png"))
+  
+  return(plot_name)
+}
