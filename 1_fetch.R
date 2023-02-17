@@ -11,6 +11,7 @@ source("1_fetch/src/fetch_nhdv2_attributes_from_sb.R")
 source("1_fetch/src/download_file.R")
 source("1_fetch/src/munge_reach_attr_tbl.R")
 source("1_fetch/src/generate_credentials.R")
+source("1_fetch/src/check_physio_region.R")
 source('2_process/src/write_data.R')
 
 # tar_cue for downloading NWIS sites and data.
@@ -471,6 +472,40 @@ p1_targets_list <- list(
                           "1_fetch/out/drb_distance_matrix.npz"),
     format = 'file', 
     repository = 'local'
+  ),
+  
+  # Download DRB physiographic ecoregions
+  # Retrieved from: https://www.sciencebase.gov/catalog/item/5d94949de4b0c4f70d0db64f
+  # see note at top of file about 'local' targets
+  tar_target(
+    p1_drb_ecoreg_zip,
+    download_sb_file(sb_id = "5d94949de4b0c4f70d0db64f",
+                     file_name = "physiographic_regions_DRB.zip",
+                     out_dir="1_fetch/out"),
+    format="file",
+    deployment = 'main',
+    repository = 'local'
+  ),
+  # Unzip DRB ecoregion / physioregion
+  tar_target(
+    p1_drb_ecoreg_shp,
+    unzip(zipfile = p1_drb_ecoreg_zip, exdir = "1_fetch/out", overwrite = TRUE),
+    format = "file",
+    deployment = 'main',
+    repository = "local"
+  ),
+  # convert to sf object
+  tar_target(
+    p1_drb_ecoreg_sf,
+    st_read(grep(pattern = 'shp$', x = p1_drb_ecoreg_shp, value = TRUE)) %>%
+      #4326 matches p1_reaches_sf
+      st_transform(crs = 4326),
+    deployment = 'main'
+  ),
+  # add physioregions to PRMS reach sf object
+  tar_target(
+    p1_reaches_ecoreg_sf,
+    get_physio_regions(reaches = p1_reaches_sf, ecoregions = p1_drb_ecoreg_sf),
+    deployment = 'main'
   )
 )
-  

@@ -566,6 +566,20 @@ p2_targets_list <- list(
       filter(Date >= earliest_date)
   ),
   
+  #Attribute table with barren, urban and forest land cover,
+  # and physiographic regions for use in analysis functions
+  tar_target(
+    p2_TOT_lc_physio_attrs,
+    select(p2_all_attr_SC_obs, PRMS_segid, Date, TOT_LC3_0, TOT_LC4_0, TOT_LC6_0) %>%
+      rename(lowurban = TOT_LC3_0,
+             midurban = TOT_LC4_0,
+             forest = TOT_LC6_0) %>%
+      left_join(y = p1_reaches_ecoreg_sf %>% 
+                  select(subsegid, "AP", "BR", "CP", "PD", "VR") %>%
+                  st_drop_geometry(), 
+                by = c('PRMS_segid' = 'subsegid'))
+  ),
+  
   #Save a table indicating number of observations for each reach by data type
   tar_target(
     p2_reach_data_type,

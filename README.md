@@ -1,6 +1,8 @@
 # drb-inland-salinity-ml
 This repository contains a pipeline for data gathering, processing, modeling, and visualizing results for machine learning models that predict salinity in inland reaches of the Delaware River Basin (DRB). This pipeline is built with targets version 0.11.0 and may not work with earlier versions.
 
+Note: there are several targets that are currently set to never update: NWIS specific conductivity data (described further in the "Building locally" section of this README), Boruta attribute screening, and Random Forest model training. The attribute screening is not being updated because it determines which features are used in the models. The RF model targets could all have the tar_cue(mode = "never") removed, at the expense of updating all downstream targets that process the results.
+
 # New Users and Reviewers
 Follow the steps below to build the pipeline with S3 within the singularity container on Tallgrass. For reviews, the code developer should provide the directory of the code to review, the name of the container used, and the slurm script to run the targets or to inspect the generated data.
 

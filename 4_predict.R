@@ -95,15 +95,8 @@ p4_targets_list <- list(
                            by_time = FALSE,
                            num_data_splits = 20
              ),
-             deployment = 'worker'
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_1,
-    generate_credentials(dummy_var = p4_Boruta_static),
-    deployment = 'main',
-    cue = tar_cue('always')
+             deployment = 'worker',
+             cue = tar_cue(mode = "never")
   ),
   
   #Prepare attributes for RF model training
@@ -236,14 +229,6 @@ p4_targets_list <- list(
              cue = tar_cue(mode = 'never')
   ),
   
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_2,
-    generate_credentials(dummy_var = p4_train_RF_static),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-  
   #only the minimum static attributes
   tar_target(p4_train_RF_min_static,
              {#Filter out data before 1984-09-30 for training due to NAs
@@ -260,14 +245,6 @@ p4_targets_list <- list(
              },
              deployment = 'worker',
              cue = tar_cue(mode = 'never')
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_3,
-    generate_credentials(dummy_var = p4_train_RF_min_static),
-    deployment = 'main',
-    cue = tar_cue('always')
   ),
   
   #static and dynamic
@@ -288,14 +265,6 @@ p4_targets_list <- list(
              cue = tar_cue(mode = 'never')
   ),
   
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_4,
-    generate_credentials(dummy_var = p4_train_RF_static_dynamic),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-  
   #minimum static and dynamic
   tar_target(p4_train_RF_min_static_dynamic,
              {#Filter out data before 1984-09-30 for training due to NAs
@@ -314,14 +283,6 @@ p4_targets_list <- list(
              cue = tar_cue(mode = 'never')
   ),
   
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_5,
-    generate_credentials(dummy_var = p4_train_RF_min_static_dynamic),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-  
   #dynamic only
   tar_target(p4_train_RF_dynamic,
              {#Filter out data before 1984-09-30 for training due to NAs
@@ -338,14 +299,6 @@ p4_targets_list <- list(
              },
              deployment = 'worker',
              cue = tar_cue(mode = 'never')
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_6,
-    generate_credentials(dummy_var = p4_train_RF_dynamic),
-    deployment = 'main',
-    cue = tar_cue('always')
   ),
   
   #Temporal train/test split and CV splits
@@ -367,14 +320,6 @@ p4_targets_list <- list(
              cue = tar_cue(mode = 'never')
   ),
   
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_7,
-    generate_credentials(dummy_var = p4_train_RF_static_dynamic_temporal),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-  
   tar_target(p4_train_RF_min_static_dynamic_temporal,
              {#Filter out data before 1984-09-30 for training due to NAs
                filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs_temporal,
@@ -391,14 +336,6 @@ p4_targets_list <- list(
              },
              deployment = 'worker',
              cue = tar_cue(mode = 'never')
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_8,
-    generate_credentials(dummy_var = p4_train_RF_min_static_dynamic_temporal),
-    deployment = 'main',
-    cue = tar_cue('always')
   ),
   
   tar_target(p4_train_RF_dynamic_temporal,
@@ -419,14 +356,6 @@ p4_targets_list <- list(
              cue = tar_cue(mode = 'never')
   ),
   
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_9,
-    generate_credentials(dummy_var = p4_train_RF_dynamic_temporal),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-  
   tar_target(p4_train_RF_static_dynamic_temporal_fulltune,
              {#Filter out data before 1984-09-30 for training due to NAs
                filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_temporal,
@@ -445,14 +374,6 @@ p4_targets_list <- list(
              cue = tar_cue(mode = 'never')
   ),
   
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_14,
-    generate_credentials(dummy_var = p4_train_RF_static_dynamic_temporal_fulltune),
-    deployment = 'main',
-    cue = tar_cue('always')
-  ),
-  
   #Spatial train/test split and CV splits
   tar_target(p4_train_RF_static_dynamic_spatial,
              {#Filter out data before 1984-09-30 for training due to NAs
@@ -468,15 +389,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'),
                                  spatial = TRUE)
              },
-             deployment = 'worker'
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_15,
-    generate_credentials(dummy_var = p4_train_RF_static_dynamic_spatial),
-    deployment = 'main',
-    cue = tar_cue('always')
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   tar_target(p4_train_RF_min_static_dynamic_spatial,
@@ -493,15 +407,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'), 
                                  spatial = TRUE)
              },
-             deployment = 'worker'
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_16,
-    generate_credentials(dummy_var = p4_train_RF_min_static_dynamic_spatial),
-    deployment = 'main',
-    cue = tar_cue('always')
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   tar_target(p4_train_RF_dynamic_spatial,
@@ -518,15 +425,8 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'), 
                                  spatial = TRUE)
              },
-             deployment = 'worker'
-  ),
-  
-  # Refresh AWS credentials
-  tar_target(
-    p4_aws_credentials_17,
-    generate_credentials(dummy_var = p4_train_RF_dynamic_spatial),
-    deployment = 'main',
-    cue = tar_cue('always')
+             deployment = 'worker',
+             cue = tar_cue(mode = 'never')
   ),
   
   #tar_target(p4_train_RF_static_dynamic_spatial_fulltune,
@@ -544,14 +444,6 @@ p4_targets_list <- list(
   #                               spatial = TRUE)
   #           },
   #           deployment = 'worker'
-  #),
-  
-  # Refresh AWS credentials
-  #tar_target(
-  #  p4_aws_credentials_18,
-  #  generate_credentials(dummy_var = p4_train_RF_static_dynamic_spatial_fulltune),
-  #  deployment = 'main',
-  #  cue = tar_cue('always')
   #),
   
   #RF Predictions
