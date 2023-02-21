@@ -2063,12 +2063,17 @@ p4_plot_targets_list <- list(
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
       
+      #change the number of threads to 1 for this calculation
+      model <- p4_train_RF_min_static_dynamic$workflow
+      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
+      
       #sample random subset to reduce computation and RAM demand
       sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data), 1), 
                             size = nrow(p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      shap <- compute_shap(model = p4_train_RF_min_static_dynamic$workflow,
+      shap <- compute_shap(model = model,
                    data = p4_train_RF_min_static_dynamic$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
@@ -2149,16 +2154,21 @@ p4_plot_targets_list <- list(
     {
       maxcores <- get_maxcores_by_RAM(SHAP_RAM, RAM_avail = RAM_set)
       
+      #change the number of threads to 1 for this calculation
+      model <- p4_train_RF_min_static_dynamic_temporal$workflow
+      model$fit$fit$spec$eng_args$num.threads <- set_args(model$fit$fit$spec, num.threads = 1)$eng_args$num.threads
+      model$fit$actions$model$spec$eng_args$num.threads <- set_args(model$fit$actions$model$spec, num.threads = 1)$eng_args$num.threads
+      
       #sample random subset to reduce computation and RAM demand
       sample_inds <- sample(x = seq(1, nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data), 1), 
                             size = nrow(p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data)*0.25, 
                             replace = FALSE)
       
-      shap <- compute_shap(model = p4_train_RF_min_static_dynamic_temporal$workflow,
+      shap <- compute_shap(model = model,
                    data = p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,] %>%
                      select(-mean_value) %>%
                      as.data.frame(),
-                   ncores = min(maxcores, SHAP_cores),
+                   ncores = min(30, SHAP_cores),
                    nsim = SHAP_nsim) 
       #add PRMS_segid, Date, and data_type columns. Cannot use tidy methods because shap has a strange class
       shap$PRMS_segid <- p4_train_RF_min_static_dynamic_temporal$best_fit$splits[[1]]$data[sample_inds,]$PRMS_segid
