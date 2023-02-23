@@ -79,6 +79,7 @@ p4_dirs <- bind_rows(
 for(i in seq_along(p4_dirs)){
   dir.create(p4_dirs[i], recursive = TRUE, showWarnings = FALSE)
 }
+dir.create("4_predict/out/XAI_splits", showWarnings = FALSE)
 
 
 # Define columns of interest for harmonized WQP data
