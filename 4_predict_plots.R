@@ -1976,7 +1976,7 @@ p4_plot_targets_list <- list(
     plot_data_splits(split = p4_shap_data_splits[[1]], 
                      split_name = names(p4_shap_data_splits)[1],
                      #using p2_TOT_lc_physio_attrs because it's smaller than the full table
-                     full_df = full_df <- distinct(p2_TOT_lc_physio_attrs, PRMS_segid),
+                     full_df = distinct(p2_TOT_lc_physio_attrs, PRMS_segid),
                      network_geometry = p1_reaches_sf,
                      boundary = drb_shp,
                      out_dir = '4_predict/out/XAI_splits'),
