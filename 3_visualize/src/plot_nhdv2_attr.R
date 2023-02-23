@@ -93,7 +93,8 @@ plot_data_splits <- function(split, split_name, full_df, network_geometry, out_d
   attr_plot_spatial <- ggplot() + 
     #full network (in case there are reaches without data in split or full_df)
     geom_sf(data = network_geometry, 
-            size = 0.3, color = 'gray') +
+            aes(color = "no data"),
+            size = 0.3) +
     #DRB boundary
     geom_sf(data = boundary, fill = NA,
             size = 0.3, color = 'black') +
@@ -102,15 +103,18 @@ plot_data_splits <- function(split, split_name, full_df, network_geometry, out_d
               left_join(.,network_geometry[,c("subsegid","geometry")],
                         by=c("PRMS_segid"="subsegid")) %>%
               sf::st_as_sf(),
-            size = 0.3, 
-            color = 'lightblue') +
+            aes(color = "data present in full set"),
+            size = 0.3) +
     #split data
     geom_sf(data = split %>% 
               left_join(.,network_geometry[,c("subsegid","geometry")],
                         by=c("PRMS_segid"="subsegid")) %>%
               sf::st_as_sf(),
-            size = 0.3, 
-            color = 'blue') +
+            aes(color = "data present in split set"),
+            size = 0.3) +
+    scale_color_manual(name = "",
+                       labels = c("no data", "data present in full set", "data present in split set"),
+                       values = c("gray", "lightblue", "blue")) + 
     theme_bw() + 
     theme(plot.margin = unit(c(0,0,0,2), "cm"),
           axis.text.x = element_text(size = 6),
