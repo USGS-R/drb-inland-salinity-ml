@@ -113,8 +113,9 @@ plot_data_splits <- function(split, split_name, full_df, network_geometry, out_d
             aes(color = "data present in split set"),
             size = 0.3) +
     scale_color_manual(name = "",
-                       labels = c("no data", "data present in full set", "data present in split set"),
-                       values = c("gray", "lightblue", "blue")) + 
+                       values = c("data present in split set" = "blue", 
+                                  "data present in full set" = "lightblue", 
+                                  "no data" = "gray")) + 
     theme_bw() + 
     theme(plot.margin = unit(c(0,0,0,2), "cm"),
           axis.text.x = element_text(size = 6),
