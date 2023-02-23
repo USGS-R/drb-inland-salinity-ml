@@ -1970,6 +1970,20 @@ p4_plot_targets_list <- list(
                       select(PRMS_segid, Date, AP, BR, VR, CP, PD)
                     )
   ),
+  #Make maps showing the reaches that each data split covers
+  tar_target(
+    p4_shap_data_split_maps_png,
+    plot_data_splits(split = p4_shap_data_splits[[1]], 
+                     split_name = names(p4_shap_data_splits)[1],
+                     #using p2_TOT_lc_physio_attrs because it's smaller than the full table
+                     full_df = distinct(p2_TOT_lc_physio_attrs, PRMS_segid),
+                     network_geometry = p1_reaches_sf,
+                     boundary = drb_shp,
+                     out_dir = '4_predict/out/XAI_splits'),
+    pattern = map(p4_shap_data_splits),
+    format = 'file',
+    repository = 'local'
+  ),
   
   #computation is RAM-limited, so determine number of cores based on available RAM.
   tar_target(
