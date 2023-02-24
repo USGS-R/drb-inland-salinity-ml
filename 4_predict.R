@@ -225,8 +225,7 @@ p4_targets_list <- list(
                                gridsize = 3,
                                id_cols = c('PRMS_segid', 'Date', 'data_type')
              ),
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   #only the minimum static attributes
@@ -235,7 +234,7 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_min_selected_static_attrs,
                                                   '1984-09-30')
              train_models_grid(brf_output = filtered_attrs,
-                               ncores = 35,
+                               ncores = RF_cores,
                                v_folds = 2,
                                range_mtry = c(2,20),
                                range_minn = c(2,20),
@@ -243,8 +242,7 @@ p4_targets_list <- list(
                                gridsize = 3,
                                id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   #static and dynamic
@@ -253,7 +251,7 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
+                                 ncores = RF_cores,
                                  v_folds = 2,
                                  range_mtry = c(5,30),
                                  range_minn = c(2,20),
@@ -261,8 +259,7 @@ p4_targets_list <- list(
                                  gridsize = 3,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   #minimum static and dynamic
@@ -271,7 +268,7 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                               ncores = 35,
+                               ncores = RF_cores,
                                v_folds = 2,
                                range_mtry = c(5,30),
                                range_minn = c(2,20),
@@ -279,8 +276,7 @@ p4_targets_list <- list(
                                gridsize = 3,
                                id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   #dynamic only
@@ -289,7 +285,7 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_dynamic_attrs,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
+                                 ncores = RF_cores,
                                  v_folds = 2,
                                  range_mtry = c(5,30),
                                  range_minn = c(2,20),
@@ -297,66 +293,11 @@ p4_targets_list <- list(
                                  gridsize = 3,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'))
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   #Temporal train/test split and CV splits
   tar_target(p4_train_RF_static_dynamic_temporal,
-             {#Filter out data before 1984-09-30 for training due to NAs
-               filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_temporal,
-                                                  '1984-09-30')
-               train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
-                                 v_folds = 2,
-                                 range_mtry = c(5,30),
-                                 range_minn = c(2,20),
-                                 range_trees = c(100,500),
-                                 gridsize = 3,
-                                 id_cols = c('PRMS_segid', 'Date', 'data_type'),
-                                 temporal = TRUE)
-             },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
-  ),
-  
-  tar_target(p4_train_RF_min_static_dynamic_temporal,
-             {#Filter out data before 1984-09-30 for training due to NAs
-               filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs_temporal,
-                                                  '1984-09-30')
-               train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
-                                 v_folds = 2,
-                                 range_mtry = c(5,30),
-                                 range_minn = c(2,20),
-                                 range_trees = c(100,500),
-                                 gridsize = 3,
-                                 id_cols = c('PRMS_segid', 'Date', 'data_type'), 
-                                 temporal = TRUE)
-             },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
-  ),
-  
-  tar_target(p4_train_RF_dynamic_temporal,
-             {#Filter out data before 1984-09-30 for training due to NAs
-               filtered_attrs <- filter_rows_date(p4_dynamic_attrs_temporal,
-                                                  '1984-09-30')
-               train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
-                                 v_folds = 2,
-                                 range_mtry = c(5,30),
-                                 range_minn = c(2,20),
-                                 range_trees = c(100,500),
-                                 gridsize = 3,
-                                 id_cols = c('PRMS_segid', 'Date', 'data_type'), 
-                                 temporal = TRUE)
-             },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
-  ),
-  
-  tar_target(p4_train_RF_static_dynamic_temporal_fulltune,
              {#Filter out data before 1984-09-30 for training due to NAs
                filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_temporal,
                                                   '1984-09-30')
@@ -370,27 +311,61 @@ p4_targets_list <- list(
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'),
                                  temporal = TRUE)
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
+  ),
+  
+  tar_target(p4_train_RF_min_static_dynamic_temporal,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs_temporal,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 65,
+                                 v_folds = cv_folds,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 30,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'), 
+                                 temporal = TRUE)
+             },
+             deployment = 'worker'
+  ),
+  
+  tar_target(p4_train_RF_dynamic_temporal,
+             {#Filter out data before 1984-09-30 for training due to NAs
+               filtered_attrs <- filter_rows_date(p4_dynamic_attrs_temporal,
+                                                  '1984-09-30')
+               train_models_grid(brf_output = filtered_attrs,
+                                 ncores = 65,
+                                 v_folds = cv_folds,
+                                 range_mtry = c(5,30),
+                                 range_minn = c(2,20),
+                                 range_trees = c(100,500),
+                                 gridsize = 30,
+                                 id_cols = c('PRMS_segid', 'Date', 'data_type'), 
+                                 temporal = TRUE)
+             },
+             deployment = 'worker'
   ),
   
   #Spatial train/test split and CV splits
+  #Using 40 cores here because running on 50 cores approached the RAM limit and did not finish in 8 hrs. 
+  #Running on 40 cores was below the RAM limit and finished in <1 hr. 
   tar_target(p4_train_RF_static_dynamic_spatial,
              {#Filter out data before 1984-09-30 for training due to NAs
                filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_spatial,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
-                                 v_folds = 2,
+                                 ncores = 40,
+                                 v_folds = cv_folds,
                                  range_mtry = c(5,30),
                                  range_minn = c(2,20),
                                  range_trees = c(100,500),
-                                 gridsize = 3,
+                                 gridsize = 30,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'),
                                  spatial = TRUE)
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   tar_target(p4_train_RF_min_static_dynamic_spatial,
@@ -398,17 +373,16 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_selected_min_static_dynamic_attrs_spatial,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
-                                 v_folds = 2,
+                                 ncores = 65,
+                                 v_folds = cv_folds,
                                  range_mtry = c(5,30),
                                  range_minn = c(2,20),
                                  range_trees = c(100,500),
-                                 gridsize = 3,
+                                 gridsize = 30,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'), 
                                  spatial = TRUE)
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
   
   tar_target(p4_train_RF_dynamic_spatial,
@@ -416,35 +390,17 @@ p4_targets_list <- list(
                filtered_attrs <- filter_rows_date(p4_dynamic_attrs_spatial,
                                                   '1984-09-30')
                train_models_grid(brf_output = filtered_attrs,
-                                 ncores = 35,
-                                 v_folds = 2,
+                                 ncores = 65,
+                                 v_folds = cv_folds,
                                  range_mtry = c(5,30),
                                  range_minn = c(2,20),
                                  range_trees = c(100,500),
-                                 gridsize = 3,
+                                 gridsize = 30,
                                  id_cols = c('PRMS_segid', 'Date', 'data_type'), 
                                  spatial = TRUE)
              },
-             deployment = 'worker',
-             cue = tar_cue(mode = 'never')
+             deployment = 'worker'
   ),
-  
-  #tar_target(p4_train_RF_static_dynamic_spatial_fulltune,
-  #           {#Filter out data before 1984-09-30 for training due to NAs
-  #             filtered_attrs <- filter_rows_date(p4_selected_static_dynamic_attrs_spatial,
-  #                                                '1984-09-30')
-  #             train_models_grid(brf_output = filtered_attrs,
-  #                               ncores = RF_cores,
-  #                               v_folds = cv_folds,
-  #                               range_mtry = c(5,30),
-  #                               range_minn = c(2,20),
-  #                               range_trees = c(100,500),
-  #                               gridsize = 30,
-  #                               id_cols = c('PRMS_segid', 'Date', 'data_type'),
-  #                               spatial = TRUE)
-  #           },
-  #           deployment = 'worker'
-  #),
   
   #RF Predictions
   #Static features, full dataset

@@ -196,6 +196,8 @@ Boruta_runs <- 300
 Boruta_trees <- 500
 #number of cores
 Boruta_cores <- 70
+#The number of cores used to train RF models
+#Note that this number is not used for every target, but it was useful to keep the RAM below 385 GB for all exact one model.
 RF_cores <- 50
 #Cross validation folds
 cv_folds <- 5
