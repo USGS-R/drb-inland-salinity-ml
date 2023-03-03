@@ -48,7 +48,8 @@ predict_dir <- "4_predict/out"
 train_test_other <- c("vip","hypopt")
 train_test_splits <- c("temporal","random","spatial")
 train_test_features <- c("RF_static", "RF_min_static", "RF_static_dynamic", 
-                         "RF_min_static_dynamic","RF_dynamic")
+                         "RF_min_static_dynamic","RF_dynamic","RGCN_static_dynamic",
+                         "RGCN_min_static_dynamic","RGCN_dynamic")
 train_test_res <- c("pred_obs","spatial_res","monthly_res","annual_res","temporal_res")
 rf_xai_plot_types <- c("shap","dependence") 
 rf_xai_shap_options <- c("seasonal","lulc", "physio")
@@ -80,7 +81,8 @@ for(i in seq_along(p4_dirs)){
   dir.create(p4_dirs[i], recursive = TRUE, showWarnings = FALSE)
 }
 dir.create("4_predict/out/XAI_splits", showWarnings = FALSE)
-
+dir.create("4_predict/out/spatial/RGCN", showWarnings = FALSE)
+dir.create("4_predict/out/temporal/RGCN", showWarnings = FALSE)
 
 # Define columns of interest for harmonized WQP data
 wqp_vars_select <- c("MonitoringLocationIdentifier","MonitoringLocationName","LongitudeMeasure","LatitudeMeasure",
