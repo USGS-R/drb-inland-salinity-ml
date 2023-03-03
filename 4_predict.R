@@ -607,7 +607,9 @@ p4_targets_list <- list(
              repository = 'local'
   ),
   tar_target(p4_train_test_dates_txt,
-             write_dates(p4_dynamic_attrs_temporal$input_data,
+             write_dates(filter_rows_date(p4_dynamic_attrs_temporal,
+                                          '1984-09-30')$input_data,
+                         cv_folds = cv_folds,
                          out_dir = "4_predict/out"),
              deployment = 'main',
              format = 'file',
