@@ -599,6 +599,13 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #tar_target(p4_spatial_cv_reaches_txt,
+  #           write_reaches_cv(p4_dynamic_attrs_spatial$input_data$training,
+  #                         filepath = "4_predict/out/"),
+  #           deployment = 'main',
+  #           format = 'file',
+  #           repository = 'local'
+  #),
   tar_target(p4_spatial_test_reaches_txt,
              write_reaches(p4_dynamic_attrs_spatial$input_data$testing$PRMS_segid,
                            filepath = "4_predict/out/spatial_test_reaches.txt"),
