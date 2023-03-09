@@ -42,19 +42,36 @@ write_reaches_cv <- function(train_dataset, cv_folds, out_dir){
   #' write validation files.
   #' @param out_dir directory to save txt files
   #' 
-  #' @return txt file containing the reach_ids
+  #' @return txt files containing the reach_ids
   
   #create validation file names
   val_nums <- seq(1,cv_folds,1)
-  filenames <- file.path(out_dir, c(paste0('val_segs', val_nums, '.txt')))
+  filepaths <- file.path(out_dir, c(paste0('spatial_val_reaches', val_nums, '.txt')))
+  
+  #add group variable to dataset based on spatial splits
+  train_dataset$group <- 0
   
   #determine validation splits and write to file
   for(i in val_nums){
-    reach_ids_i
-    write_csv(x = as.data.frame(reach_ids_i), file = filepath[i], col_names = FALSE)
+    if(i == cv_folds){
+      ind_i <- which(train_dataset$group == 0)
+      inds_grp <- seq(1,length(ind_i),1)
+    }else{
+      #only use data that haven't been assigned to a group
+      ind_i <- which(train_dataset$group == 0)
+      #get the correct training proportion to use for a reduced dataset
+      train_prop_i <- nrow(train_dataset)/cv_folds/nrow(train_dataset[ind_i,])
+      #group row indices
+      inds_grp <- make_spatial_split_CVtraining(attrs_df = train_dataset[ind_i,], 
+                                                train_prop = train_prop_i)
+    }
+    #assign group index
+    train_dataset$group[ind_i][inds_grp] <- i
+    write_csv(x = as.data.frame(sort(unique(train_dataset$PRMS_segid[train_dataset$group == i]))), 
+              file = filepaths[i], col_names = FALSE)
   }
   
-  return(filenames)
+  return(filepaths)
 }
 
 write_dates <- function(dataset, cv_folds = NULL, out_dir){
