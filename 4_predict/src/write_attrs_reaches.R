@@ -116,3 +116,22 @@ write_dates <- function(dataset, cv_folds = NULL, out_dir){
   
   return(filenames)
 }
+
+write_pred_obs <- function(pred_obs, out_dir){
+  #' @description generates a text file containing the predictions, observations,
+  #' date, and segment columns.
+  #' 
+  #' @param pred_obs dataframe containing columns "Date", "PRMS_segid", "obs", and ".pred"
+  #' @param out_dir directory to save txt file
+  #' 
+  #' @return vector of paths to txt file
+   
+  filename <- file.path(out_dir, 'pred_obs.txt')
+  
+  pred_obs <- select(pred_obs, "Date", "PRMS_segid", "obs", ".pred") %>%
+    rename(pred = '.pred')
+  
+  write_csv(pred_obs, filename)
+  
+  return(filename)
+}
