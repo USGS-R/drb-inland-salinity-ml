@@ -192,6 +192,29 @@ p3_targets_list <- list(
     },
     repository = "local"
   ),
+  #RGCN
+  tar_target(
+    p3_RGCN_model_results_temporal,
+    {
+      model_results_list <- list(static_dynamic = p4_RGCN_pred_obs_static_dynamic_temporal_test,
+                                 min_static_dynamic = p4_RGCN_pred_obs_min_static_dynamic_temporal_test,
+                                 dynamic = p4_RGCN_pred_obs_dynamic_temporal_test)
+      model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
+      model_results
+    },
+    repository = "local"
+  ),
+  tar_target(
+    p3_RGCN_model_results_spatial,
+    {
+      model_results_list <- list(static_dynamic = p4_RGCN_pred_obs_static_dynamic_spatial_test,
+                                 min_static_dynamic = p4_RGCN_pred_obs_min_static_dynamic_spatial_test,
+                                 dynamic = p4_RGCN_pred_obs_dynamic_spatial_test)
+      model_results <- purrr::map_df(model_results_list, ~as.data.frame(.x), .id = "model")
+      model_results
+    },
+    repository = "local"
+  ),
   
   # Plot empirical CDFs of model performance
   tar_target(
@@ -226,6 +249,28 @@ p3_targets_list <- list(
               plot_width_in = 6, plot_height_in = 4),
     repository = "local",
     format = "file"
+  ),
+  #RGCN
+  tar_target(
+    p3_RGCN_ecdf_all_reaches_temporal_png,
+    plot_ecdf(model_results = p3_RGCN_model_results_temporal, 
+              plot_type = "all_reaches", 
+              fileout = "4_predict/out/temporal/RGCN_ecdf_all_reaches_temporal.png",
+              log_x_axis = TRUE,
+              plot_points = FALSE,
+              plot_width_in = 6, plot_height_in = 4),
+    repository = "local",
+    format = "file"
+  ),
+  tar_target(
+    p3_RGCN_ecdf_all_reaches_spatial_png,
+    plot_ecdf(model_results = p3_RGCN_model_results_spatial, 
+              plot_type = "all_reaches", 
+              fileout = "4_predict/out/spatial/RGCN_ecdf_all_reaches_spatial.png",
+              log_x_axis = TRUE,
+              plot_points = FALSE,
+              plot_width_in = 6, plot_height_in = 4),
+    repository = "local",
+    format = "file"
   )
-  
 )
