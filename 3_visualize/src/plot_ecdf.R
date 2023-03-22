@@ -45,7 +45,7 @@ plot_ecdf <- function(model_results, plot_type = "all_reaches", fileout,
   if(plot_type == "all_reaches"){
     preds <- model_results %>%
       group_by(model, PRMS_segid) %>%
-      summarize(rmse = sqrt(mean(errsq)),
+      summarize(rmse = sqrt(mean(errsq, na.rm = TRUE)),
                 rmse_log10 = log10(rmse),
                 .groups = "drop")
     
@@ -68,7 +68,7 @@ plot_ecdf <- function(model_results, plot_type = "all_reaches", fileout,
     preds <- model_results %>%
       filter(PRMS_segid %in% segids_select) %>%
       group_by(model, PRMS_segid, Date) %>%
-      summarize(rmse = sqrt(mean(errsq)),
+      summarize(rmse = sqrt(mean(errsq, na.rm = TRUE)),
                 rmse_log10 = log10(rmse),
                 .groups = "drop")
     
@@ -94,7 +94,7 @@ plot_ecdf <- function(model_results, plot_type = "all_reaches", fileout,
       filter(month %in% months_select, 
              year %in% years_select) %>%
       group_by(model, year, month, PRMS_segid) %>%
-      summarize(rmse = sqrt(mean(errsq)),
+      summarize(rmse = sqrt(mean(errsq, na.rm = TRUE)),
                 rmse_log10 = log10(rmse),
                 .groups = "drop")  
     

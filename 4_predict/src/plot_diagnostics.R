@@ -272,7 +272,7 @@ plot_barplot <- function(attr_data, file_path,
     col_name <- names(dat_subset)[2]
     
     #y limits
-    plt_lim <- c(min(0, dat_subset[[2]]), max(dat_subset[[2]]))
+    plt_lim <- c(min(0, dat_subset[[2]]), max(0, dat_subset[[2]]))
     
     # barplot
     cols <- colnames(dat_subset)

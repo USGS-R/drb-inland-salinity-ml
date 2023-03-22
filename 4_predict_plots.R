@@ -520,6 +520,271 @@ p4_plot_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  # RGCN predicted vs. observed y
+  tar_target(p4_RGCN_pred_obs_static_dynamic_temporal_train,
+             read_csv('4_predict/out/temporal/RGCN/static_dynamic_test1/trn_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_temporal_val,
+             read_csv('4_predict/out/temporal/RGCN/static_dynamic_test1/val_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_temporal_test,
+             read_csv('4_predict/out/temporal/RGCN/static_dynamic_test1/tst_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_temporal_full,
+             rbind(p4_RGCN_pred_obs_static_dynamic_temporal_train,
+                   p4_RGCN_pred_obs_static_dynamic_temporal_val,
+                   p4_RGCN_pred_obs_static_dynamic_temporal_test) %>%
+               arrange(Date, PRMS_segid),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_temporal_test_png,
+             plot_pred_obs(df_pred_obs = p4_RGCN_pred_obs_static_dynamic_temporal_test %>%
+                             drop_na(),
+                           model_name = 'daily_SC_RGCN_static_dynamic_temporal_test',
+                           out_dir = '4_predict/out/temporal/pred_obs/RGCN_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_temporal_train,
+             read_csv('4_predict/out/temporal/RGCN/min_static_dynamic_test1/trn_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_temporal_val,
+             read_csv('4_predict/out/temporal/RGCN/min_static_dynamic_test1/val_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_temporal_test,
+             read_csv('4_predict/out/temporal/RGCN/min_static_dynamic_test1/tst_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_temporal_full,
+             rbind(p4_RGCN_pred_obs_min_static_dynamic_temporal_train,
+                   p4_RGCN_pred_obs_min_static_dynamic_temporal_val,
+                   p4_RGCN_pred_obs_min_static_dynamic_temporal_test) %>%
+               arrange(Date, PRMS_segid),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_temporal_test_png,
+             plot_pred_obs(df_pred_obs = p4_RGCN_pred_obs_min_static_dynamic_temporal_test %>%
+                             drop_na(),
+                           model_name = 'daily_SC_RGCN_min_static_dynamic_temporal_test',
+                           out_dir = '4_predict/out/temporal/pred_obs/RGCN_min_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_temporal_train,
+             read_csv('4_predict/out/temporal/RGCN/dynamic_test1/trn_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_temporal_val,
+             read_csv('4_predict/out/temporal/RGCN/dynamic_test1/val_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_temporal_test,
+             read_csv('4_predict/out/temporal/RGCN/dynamic_test1/tst_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_temporal_full,
+             rbind(p4_RGCN_pred_obs_dynamic_temporal_train,
+                   p4_RGCN_pred_obs_dynamic_temporal_val,
+                   p4_RGCN_pred_obs_dynamic_temporal_test) %>%
+               arrange(Date, PRMS_segid),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_temporal_test_png,
+             plot_pred_obs(df_pred_obs = p4_RGCN_pred_obs_dynamic_temporal_test %>%
+                             drop_na(),
+                           model_name = 'daily_SC_RGCN_dynamic_temporal_test',
+                           out_dir = '4_predict/out/temporal/pred_obs/RGCN_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_spatial_train,
+             read_csv('4_predict/out/spatial/RGCN/static_dynamic_test1/trn_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_spatial_val,
+             read_csv('4_predict/out/spatial/RGCN/static_dynamic_test1/val_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_spatial_test,
+             read_csv('4_predict/out/spatial/RGCN/static_dynamic_test1/tst_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_spatial_full,
+             rbind(p4_RGCN_pred_obs_static_dynamic_spatial_train,
+                   p4_RGCN_pred_obs_static_dynamic_spatial_val,
+                   p4_RGCN_pred_obs_static_dynamic_spatial_test) %>%
+               arrange(Date, PRMS_segid),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_static_dynamic_spatial_test_png,
+             plot_pred_obs(df_pred_obs = p4_RGCN_pred_obs_static_dynamic_spatial_test %>%
+                             drop_na(),
+                           model_name = 'daily_SC_RGCN_static_dynamic_spatial_test',
+                           out_dir = '4_predict/out/spatial/pred_obs/RGCN_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_spatial_train,
+             read_csv('4_predict/out/spatial/RGCN/min_static_dynamic_test1/trn_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_spatial_val,
+             read_csv('4_predict/out/spatial/RGCN/min_static_dynamic_test1/val_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_spatial_test,
+             read_csv('4_predict/out/spatial/RGCN/min_static_dynamic_test1/tst_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_spatial_full,
+             rbind(p4_RGCN_pred_obs_min_static_dynamic_spatial_train,
+                   p4_RGCN_pred_obs_min_static_dynamic_spatial_val,
+                   p4_RGCN_pred_obs_min_static_dynamic_spatial_test) %>%
+               arrange(Date, PRMS_segid),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_min_static_dynamic_spatial_test_png,
+             plot_pred_obs(df_pred_obs = p4_RGCN_pred_obs_min_static_dynamic_spatial_test %>%
+                             drop_na(),
+                           model_name = 'daily_SC_RGCN_min_static_dynamic_spatial_test',
+                           out_dir = '4_predict/out/spatial/pred_obs/RGCN_min_static_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_spatial_train,
+             read_csv('4_predict/out/spatial/RGCN/dynamic_test1/trn_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_spatial_val,
+             read_csv('4_predict/out/spatial/RGCN/dynamic_test1/val_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_spatial_test,
+             read_csv('4_predict/out/spatial/RGCN/dynamic_test1/tst_preds_obs.csv') %>%
+               rename(.pred = pred) %>%
+               mutate(Month = month(Date)) %>%
+               mutate(Year = year(Date)) %>%
+               mutate(err = (.pred - obs)) %>%
+               mutate(errsq = err^2),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_spatial_full,
+             rbind(p4_RGCN_pred_obs_dynamic_spatial_train,
+                   p4_RGCN_pred_obs_dynamic_spatial_val,
+                   p4_RGCN_pred_obs_dynamic_spatial_test) %>%
+               arrange(Date, PRMS_segid),
+             deployment = 'main'
+  ),
+  tar_target(p4_RGCN_pred_obs_dynamic_spatial_test_png,
+             plot_pred_obs(df_pred_obs = p4_RGCN_pred_obs_dynamic_spatial_test %>%
+                             drop_na(),
+                           model_name = 'daily_SC_RGCN_dynamic_spatial_test',
+                           out_dir = '4_predict/out/spatial/pred_obs/RGCN_dynamic', 
+                           count_shade = TRUE),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
   
   
   #Train test boxplot coverage of SC data
@@ -996,6 +1261,187 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
+  #RGCN
+  tar_target(
+    p4_RGCN_spatial_res_static_dynamic_temporal_full_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_full, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_min_static_dynamic_temporal_full_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_full, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_dynamic_temporal_full_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_full, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_static_dynamic_spatial_full_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_full, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_min_static_dynamic_spatial_full_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_full, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_dynamic_spatial_full_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_full, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
+                      filename_end = '_full')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_test, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_min_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_test, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_test, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_test, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_min_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_test, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_spatial_res_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all time for each PRMS segment
+      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_test, PRMS_segid), 
+                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                                 RMSE_log10 = log10(RMSE))
+      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                      network_geometry = p1_reaches_sf,
+                      file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
+                      filename_end = '_test')
+    },
+    format = "file",
+    repository = 'local'
+  ),
   
   
   #Monthly RMSE and Bias barplots
@@ -1374,12 +1820,217 @@ p4_plot_targets_list <- list(
     format = "file",
     repository = 'local'
   ),
+  #RGCN
+  tar_target(
+    p4_RGCN_monthly_res_static_dynamic_temporal_full_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_full, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_temporal_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_min_static_dynamic_temporal_full_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_full, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_temporal_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_dynamic_temporal_full_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_full, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_temporal_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_static_dynamic_spatial_full_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_full, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_spatial_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_min_static_dynamic_spatial_full_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_full, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_spatial_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_dynamic_spatial_full_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_full, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_spatial_full', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_test, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_temporal_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_min_static_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_test, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_temporal_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_dynamic_temporal_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_test, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/temporal/monthly_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_temporal_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_test, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_spatial_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_min_static_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_test, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_spatial_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_monthly_res_dynamic_spatial_test_png,
+    {
+      #Average RMSE over all days of month and all space
+      PRMS_month <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_test, Month),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Month)
+      plot_barplot(attr_data = PRMS_month,
+                   file_path = "4_predict/out/spatial/monthly_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_spatial_test', 
+                   panel = TRUE,
+                   plot_month_names = TRUE)
+    },
+    format = "file",
+    repository = 'local'
+  ),
   
   #Annual RMSE and Bias over time, aggregated over all reaches
   tar_target(
     p4_annual_res_static_png,
     {
-      #Average RMSE over all days of month and all space
+      #Average RMSE over all years and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static$pred, Year),
                               RMSE = sqrt(mean(errsq)),
                               Bias = mean(err)) %>%
@@ -1396,7 +2047,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1413,7 +2063,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1430,7 +2079,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1447,7 +2095,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_dynamic_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1464,7 +2111,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_dynamic_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1481,7 +2127,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_dynamic_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1498,7 +2143,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_dynamic_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1515,7 +2159,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_dynamic_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1532,7 +2175,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_dynamic_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1549,7 +2191,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_dynamic_temporal_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_temporal$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1566,7 +2207,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_dynamic_temporal_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_temporal_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1583,7 +2223,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_dynamic_temporal_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1600,7 +2239,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_dynamic_temporal_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1617,7 +2255,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_dynamic_temporal_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_temporal$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1634,7 +2271,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_dynamic_temporal_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_temporal_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1651,7 +2287,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_dynamic_spatial_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_spatial$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1668,7 +2303,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_static_dynamic_spatial_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_static_dynamic_spatial_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1685,7 +2319,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_dynamic_spatial_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1702,7 +2335,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_min_static_dynamic_spatial_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1719,7 +2351,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_dynamic_spatial_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_spatial$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1736,7 +2367,6 @@ p4_plot_targets_list <- list(
   tar_target(
     p4_annual_res_dynamic_spatial_test_png,
     {
-      #Average RMSE over all days of month and all space
       PRMS_ann <- summarize(group_by(p4_pred_RF_dynamic_spatial_test$pred, Year),
                             RMSE = sqrt(mean(errsq)),
                             Bias = mean(err)) %>%
@@ -1744,6 +2374,199 @@ p4_plot_targets_list <- list(
       plot_barplot(attr_data = PRMS_ann,
                    file_path = "4_predict/out/spatial/annual_res/RF_dynamic",
                    model_name = 'RF_dynamic_spatial_test',
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  #RGCN
+  tar_target(
+    p4_RGCN_annual_res_static_dynamic_temporal_full_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_full, Year),
+                            RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                            Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_temporal_full', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_min_static_dynamic_temporal_full_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_full, Year),
+                            RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                            Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_temporal_full', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_dynamic_temporal_full_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_full, Year),
+                            RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                            Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_temporal_full', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_static_dynamic_spatial_full_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_full, Year),
+                            RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                            Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_spatial_full', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_min_static_dynamic_spatial_full_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_full, Year),
+                            RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                            Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_spatial_full', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_dynamic_spatial_full_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_full, Year),
+                            RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                            Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_spatial_full', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_static_dynamic_temporal_test_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_test, Year),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_temporal_test', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_min_static_dynamic_temporal_test_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_test, Year),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_temporal_test', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_dynamic_temporal_test_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_test, Year),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/temporal/annual_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_temporal_test', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_static_dynamic_spatial_test_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_test, Year),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RGCN_static_dynamic",
+                   model_name = 'RGCN_static_dynamic_spatial_test', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_min_static_dynamic_spatial_test_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_test, Year),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RGCN_min_static_dynamic",
+                   model_name = 'RGCN_min_static_dynamic_spatial_test', 
+                   panel = TRUE,
+                   label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
+    },
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_annual_res_dynamic_spatial_test_png,
+    {
+      PRMS_ann <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_test, Year),
+                              RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                              Bias = mean(err, na.rm = TRUE)) %>%
+        arrange(Year)
+      plot_barplot(attr_data = PRMS_ann,
+                   file_path = "4_predict/out/spatial/annual_res/RGCN_dynamic",
+                   model_name = 'RGCN_dynamic_spatial_test', 
                    panel = TRUE,
                    label_sequence = seq(1,length(unique(PRMS_ann$Year)),3))
     },
@@ -1948,6 +2771,115 @@ p4_plot_targets_list <- list(
                     network_geometry = p1_reaches_sf,
                     model_name = 'RF_dynamic_spatial_test',
                     out_dir = "4_predict/out/spatial/temporal_res/RF_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  #RGCN
+  tar_target(
+    p4_RGCN_temporal_res_static_dynamic_temporal_full_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_static_dynamic_temporal_full,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_static_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/temporal_res/RGCN_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_min_static_dynamic_temporal_full_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_min_static_dynamic_temporal_full,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_min_static_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/temporal_res/RGCN_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_dynamic_temporal_full_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_dynamic_temporal_full,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_dynamic_temporal_full',
+                    out_dir = "4_predict/out/temporal/temporal_res/RGCN_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_static_dynamic_spatial_full_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_static_dynamic_spatial_full,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_static_dynamic_spatial_full',
+                    out_dir = "4_predict/out/spatial/temporal_res/RGCN_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_min_static_dynamic_spatial_full_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_min_static_dynamic_spatial_full,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_min_static_dynamic_spatial_full',
+                    out_dir = "4_predict/out/spatial/temporal_res/RGCN_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_dynamic_spatial_full_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_dynamic_spatial_full,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_dynamic_spatial_full',
+                    out_dir = "4_predict/out/spatial/temporal_res/RGCN_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_static_dynamic_temporal_test_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_static_dynamic_temporal_test,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_static_dynamic_temporal_test',
+                    out_dir = "4_predict/out/temporal/temporal_res/RGCN_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_min_static_dynamic_temporal_test_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_min_static_dynamic_temporal_test,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_min_static_dynamic_temporal_test',
+                    out_dir = "4_predict/out/temporal/temporal_res/RGCN_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_dynamic_temporal_test_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_dynamic_temporal_test,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_dynamic_temporal_test',
+                    out_dir = "4_predict/out/temporal/temporal_res/RGCN_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_static_dynamic_spatial_test_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_static_dynamic_spatial_test,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_static_dynamic_spatial_test',
+                    out_dir = "4_predict/out/spatial/temporal_res/RGCN_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_min_static_dynamic_spatial_test_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_min_static_dynamic_spatial_test,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_min_static_dynamic_spatial_test',
+                    out_dir = "4_predict/out/spatial/temporal_res/RGCN_min_static_dynamic"),
+    format = "file",
+    repository = 'local'
+  ),
+  tar_target(
+    p4_RGCN_temporal_res_dynamic_spatial_test_png,
+    plot_timeseries(pred_df = p4_RGCN_pred_obs_dynamic_spatial_test,
+                    network_geometry = p1_reaches_sf,
+                    model_name = 'RGCN_dynamic_spatial_test',
+                    out_dir = "4_predict/out/spatial/temporal_res/RGCN_dynamic"),
     format = "file",
     repository = 'local'
   ),
