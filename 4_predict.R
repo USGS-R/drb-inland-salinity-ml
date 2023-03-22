@@ -573,8 +573,7 @@ p4_targets_list <- list(
   ),
   
   
-  #Save attributes for each of the 3 splits, reaches in the spatial test set,
-  # and temporal train start/end and test start/end
+  #Save attributes for each of the 3 splits
   tar_target(p4_dynamic_attrs_txt,
              write_attrs_files(p4_dynamic_attrs$input_data$testing, 
                                   drop_cols = c("PRMS_segid", "Date", "mean_value", "data_type"),
@@ -599,6 +598,7 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #Save reaches in the spatial validation (cv) and test sets,
   tar_target(p4_spatial_cv_reaches_txt,
             write_reaches_cv(train_dataset = p4_dynamic_attrs_spatial$input_data$training %>%
                                select(PRMS_segid, data_type),
@@ -615,6 +615,7 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #Save temporal train start/end and test start/end dates
   tar_target(p4_train_test_dates_txt,
              write_dates(filter_rows_date(p4_dynamic_attrs_temporal,
                                           '1984-09-30')$input_data,
@@ -625,7 +626,7 @@ p4_targets_list <- list(
              repository = 'local'
   ),
   
-  #write file with predictions and observations
+  #write file with predictions and observations from each model
   tar_target(p4_min_static_dynamic_temporal_test_pred_obs_csv,
              write_pred_obs(p4_pred_RF_min_static_dynamic_temporal_test$pred,
                             out_dir = "4_predict/out/temporal/pred_obs/RF_min_static_dynamic/"),
