@@ -598,6 +598,22 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #Save the unique attributes as a csv (static dynamic contain all unique attributes)
+  tar_target(p4_all_model_attrs_csv,
+             {
+               statdyn <- read_csv(p4_static_dynamic_attrs_txt, col_names = FALSE,
+                                   show_col_types = FALSE)
+               
+               write_csv(as.data.frame(statdyn$X1), 
+                         file = "4_predict/out/all_model_attrs.csv", 
+                         col_names = FALSE)
+               "4_predict/out/all_model_attrs.csv"
+             },
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  
   #Save reaches in the spatial validation (cv) and test sets,
   tar_target(p4_spatial_cv_reaches_txt,
             write_reaches_cv(train_dataset = p4_dynamic_attrs_spatial$input_data$training %>%
