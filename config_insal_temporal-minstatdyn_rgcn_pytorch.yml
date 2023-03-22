@@ -1,0 +1,58 @@
+runDescription: "DRB Inland Salinity RGCN prediction with temporal holdout - min static and dynamic attributes"
+
+# Input files
+obs_file: "2_process/out/drb_SC_obs_PRMS.zarr"
+attrs_file: "2_process/out/drb_attrs_PRMS.zarr"
+dist_matrix_file: "1_fetch/out/drb_distance_matrix.npz"
+# File containing the attribute names to use within the attrs_file
+x_vars_file: "4_predict/out/min_static_dynamic_attrs.txt"
+
+#river-dl code directory
+code_dir: "../river-dl"
+
+# Attribute names within obs_file
+y_vars: ['mean_value']
+#Attributs to take the log of for model training.
+log_y_vars: False
+
+# output location
+out_dir: "4_predict/out/temporal/RGCN/min_static_dynamic_test1"
+
+#random seed for training False==No seed, otherwise specify the seed
+seed: 21023
+
+lambdas: [1]
+
+#Define number of epochs and the early stopping criteria (number of epochs) 
+epochs: 200
+#setting this to False will turn off early stopping rounds
+early_stopping: 10
+
+
+#Hyperparameter settings
+hidden_size: 20
+dropout: 0.2
+recurrent_dropout: 0.2
+learning_rate: 0.005
+trn_offset: 1.0
+tst_val_offset: 1.0
+seq_len: 365
+
+# Define the spatial test segments (to be loaded from a file) 
+# Use 'None' if all segments may be used
+# using f instead of file because file triggers preproc_utils to generate metadata that wouldn't exist for 'None'
+train_segs_f: 'None'
+val_segs_f: 'None'
+test_segs_f: 'None'
+#when True, the final file of predictions and observations are trimmed to the reaches in each of the 3 above files
+spatial_write: False
+
+# Define the earliest date, latest date, training, validation, and testing time periods
+earliest_date: '1984-09-30'
+latest_date: '2021-12-31'
+train_start_date_f: "4_predict/out/train_start.txt"
+train_end_date_f: "4_predict/out/val_end4.txt"
+val_start_date_f: "4_predict/out/val_start5.txt"
+val_end_date_f: "4_predict/out/train_end.txt"
+test_start_date_f: "4_predict/out/test_start.txt"
+test_end_date_f: "4_predict/out/test_end.txt"
