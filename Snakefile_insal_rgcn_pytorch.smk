@@ -166,7 +166,7 @@ rule make_predictions:
 
 
 #Order in the list is: 
-# spatial (bool), temporal (False or timestep to use), sum_aggregation (bool), site_based (bool)
+# spatial (bool), temporal (False or timestep to use), time_aggregation (bool), site_based (bool)
 def get_grp_arg(wildcards):
 	if wildcards.metric_type == 'overall':
 		return [False, False, False, False]
@@ -221,7 +221,7 @@ rule combine_metrics:
 						test_sites = test_segs,
 						group_spatially = params.grp_arg[0],
 						group_temporally = params.grp_arg[1],
-						sum_aggregation = params.grp_arg[2],
+						time_aggregation = params.grp_arg[2],
 						site_based = params.grp_arg[3],
 						outfile = output[0],
 						spatial_idx_name = "PRMS_segid",

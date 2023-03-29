@@ -130,7 +130,7 @@ def write_preds_obs(pred_file, obs_file, partition, spatial_idx_name,
 
 def RF_model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
                      group_spatially=False, group_temporally=False,
-                     sum_aggregation=False, site_based=False,
+                     time_aggregation=False, site_based=False,
                      outfile=None):
     data = pd.read_csv(pred_obs_csv)
     data[time_idx_name] = pd.to_datetime(data[time_idx_name])
@@ -150,9 +150,9 @@ def RF_model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
         .reset_index()
         )
     elif not group_spatially and group_temporally:
-        if sum_aggregation:
+        if time_aggregation:
             #performance metrics computed at the group_temporally timestep
-            #for some reason, no `.` calculations are allowed after .sum(),
+            #for some reason, no `.` calculations are allowed after .mean(),
             #so calc_metrics() is called first.
             if site_based:
                 #create a group_temporally timeseries for each observation site
@@ -162,14 +162,14 @@ def RF_model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
                 .dropna()
                 .groupby([pd.Grouper(level=time_idx_name, freq=group_temporally),
                          pd.Grouper(level=spatial_idx_name)])
-                .sum()
+                .mean()
                 )
             else:
                 #create a group_temporally timeseries using data from all reaches
                 data_sum = (data
                 .dropna()
                 .groupby(pd.Grouper(level=time_idx_name, freq=group_temporally))
-                .sum()
+                .mean()
                 )
                 #For some reason, with pd.Grouper the sum is computed as 0
                 # on days with no observations. Need to remove these days
@@ -191,8 +191,8 @@ def RF_model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
             if group_temporally != 'M':
                 #native timestep performance metrics within the group_temporally groups
                 #This method will report one row per group_temporally group
-                # examples: year-month would be a group when group_temporally is 'M'
-                # year is a group when group_temporally is 'Y'
+                # examples: year-month-week would be a group when group_temporally is 'W'
+                # year would be a group when group_temporally is 'Y'
                 metrics = (data
                 .groupby(pd.Grouper(level=time_idx_name, freq=group_temporally))
                 .apply(calc_metrics)
@@ -206,15 +206,15 @@ def RF_model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
                 .reset_index()
                 )                
     elif group_spatially and group_temporally:
-        if sum_aggregation:
+        if time_aggregation:
             #performance metrics for each reach computed at the group_temporally timestep
             data_calc = (data
             .dropna()
             .groupby([pd.Grouper(level=time_idx_name, freq=group_temporally),
                       pd.Grouper(level=spatial_idx_name)])
-            .sum()
+            .mean()
             )
-            #unable to apply any other . functions after .sum().
+            #unable to apply any other . functions after .mean().
             metrics = (data_calc.groupby(pd.Grouper(level=spatial_idx_name))
             .apply(calc_metrics)
             .reset_index()
