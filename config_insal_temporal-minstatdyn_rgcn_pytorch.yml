@@ -48,8 +48,8 @@ test_segs_f: 'None'
 spatial_write: False
 
 # Define the earliest date, latest date, training, validation, and testing time periods
-earliest_date: '1984-09-30'
-latest_date: '2021-12-31'
+earliest_date: "4_predict/out/train_start.txt"
+latest_date: "4_predict/out/test_end.txt"
 train_start_date_f: "4_predict/out/train_start.txt"
 train_end_date_f: "4_predict/out/val_end4.txt"
 val_start_date_f: "4_predict/out/val_start5.txt"
