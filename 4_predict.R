@@ -2,6 +2,7 @@ source("4_predict/src/select_features.R")
 source("4_predict/src/train_models.R")
 source("4_predict/src/plot_diagnostics.R")
 source("1_fetch/src/generate_credentials.R")
+source("4_predict/src/write_attrs_reaches.R")
 
 #Predict phase
 p4_targets_list <- list(
@@ -569,5 +570,119 @@ p4_targets_list <- list(
                                test_data = p4_train_RF_dynamic_spatial$best_fit$splits[[1]]$data[-p4_train_RF_dynamic_spatial$best_fit$splits[[1]]$in_id,],
                                target_name = 'mean_value'),
              deployment = 'main'
+  ),
+  
+  
+  #Save attributes for each of the 3 splits
+  tar_target(p4_dynamic_attrs_txt,
+             write_attrs_files(p4_dynamic_attrs$input_data$testing, 
+                                  drop_cols = c("PRMS_segid", "Date", "mean_value", "data_type"),
+                                  filepath = "4_predict/out/dynamic_attrs.txt"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_min_static_dynamic_attrs_txt,
+             write_attrs_files(p4_selected_min_static_dynamic_attrs$input_data$testing, 
+                                  drop_cols = c("PRMS_segid", "Date", "mean_value", "data_type"),
+                                  filepath = "4_predict/out/min_static_dynamic_attrs.txt"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_static_dynamic_attrs_txt,
+             write_attrs_files(p4_selected_static_dynamic_attrs$input_data$testing,
+                                  drop_cols = c("PRMS_segid", "Date", "mean_value", "data_type"),
+                                  filepath = "4_predict/out/static_dynamic_attrs.txt"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  #Save the unique attributes as a csv (static dynamic contain all unique attributes)
+  tar_target(p4_all_model_attrs_csv,
+             {
+               statdyn <- read_csv(p4_static_dynamic_attrs_txt, col_names = FALSE,
+                                   show_col_types = FALSE)
+               
+               write_csv(as.data.frame(statdyn$X1), 
+                         file = "4_predict/out/all_model_attrs.csv", 
+                         col_names = FALSE)
+               "4_predict/out/all_model_attrs.csv"
+             },
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  
+  #Save reaches in the spatial validation (cv) and test sets,
+  tar_target(p4_spatial_cv_reaches_txt,
+            write_reaches_cv(train_dataset = p4_dynamic_attrs_spatial$input_data$training %>%
+                               select(PRMS_segid, data_type),
+                             cv_folds = cv_folds,
+                             out_dir = "4_predict/out"),
+            deployment = 'main',
+            format = 'file',
+            repository = 'local'
+  ),
+  tar_target(p4_spatial_test_reaches_txt,
+             write_reaches(p4_dynamic_attrs_spatial$input_data$testing$PRMS_segid,
+                           filepath = "4_predict/out/spatial_test_reaches.txt"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  #Save temporal train start/end and test start/end dates
+  tar_target(p4_train_test_dates_txt,
+             write_dates(filter_rows_date(p4_dynamic_attrs_temporal,
+                                          '1984-09-30')$input_data,
+                         cv_folds = cv_folds,
+                         out_dir = "4_predict/out"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  
+  #write file with predictions and observations from each model
+  tar_target(p4_min_static_dynamic_temporal_test_pred_obs_csv,
+             write_pred_obs(p4_pred_RF_min_static_dynamic_temporal_test$pred,
+                            out_dir = "4_predict/out/temporal/pred_obs/RF_min_static_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_static_dynamic_temporal_test_pred_obs_csv,
+             write_pred_obs(p4_pred_RF_static_dynamic_temporal_test$pred,
+                            out_dir = "4_predict/out/temporal/pred_obs/RF_static_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_dynamic_temporal_test_pred_obs_csv,
+             write_pred_obs(p4_pred_RF_dynamic_temporal_test$pred,
+                            out_dir = "4_predict/out/temporal/pred_obs/RF_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_min_static_dynamic_spatial_test_pred_obs_csv,
+             write_pred_obs(p4_pred_RF_min_static_dynamic_spatial_test$pred,
+                            out_dir = "4_predict/out/spatial/pred_obs/RF_min_static_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_static_dynamic_spatial_test_pred_obs_csv,
+             write_pred_obs(p4_pred_RF_static_dynamic_spatial_test$pred,
+                            out_dir = "4_predict/out/spatial/pred_obs/RF_static_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_dynamic_spatial_test_pred_obs_csv,
+             write_pred_obs(p4_pred_RF_dynamic_spatial_test$pred,
+                            out_dir = "4_predict/out/spatial/pred_obs/RF_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
   )
 )
