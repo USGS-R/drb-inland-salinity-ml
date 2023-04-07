@@ -21,6 +21,7 @@ from river_dl.predict import predict_from_io_data
 from utils import *
 
 out_dir = config['out_dir']
+os.makedirs(out_dir, exist_ok=True)
 
 #spatial holdout info
 train_segs = check_spatial_segs(config['train_segs_f'])
