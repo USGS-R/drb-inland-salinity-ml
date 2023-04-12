@@ -1,0 +1,46 @@
+[
+  {
+    "name": "drb-inland-salinity-ml",
+    "organization": "U.S. Geological Survey",
+    "description": "Code repo for Delaware River Basin machine learning models that predict inland salinity.",
+    "version": "main",
+    "status": "Development",
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "Public Domain, CC0-1.0",
+          "URL": "https://raw.githubusercontent.com/USGS-R/drb-inland-salinity-ml/main/LICENSE.md"
+        }
+      ]
+    },
+    "homepageURL": "https://github.com/USGS-R/drb-inland-salinity-ml/",
+    "downloadURL": "https://github.com/USGS-R/drb-inland-salinity-ml/archive/refs/heads/main.zip",
+    "disclaimerURL": "https://raw.githubusercontent.com/USGS-R/drb-inland-salinity-ml/main/DISCLAIMER.md",
+    "repositoryURL": "https://github.com/USGS-R/drb-inland-salinity-ml.git",
+    "vcs": "git",
+    "laborHours": -1,
+    "tags": [
+      "R",
+      "USGS",
+      "usg-artificial-intelligence",
+      "research",
+      "random forest",
+      "explainable AI",
+      "specific conductivity",
+      "salinity",
+      "river"
+    ],
+    "languages": [
+      "R",
+      "HTML"
+    ],
+    "contact": {
+      "name": "Jared D. Smith",
+      "email": "jsmith@usgs.gov"
+    },
+    "date": {
+      "metadataLastUpdated": "2023-04-10"
+    }
+  }
+]
