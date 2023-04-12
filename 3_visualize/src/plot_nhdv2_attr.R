@@ -1,5 +1,6 @@
-plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
-                            filename_end = NULL, boundary = drb_shp){
+plot_nhdv2_attr <- function(attr_data, network_geometry, file_path,
+                            filename_end = NULL, boundary = drb_shp,
+                            reservoirs = NULL){
   #' 
   #' @description This function visualizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
@@ -11,6 +12,8 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
   #' @param filename_end optional character string to add to the end of the filename
   #' before the file extension.
   #' @param boundary sf polygon defining the boundary of the DRB to plot
+  #' @param reservoirs shapefile containing reservoir locations. When specified, 
+  #' these will be added to the plots.
   #'
   #' @value Returns a png file containing a violin plot showing distribution of each NHDv2 attribute variable
   
@@ -35,6 +38,10 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,0), "cm"))
     
+    if(!is.null(reservoirs)){
+      reservoirs$color_col = 'reservoir'
+    }
+    
     # plot the spatial variation
     attr_plot_spatial <- ggplot() + 
       #full network (in case there are reaches without data)
@@ -54,7 +61,11 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,2), "cm"),
             axis.text.x = element_text(size = 6),
-            legend.title = element_text(size = 10))
+            legend.title = element_text(size = 10)) +
+      #reservoirs
+      {if(!is.null(reservoirs)){geom_sf(data = reservoirs, color = 'black', 
+                                        size = 1,
+                                        mapping = aes(color = color_col))}}
     
     # create combined plot showing violin plot and spatial distribution
     attr_plot_combined <- attr_plot + attr_plot_spatial + patchwork::plot_layout(ncol=2)

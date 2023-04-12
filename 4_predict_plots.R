@@ -941,7 +941,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_static",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -956,7 +957,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_static",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -971,7 +973,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_min_static",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -986,7 +989,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_min_static",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1001,7 +1005,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1016,7 +1021,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1031,7 +1037,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1046,7 +1053,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1061,7 +1069,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1076,7 +1085,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/random/spatial_res/RF_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1091,7 +1101,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1106,7 +1117,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1121,7 +1133,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1136,7 +1149,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1151,7 +1165,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1166,7 +1181,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1181,7 +1197,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1196,7 +1213,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1211,7 +1229,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1226,7 +1245,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1241,7 +1261,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1256,7 +1277,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1272,7 +1294,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1287,7 +1310,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1302,7 +1326,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1317,7 +1342,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1332,7 +1358,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1347,7 +1374,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
-                      filename_end = '_full')
+                      filename_end = '_full',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1362,7 +1390,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1377,7 +1406,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1392,7 +1422,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1407,7 +1438,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1422,7 +1454,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
@@ -1437,7 +1470,8 @@ p4_plot_targets_list <- list(
       plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
                       network_geometry = p1_reaches_sf,
                       file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
-                      filename_end = '_test')
+                      filename_end = '_test',
+                      reservoirs = p1_reservoirs_sf$dams)
     },
     format = "file",
     repository = 'local'
