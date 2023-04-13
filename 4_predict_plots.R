@@ -933,546 +933,342 @@ p4_plot_targets_list <- list(
   # Spatial residuals aggregated over time
   tar_target(
     p4_spatial_res_static_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_static",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_static",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_static",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_static",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_min_static",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_min_static",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_min_static",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_min_static",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_dynamic_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_dynamic$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_dynamic_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_dynamic_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_static_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_dynamic_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_dynamic$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_dynamic_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_dynamic_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_min_static_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_dynamic_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_dynamic$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_dynamic_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/random/spatial_res/RF_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_dynamic_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/random/spatial_res/RF_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_dynamic_temporal_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_temporal$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_dynamic_temporal$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_dynamic_temporal_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_temporal_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_dynamic_temporal_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RF_static_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_dynamic_temporal_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_dynamic_temporal$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_dynamic_temporal_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_temporal_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_dynamic_temporal_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RF_min_static_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_dynamic_temporal_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_temporal$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_dynamic_temporal$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_dynamic_temporal_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_temporal_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_dynamic_temporal_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RF_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_dynamic_spatial_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_spatial$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_dynamic_spatial$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_static_dynamic_spatial_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_static_dynamic_spatial_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_static_dynamic_spatial_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RF_static_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_dynamic_spatial_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_dynamic_spatial$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_min_static_dynamic_spatial_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_min_static_dynamic_spatial_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_min_static_dynamic_spatial_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RF_min_static_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_dynamic_spatial_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_spatial$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_dynamic_spatial$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
+              filename_end = '_full', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_spatial_res_dynamic_spatial_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_pred_RF_dynamic_spatial_test$pred, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_pred_RF_dynamic_spatial_test$pred, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RF_dynamic",
+              filename_end = '_test', 
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   #RGCN
   tar_target(
     p4_RGCN_spatial_res_static_dynamic_temporal_full_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_full, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_static_dynamic_temporal_full, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
+              filename_end = '_full',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_min_static_dynamic_temporal_full_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_full, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_min_static_dynamic_temporal_full, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
+              filename_end = '_full',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_dynamic_temporal_full_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_full, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_dynamic_temporal_full, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
+              filename_end = '_full',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_static_dynamic_spatial_full_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_full, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_static_dynamic_spatial_full, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
+              filename_end = '_full',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_min_static_dynamic_spatial_full_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_full, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_min_static_dynamic_spatial_full, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
+              filename_end = '_full',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_dynamic_spatial_full_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_full, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
-                      filename_end = '_full',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_dynamic_spatial_full, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
+              filename_end = '_full',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_static_dynamic_temporal_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_temporal_test, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_static_dynamic_temporal_test, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RGCN_static_dynamic",
+              filename_end = '_test',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_min_static_dynamic_temporal_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_temporal_test, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_min_static_dynamic_temporal_test, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RGCN_min_static_dynamic",
+              filename_end = '_test',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_dynamic_temporal_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_temporal_test, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_dynamic_temporal_test, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/temporal/spatial_res/RGCN_dynamic",
+              filename_end = '_test',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_static_dynamic_spatial_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_static_dynamic_spatial_test, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_static_dynamic_spatial_test, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RGCN_static_dynamic",
+              filename_end = '_test',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_min_static_dynamic_spatial_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_min_static_dynamic_spatial_test, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_min_static_dynamic_spatial_test, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RGCN_min_static_dynamic",
+              filename_end = '_test',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
   tar_target(
     p4_RGCN_spatial_res_dynamic_spatial_test_png,
-    {
-      #Average RMSE over all time for each PRMS segment
-      PRMS_seg_RMSE <- summarize(group_by(p4_RGCN_pred_obs_dynamic_spatial_test, PRMS_segid), 
-                                 RMSE = sqrt(mean(errsq, na.rm = TRUE)),
-                                 RMSE_log10 = log10(RMSE))
-      plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
-                      network_geometry = p1_reaches_sf,
-                      file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
-                      filename_end = '_test',
-                      reservoirs = p1_reservoirs_sf$dams)
-    },
+    plot_maps(pred_df = p4_RGCN_pred_obs_dynamic_spatial_test, 
+              network_geometry = p1_reaches_sf, 
+              file_path = "4_predict/out/spatial/spatial_res/RGCN_dynamic",
+              filename_end = '_test',
+              reservoirs = p1_reservoirs_sf$dams),
     format = "file",
     repository = 'local'
   ),
