@@ -643,9 +643,37 @@ p4_targets_list <- list(
   ),
   
   #write file with predictions and observations from each model
+  #Create data splits
+  tar_target(p4_pred_obs_xai_splits,
+             {
+               split_list <- list()
+               for(i in 1:length(p4_shap_data_splits)){
+                 split_list <- c(split_list,
+                                 list(list(name = names(p4_shap_data_splits)[i],
+                                      df = p4_shap_data_splits[[i]])))
+                 names(split_list) <- c(names(split_list)[1:i-1], split_list[[i]]$name) 
+               }
+               split_list
+             },
+             deployment = 'main'
+  ),
+  
+  #write files
   tar_target(p4_min_static_dynamic_temporal_test_pred_obs_csv,
              write_pred_obs(p4_pred_RF_min_static_dynamic_temporal_test$pred,
                             out_dir = "4_predict/out/temporal/pred_obs/RF_min_static_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  #Mapped over data splits
+  tar_target(p4_min_static_dynamic_temporal_test_pred_obs_xai_splits_csv,
+             write_pred_obs_splits(pred_obs = p4_pred_RF_min_static_dynamic_temporal_test$pred,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/temporal/pred_obs/RF_min_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+                                   ),
+             pattern = map(p4_pred_obs_xai_splits),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -657,9 +685,33 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #Mapped over data splits
+  tar_target(p4_static_dynamic_temporal_test_pred_obs_xai_splits_csv,
+             write_pred_obs_splits(pred_obs = p4_pred_RF_static_dynamic_temporal_test$pred,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/temporal/pred_obs/RF_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
   tar_target(p4_dynamic_temporal_test_pred_obs_csv,
              write_pred_obs(p4_pred_RF_dynamic_temporal_test$pred,
                             out_dir = "4_predict/out/temporal/pred_obs/RF_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  #Mapped over data splits
+  tar_target(p4_dynamic_temporal_test_pred_obs_xai_splits_csv,
+             write_pred_obs_splits(pred_obs = p4_pred_RF_dynamic_temporal_test$pred,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/temporal/pred_obs/RF_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
              deployment = 'main',
              format = 'file',
              repository = 'local'
@@ -671,6 +723,18 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #Mapped over data splits
+  tar_target(p4_min_static_dynamic_spatial_test_pred_obs_xai_splits_csv,
+             write_pred_obs_splits(pred_obs = p4_pred_RF_min_static_dynamic_spatial_test$pred,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/spatial/pred_obs/RF_min_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
   tar_target(p4_static_dynamic_spatial_test_pred_obs_csv,
              write_pred_obs(p4_pred_RF_static_dynamic_spatial_test$pred,
                             out_dir = "4_predict/out/spatial/pred_obs/RF_static_dynamic/"),
@@ -678,9 +742,33 @@ p4_targets_list <- list(
              format = 'file',
              repository = 'local'
   ),
+  #Mapped over data splits
+  tar_target(p4_static_dynamic_spatial_test_pred_obs_xai_splits_csv,
+             write_pred_obs_splits(pred_obs = p4_pred_RF_static_dynamic_spatial_test$pred,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/spatial/pred_obs/RF_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
   tar_target(p4_dynamic_spatial_test_pred_obs_csv,
              write_pred_obs(p4_pred_RF_dynamic_spatial_test$pred,
                             out_dir = "4_predict/out/spatial/pred_obs/RF_dynamic/"),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  #Mapped over data splits
+  tar_target(p4_dynamic_spatial_test_pred_obs_xai_splits_csv,
+             write_pred_obs_splits(pred_obs = p4_pred_RF_dynamic_spatial_test$pred,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/spatial/pred_obs/RF_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
              deployment = 'main',
              format = 'file',
              repository = 'local'
