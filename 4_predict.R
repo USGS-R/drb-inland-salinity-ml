@@ -772,5 +772,74 @@ p4_targets_list <- list(
              deployment = 'main',
              format = 'file',
              repository = 'local'
+  ),
+  
+  #RGCN
+  #Mapped over data splits
+  tar_target(p4_RGCN_static_dynamic_temporal_test_pred_obs_xai_splits_txt,
+             write_pred_obs_splits(pred_obs = p4_RGCN_pred_obs_static_dynamic_temporal_test,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/temporal/pred_obs/RGCN_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_min_static_dynamic_temporal_test_pred_obs_xai_splits_txt,
+             write_pred_obs_splits(pred_obs = p4_RGCN_pred_obs_min_static_dynamic_temporal_test,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/temporal/pred_obs/RGCN_min_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_dynamic_temporal_test_pred_obs_xai_splits_txt,
+             write_pred_obs_splits(pred_obs = p4_RGCN_pred_obs_dynamic_temporal_test,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/temporal/pred_obs/RGCN_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_static_dynamic_spatial_test_pred_obs_xai_splits_txt,
+             write_pred_obs_splits(pred_obs = p4_RGCN_pred_obs_static_dynamic_spatial_test,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/spatial/pred_obs/RGCN_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_min_static_dynamic_spatial_test_pred_obs_xai_splits_txt,
+             write_pred_obs_splits(pred_obs = p4_RGCN_pred_obs_min_static_dynamic_spatial_test,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/spatial/pred_obs/RGCN_min_static_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
+  ),
+  tar_target(p4_RGCN_dynamic_spatial_test_pred_obs_xai_splits_txt,
+             write_pred_obs_splits(pred_obs = p4_RGCN_pred_obs_dynamic_spatial_test,
+                                   split = p4_pred_obs_xai_splits[[1]]$df,
+                                   out_dir = get_shap_dir(main_dir = "4_predict/out/spatial/pred_obs/RGCN_dynamic",
+                                                          subdir_name = p4_pred_obs_xai_splits[[1]]$name)
+             ),
+             pattern = map(p4_pred_obs_xai_splits),
+             deployment = 'main',
+             format = 'file',
+             repository = 'local'
   )
 )
