@@ -38,10 +38,6 @@ plot_nhdv2_attr <- function(attr_data, network_geometry, file_path,
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,0), "cm"))
     
-    if(!is.null(reservoirs)){
-      reservoirs$color_col = 'reservoir'
-    }
-    
     # plot the spatial variation
     attr_plot_spatial <- ggplot() + 
       #full network (in case there are reaches without data)
@@ -58,14 +54,19 @@ plot_nhdv2_attr <- function(attr_data, network_geometry, file_path,
               mapping = aes(color=.data[[col_name]]),
               size = 0.3) + 
       scale_color_viridis_c(option="plasma") + 
+	  #reservoirs
+      {if(!is.null(reservoirs)){
+        geom_sf(data = reservoirs, 
+                size = 1,
+                mapping = aes(fill = "black"))}
+      } + 
+      {if(!is.null(reservoirs)){
+        scale_fill_identity(name = "", labels = c(black = "reservoir"), guide = "legend")}
+      } +
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,2), "cm"),
             axis.text.x = element_text(size = 6),
-            legend.title = element_text(size = 10)) +
-      #reservoirs
-      {if(!is.null(reservoirs)){geom_sf(data = reservoirs, color = 'black', 
-                                        size = 1,
-                                        mapping = aes(color = color_col))}}
+            legend.title = element_text(size = 10))
     
     # create combined plot showing violin plot and spatial distribution
     attr_plot_combined <- attr_plot + attr_plot_spatial + patchwork::plot_layout(ncol=2)
