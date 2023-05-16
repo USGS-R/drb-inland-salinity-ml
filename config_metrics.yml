@@ -1,0 +1,7 @@
+runDescription: "Compute test set metrics for RF and RGCN models for different data splits"
+
+#river-dl code directory
+code_dir: "../river-dl"
+
+# output location
+out_dir: "4_predict/out"

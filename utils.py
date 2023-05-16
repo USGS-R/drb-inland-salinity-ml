@@ -128,7 +128,7 @@ def write_preds_obs(pred_file, obs_file, partition, spatial_idx_name,
             
         data.to_csv(filepath)
 
-def RF_model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
+def model_metrics(pred_obs_csv, spatial_idx_name, time_idx_name,
                      group_spatially=False, group_temporally=False,
                      time_aggregation=False, site_based=False,
                      outfile=None):

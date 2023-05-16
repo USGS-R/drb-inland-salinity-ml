@@ -135,3 +135,21 @@ write_pred_obs <- function(pred_obs, out_dir){
   
   return(filename)
 }
+
+write_pred_obs_splits = function(pred_obs, split, out_dir){
+  #' @description generates a text file containing the predictions, observations,
+  #' date, and segment columns.
+  #' 
+  #' @param pred_obs dataframe containing columns "Date", "PRMS_segid", "obs", and ".pred"
+  #' @param split data frame with PRMS_segid and Date for the rows to use from pred_obs.
+  #' @param out_dir directory to save txt file
+  #' 
+  #' @return vector of paths to txt file
+  
+  #get subset of pred_obs to use
+  pred_obs_split <- left_join(split, pred_obs, by = c('PRMS_segid', 'Date'))
+  
+  filename <- write_pred_obs(pred_obs = pred_obs_split, out_dir = out_dir)
+  
+  return(filename)
+}
