@@ -539,7 +539,8 @@ plot_maps <- function(pred_df, network_geometry, file_path, filename_end = '_ful
 
 
 #SHAP values
-plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
+plot_shap_global <- function(shap, model_name, out_dir, num_features = 40,
+                             dynamic_attrs_txt = NULL){
   #' 
   #' @description Creates SHAP global importance plot
   #'
@@ -547,11 +548,16 @@ plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
   #' @param model_name character string describing the model. Will be added 
   #' to the end of the filename before the file extension, and also be the plot title.
   #' @param out_dir output directory
+  #' @param num_features number of features to plot
+  #' @param dynamic_attrs_txt Text file providing the dynamic attribute names as rows. 
+  #' When specified, makes a panel plot with static features
+  #' in one panel and dynamic attributes in another
   #'
-  #' @return Returns the paths to png files of SHAP dependence plots for each feature
+  #' @return Returns the paths to png files of SHAP global feature importance
   
+  #Plot for all attributes:
   fileout <- file.path(out_dir, 
-                       paste0('SHAP_global_', model_name, '.png'))
+                       paste0('SHAP_global_', model_name, '_vars', num_features, '.png'))
   
   p1 <- autoplot(shap, type = "importance", num_features = num_features) +
     ggtitle(model_name) + 
@@ -559,11 +565,35 @@ plot_shap_global <- function(shap, model_name, out_dir, num_features = 40){
   
   ggsave(filename = fileout, plot = p1, device = 'png')
   
+  if (!is.null(dynamic_attrs_txt)){
+    #Plot for panels of top static only and dynamic only attributes:
+    fileout <- c(fileout, 
+                 file.path(out_dir, 
+                           paste0('SHAP_global_panels_', model_name, '_vars', num_features, '.png'))
+                 )
+    
+    dynamic_attrs <- read_csv(dynamic_attrs_txt, col_names = FALSE,
+                             show_col_types = FALSE)
+    
+    x_lims <- c(0, ceiling(max(colMeans(abs(shap)))))
+    
+    p2 <- autoplot(shap[, -which(colnames(shap) %in% dynamic_attrs[[1]])], type = "importance", num_features = num_features) +
+      ggtitle(model_name, subtitle = 'Static Attributes') +
+      theme(axis.text.y = element_text(size = 5)) +
+      ylim(x_lims)
+    p3 <- autoplot(shap[, which(colnames(shap) %in% dynamic_attrs[[1]])], type = "importance", num_features = num_features) +
+      ggtitle(model_name, subtitle = 'Dynamic Attributes') +
+      theme(axis.text.y = element_text(size = 5)) +
+      ylim(x_lims)
+    
+    ggsave(filename = fileout[2], plot = p2+p3, device = 'png')
+  }
+  
   return(fileout)
 }
 plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 40,
                                 sv_kind = 'beeswarm', drop_columns, scale_shap = NULL,
-                                xlims = NULL){
+                                xlims = NULL, dynamic_attrs_txt = NULL){
   #' 
   #' @description Creates SHAP global importance plot using the shapviz package
   #'
@@ -579,6 +609,9 @@ plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 
   #' scale_shap. Can be useful when SHAP values span orders of magnitude, but
   #' this may change the order of variables due to nonlinear scaling
   #' @param xlims if not NULL, a vector containing the desired x and y axis limits
+  #' @param dynamic_attrs_txt Text file providing the dynamic attribute names as rows. 
+  #' When specified, makes a panel plot with static features
+  #' in one panel and dynamic attributes in another
   #'
   #' @return Returns the paths to png files of SHAP dependence plots for each feature
   
@@ -598,7 +631,7 @@ plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 
   }
   
   filesout <- file.path(out_dir, 
-                        paste0('SHAP_global_', model_name, '_vars', num_features, '.png'))
+                        paste0('SHAP_global_bee_', model_name, '_vars', num_features, '.png'))
   
   p1 <- sv_importance(shapviz(shap, X = data), 
                       kind = sv_kind, max_display = num_features, fill = 'black',
@@ -609,6 +642,41 @@ plot_shap_global_sv <- function(shap, data, model_name, out_dir, num_features = 
     ggtitle(model_name)
   
   ggsave(filename = filesout, plot = p1, device = 'png')
+  
+  if (!is.null(dynamic_attrs_txt)){
+    #Plot for panels of top static only and dynamic only attributes:
+    filesout <- c(filesout, 
+                 file.path(out_dir, 
+                           paste0('SHAP_global_bee_panels_', model_name, '_vars', num_features, '.png'))
+                 )
+    
+    dynamic_attrs <- read_csv(dynamic_attrs_txt, col_names = FALSE,
+                              show_col_types = FALSE)
+    
+    if(is.null(xlims)){
+      x_lims <- c(floor(min(shap)), ceiling(max(shap)))
+    }
+    
+    p2 <- sv_importance(shapviz(shap[, -which(colnames(shap) %in% dynamic_attrs[[1]])], X = data), 
+                        kind = sv_kind, max_display = num_features, fill = 'black',
+                        alpha = 0.5) +
+      #Note, sv_importance flips the x and y axes internally, so the plotted x-axis
+      # initially is the y-axis.
+      ylim(xlims) +
+      ggtitle(model_name, subtitle = 'Static Attributes') +
+      #hide legend from the first panel because it's the same as the second.
+      theme(legend.position="none")
+    
+    p3 <- sv_importance(shapviz(shap[, which(colnames(shap) %in% dynamic_attrs[[1]])], X = data), 
+                        kind = sv_kind, max_display = num_features, fill = 'black',
+                        alpha = 0.5) +
+      #Note, sv_importance flips the x and y axes internally, so the plotted x-axis
+      # initially is the y-axis.
+      ylim(xlims) +
+      ggtitle(model_name, subtitle = 'Dynamic Attributes')
+    
+    ggsave(filename = filesout[2], plot = p2+p3, device = 'png', width = 12, height = 8, units = 'in')
+  }
   
   return(filesout)
 }
