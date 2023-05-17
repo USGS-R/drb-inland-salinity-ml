@@ -451,7 +451,7 @@ plot_maps <- function(pred_df, network_geometry, file_path, filename_end = '_ful
   if('all' %in% time_aggregation){
     #Average RMSE over all time for each PRMS segment
     PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid), 
-                               RMSE = sqrt(mean(errsq)),
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
                                RMSE_log10 = log10(RMSE))
     
     filesout <- c(filesout, 
@@ -466,7 +466,7 @@ plot_maps <- function(pred_df, network_geometry, file_path, filename_end = '_ful
   if('year' %in% time_aggregation){
     #Average RMSE within each year for each PRMS segment
     PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid, Year), 
-                               RMSE = sqrt(mean(errsq)),
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
                                RMSE_log10 = log10(RMSE))
     
     #Make a map for each year
@@ -488,7 +488,7 @@ plot_maps <- function(pred_df, network_geometry, file_path, filename_end = '_ful
   if('month' %in% time_aggregation){
     #Average RMSE in each calendar month for each PRMS segment
     PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid, Month), 
-                               RMSE = sqrt(mean(errsq)),
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
                                RMSE_log10 = log10(RMSE))
     
     #Make a map for each calendar month
@@ -515,7 +515,7 @@ plot_maps <- function(pred_df, network_geometry, file_path, filename_end = '_ful
                                 pred_df$Month %in% c(7,8,9) ~ 'JAS')
     
     PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid, Season), 
-                               RMSE = sqrt(mean(errsq)),
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
                                RMSE_log10 = log10(RMSE))
     
     #Make a map for each calendar month
