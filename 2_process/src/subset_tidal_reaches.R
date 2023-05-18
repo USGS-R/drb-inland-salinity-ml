@@ -21,5 +21,5 @@ subset_tidal_reaches <- function(reach_sf, segs_w_comids){
   
   # Subset and return NHM segments that overlap a "tidal" NHDPlus reach
   tidal_reaches <- filter(reach_sf, subsegid %in% segs_w_tidal_comids)
-  return(tidal_reaches)
+  return(tidal_reaches$subsegid)
 }

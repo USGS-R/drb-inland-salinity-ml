@@ -120,7 +120,7 @@ p2_targets_list <- list(
   
   # Subset PRMS segments that may be tidally-influenced
   tar_target(
-    p2_tidal_reaches_sf,
+    p2_tidal_reaches,
     subset_tidal_reaches(p1_reaches_sf, p2_drb_comids_seg)
   ),
   
