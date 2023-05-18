@@ -100,12 +100,27 @@ p2_targets_list <- list(
       rename(comid = comid_cat)
   ),
   
+  # Reshape PRMS-NHDv2 xwalk table to return all COMIDS that intersect/overlap the PRMS segments
+  tar_target(
+    p2_drb_comids_seg,
+    p2_prms_nhdv2_xwalk %>%
+      select(PRMS_segid, comid_seg) |> 
+      tidyr::separate_rows(comid_seg,sep=";") |> 
+      rename(comid = comid_seg)
+  ),
+  
   # Subset PRMS-NHDv2 xwalk table to return the COMID located at the downstream end of each PRMS segment
   tar_target(
     p2_drb_comids_down,
     p2_prms_nhdv2_xwalk %>% 
       select(PRMS_segid,comid_down) %>% 
       rename(comid = comid_down)
+  ),
+  
+  # Subset PRMS segments that may be tidally-influenced
+  tar_target(
+    p2_tidal_reaches_sf,
+    subset_tidal_reaches(p1_reaches_sf, p2_drb_comids_seg)
   ),
   
   #----
