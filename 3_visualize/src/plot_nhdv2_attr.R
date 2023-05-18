@@ -1,5 +1,6 @@
-plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
-                            filename_end = NULL, boundary = drb_shp){
+plot_nhdv2_attr <- function(attr_data, network_geometry, file_path,
+                            filename_end = NULL, boundary = drb_shp,
+                            reservoirs = NULL){
   #' 
   #' @description This function visualizes each of the downloaded NHDv2 attribute variables across all river segments within the network
   #'
@@ -11,6 +12,8 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
   #' @param filename_end optional character string to add to the end of the filename
   #' before the file extension.
   #' @param boundary sf polygon defining the boundary of the DRB to plot
+  #' @param reservoirs shapefile containing reservoir locations. When specified, 
+  #' these will be added to the plots.
   #'
   #' @value Returns a png file containing a violin plot showing distribution of each NHDv2 attribute variable
   
@@ -51,6 +54,15 @@ plot_nhdv2_attr <- function(attr_data,network_geometry,file_path,
               mapping = aes(color=.data[[col_name]]),
               size = 0.3) + 
       scale_color_viridis_c(option="plasma") + 
+	  #reservoirs
+      {if(!is.null(reservoirs)){
+        geom_sf(data = reservoirs, 
+                size = 1,
+                mapping = aes(fill = "black"))}
+      } + 
+      {if(!is.null(reservoirs)){
+        scale_fill_identity(name = "", labels = c(black = "reservoir"), guide = "legend")}
+      } +
       theme_bw() + 
       theme(plot.margin = unit(c(0,0,0,2), "cm"),
             axis.text.x = element_text(size = 6),

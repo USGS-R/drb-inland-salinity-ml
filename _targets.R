@@ -69,7 +69,13 @@ p4_dirs <- bind_rows(
   expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "shap"], 
               train_test_features, rf_xai_shap_options[rf_xai_shap_options == "seasonal"], rf_xai_shap_seasonal_options, rf_xai_shap_seasonal_suboptions),
   expand.grid(predict_dir, train_test_splits, rf_xai_plot_types[rf_xai_plot_types == "dependence"], 
-              train_test_features, rf_xai_dep_options)) %>%
+              train_test_features, rf_xai_dep_options),
+  expand.grid(predict_dir, train_test_splits, train_test_res[train_test_res == "pred_obs"], 
+              train_test_features, rf_xai_shap_options[rf_xai_shap_options == "lulc"], rf_xai_shap_lulc_options),
+  expand.grid(predict_dir, train_test_splits, train_test_res[train_test_res == "pred_obs"], 
+              train_test_features, rf_xai_shap_options[rf_xai_shap_options == "physio"], rf_xai_shap_physio_options),
+  expand.grid(predict_dir, train_test_splits, train_test_res[train_test_res == "pred_obs"], 
+              train_test_features, rf_xai_shap_options[rf_xai_shap_options == "seasonal"], rf_xai_shap_seasonal_options, rf_xai_shap_seasonal_suboptions)) %>%
   mutate(file_path = case_when(is.na(Var4) ~ file.path(Var1, Var2, Var3),
                                is.na(Var5) ~ file.path(Var1, Var2, Var3, Var4),
                                is.na(Var6) ~ file.path(Var1, Var2, Var3, Var4, Var5),

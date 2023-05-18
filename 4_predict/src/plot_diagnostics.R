@@ -422,6 +422,122 @@ plot_timeseries <- function(pred_df, network_geometry, model_name, out_dir){
 }
 
 
+#maps for different time periods
+plot_maps <- function(pred_df, network_geometry, file_path, filename_end = '_full',
+                      reservoirs = NULL, 
+                      time_aggregation = c('all', 'season', 'month', 'year')){
+  #' 
+  #' @description Creates maps of error metrics within the pred_df.
+  #'
+  #' @param pred_df dataframe with columns for 'PRMS_segid', 'Date', 'Month', 
+  #' 'Year', and 'errsq' as output from `predict_test_data`
+  #' @param network_geometry sf object containing the network flowline geometry; 
+  #' must include columns "subsegid" and "geometry"
+  #' @param file_path a character string that indicates the location of the saved plot
+  #' @param filename_end optional character string to add to the end of the filename
+  #' before the file extension.
+  #' @param reservoirs shapefile containing reservoir locations. When specified, 
+  #' these will be added to the plots.
+  #' @param time_aggregation how to aggregate results for each reach. 'all' 
+  #' aggregates over all available data. 'season' creates a map for each water 
+  #' year season. 'month' creates a map for each calendar month. 'year' creates
+  #' a map for each calendar year.
+  #'
+  #' @return Returns the path to png files containing a violin plot showing
+  #'  the distribution of each attribute in the pred_df
+  
+  filesout <- vector('character', length = 0L)
+  
+  if('all' %in% time_aggregation){
+    #Average RMSE over all time for each PRMS segment
+    PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid), 
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                               RMSE_log10 = log10(RMSE))
+    
+    filesout <- c(filesout, 
+                  plot_nhdv2_attr(attr_data = PRMS_seg_RMSE,
+                    network_geometry = network_geometry,
+                    file_path = file_path,
+                    filename_end = filename_end,
+                    reservoirs = reservoirs)
+                )
+  }
+  
+  if('year' %in% time_aggregation){
+    #Average RMSE within each year for each PRMS segment
+    PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid, Year), 
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                               RMSE_log10 = log10(RMSE))
+    
+    #Make a map for each year
+    years <- sort(unique(PRMS_seg_RMSE$Year))
+    for(y in 1:length(years)){
+      filename_end_y <- paste0('_year_', years[y], filename_end)
+      
+      filesout <- c(filesout, 
+                    plot_nhdv2_attr(attr_data = filter(PRMS_seg_RMSE, Year == years[y]) %>%
+                                      select(-Year),
+                      network_geometry = network_geometry,
+                      file_path = file_path,
+                      filename_end = filename_end_y,
+                      reservoirs = reservoirs)
+                  )
+    }
+  }
+  
+  if('month' %in% time_aggregation){
+    #Average RMSE in each calendar month for each PRMS segment
+    PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid, Month), 
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                               RMSE_log10 = log10(RMSE))
+    
+    #Make a map for each calendar month
+    months <- sort(unique(PRMS_seg_RMSE$Month))
+    for(m in 1:length(months)){
+      filename_end_m <- paste0('_month_', month.name[months[m]], filename_end)
+      
+      filesout <- c(filesout, 
+                    plot_nhdv2_attr(attr_data = filter(PRMS_seg_RMSE, Month == months[m]) %>%
+                                      select(-Month),
+                                    network_geometry = network_geometry,
+                                    file_path = file_path,
+                                    filename_end = filename_end_m,
+                                    reservoirs = reservoirs)
+      )
+    }
+  }
+  
+  if('season' %in% time_aggregation){
+    #Average RMSE in each water year season for each PRMS segment
+    pred_df$Season <- case_when(pred_df$Month %in% c(10,11,12) ~ 'OND',
+                                pred_df$Month %in% c(1,2,3) ~ 'JFM',
+                                pred_df$Month %in% c(4,5,6) ~ 'AMJ',
+                                pred_df$Month %in% c(7,8,9) ~ 'JAS')
+    
+    PRMS_seg_RMSE <- summarize(group_by(pred_df, PRMS_segid, Season), 
+                               RMSE = sqrt(mean(errsq, na.rm = TRUE)),
+                               RMSE_log10 = log10(RMSE))
+    
+    #Make a map for each calendar month
+    seasons <- sort(unique(PRMS_seg_RMSE$Season))
+    for(s in 1:length(seasons)){
+      filename_end_s <- paste0('_season_', seasons[s], filename_end)
+      
+      filesout <- c(filesout, 
+                    plot_nhdv2_attr(attr_data = filter(PRMS_seg_RMSE, Season == seasons[s]) %>%
+                                      select(-Season),
+                                    network_geometry = network_geometry,
+                                    file_path = file_path,
+                                    filename_end = filename_end_s,
+                                    reservoirs = reservoirs)
+      )
+    }
+  }
+  
+  return(filesout)
+}
+
+
 #SHAP values
 plot_shap_global <- function(shap, model_name, out_dir, num_features = 40,
                              dynamic_attrs_txt = NULL){
