@@ -13,6 +13,7 @@ source('2_process/src/area_diff_fix.R')
 source('2_process/src/clean_lulc_data_for_merge.R')
 source('2_process/src/add_dynamic_attr.R')
 source('2_process/src/write_data.R')
+source("2_process/src/subset_tidal_reaches.R")
 
 
 p2_targets_list <- list(
