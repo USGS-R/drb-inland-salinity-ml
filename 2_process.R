@@ -119,9 +119,12 @@ p2_targets_list <- list(
   ),
   
   # Subset PRMS segments that may be tidally-influenced
+  # Based on the elevation of tidally-influenced NWIS gages in the DRB, 4 meters
+  # is used to indicate the likely head-of-tide. 
+  # See https://github.com/USGS-R/drb-inland-salinity-ml/issues/241
   tar_target(
     p2_tidal_reaches,
-    subset_tidal_reaches(p1_reaches_sf, p2_drb_comids_seg)
+    subset_tidal_reaches(p1_reaches_sf, p2_drb_comids_seg, tidal_elev_m = 4)
   ),
   
   #----
