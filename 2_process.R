@@ -126,6 +126,17 @@ p2_targets_list <- list(
     p2_tidal_reaches,
     subset_tidal_reaches(p1_reaches_sf, p2_drb_comids_seg, tidal_elev_m = 4)
   ),
+  tar_target(
+    p2_tidal_reaches_txt,
+    {
+      reach_df = as.data.frame(p2_tidal_reaches)
+      colnames(reach_df) = 'PRMS_segid'
+      write_csv(reach_df, '2_process/out/p2_tidal_reaches.txt')
+      '2_process/out/p2_tidal_reaches.txt'
+    },
+    format = 'file',
+    repository = 'local'
+  ),
   
   #----
   # NLCD Land Cover Proportions 
