@@ -129,10 +129,24 @@ p2_targets_list <- list(
   tar_target(
     p2_tidal_reaches_txt,
     {
+      fileout = '2_process/out/p2_tidal_reaches.txt'
       reach_df = as.data.frame(p2_tidal_reaches)
       colnames(reach_df) = 'PRMS_segid'
-      write_csv(reach_df, '2_process/out/p2_tidal_reaches.txt')
-      '2_process/out/p2_tidal_reaches.txt'
+      write_csv(reach_df, fileout)
+      fileout
+    },
+    format = 'file',
+    repository = 'local'
+  ),
+  tar_target(
+    p2_nontidal_reaches_txt,
+    {
+      fileout = '2_process/out/p2_nontidal_reaches.txt'
+      
+      nontidal = p1_reaches_sf$subsegid[!(p1_reaches_sf$subsegid %in% p2_tidal_reaches)]
+      reach_df = as.data.frame(nontidal)
+      write_csv(reach_df, fileout, col_names = FALSE)
+      fileout
     },
     format = 'file',
     repository = 'local'
