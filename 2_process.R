@@ -13,6 +13,7 @@ source('2_process/src/area_diff_fix.R')
 source('2_process/src/clean_lulc_data_for_merge.R')
 source('2_process/src/add_dynamic_attr.R')
 source('2_process/src/write_data.R')
+source("2_process/src/subset_tidal_reaches.R")
 
 
 p2_targets_list <- list(
@@ -100,12 +101,55 @@ p2_targets_list <- list(
       rename(comid = comid_cat)
   ),
   
+  # Reshape PRMS-NHDv2 xwalk table to return all COMIDS that intersect/overlap the PRMS segments
+  tar_target(
+    p2_drb_comids_seg,
+    p2_prms_nhdv2_xwalk %>%
+      select(PRMS_segid, comid_seg) |> 
+      tidyr::separate_rows(comid_seg,sep=";") |> 
+      rename(comid = comid_seg)
+  ),
+  
   # Subset PRMS-NHDv2 xwalk table to return the COMID located at the downstream end of each PRMS segment
   tar_target(
     p2_drb_comids_down,
     p2_prms_nhdv2_xwalk %>% 
       select(PRMS_segid,comid_down) %>% 
       rename(comid = comid_down)
+  ),
+  
+  # Subset PRMS segments that may be tidally-influenced
+  # Based on the elevation of tidally-influenced NWIS gages in the DRB, 4 meters
+  # is used to indicate the likely head-of-tide. 
+  # See https://github.com/USGS-R/drb-inland-salinity-ml/issues/241
+  tar_target(
+    p2_tidal_reaches,
+    subset_tidal_reaches(p1_reaches_sf, p2_drb_comids_seg, tidal_elev_m = 4)
+  ),
+  tar_target(
+    p2_tidal_reaches_txt,
+    {
+      fileout = '2_process/out/p2_tidal_reaches.txt'
+      reach_df = as.data.frame(p2_tidal_reaches)
+      colnames(reach_df) = 'PRMS_segid'
+      write_csv(reach_df, fileout)
+      fileout
+    },
+    format = 'file',
+    repository = 'local'
+  ),
+  tar_target(
+    p2_nontidal_reaches_txt,
+    {
+      fileout = '2_process/out/p2_nontidal_reaches.txt'
+      
+      nontidal = p1_reaches_sf$subsegid[!(p1_reaches_sf$subsegid %in% p2_tidal_reaches)]
+      reach_df = as.data.frame(nontidal)
+      write_csv(reach_df, fileout, col_names = FALSE)
+      fileout
+    },
+    format = 'file',
+    repository = 'local'
   ),
   
   #----
