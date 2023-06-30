@@ -1,3 +1,5 @@
+Active development moved to https://code.usgs.gov/wma/wp/drb-inland-salinity-ml
+
 # drb-inland-salinity-ml
 This repository contains a pipeline for data gathering, processing, modeling, and visualizing results for machine learning models that predict salinity in inland reaches of the Delaware River Basin (DRB). This pipeline is built with targets version 0.11.0 and may not work with earlier versions.
 
